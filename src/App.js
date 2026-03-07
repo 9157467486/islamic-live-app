@@ -1202,14 +1202,22 @@ function TasbeehPage() {
 export default function MinbarLiveApp() {
   const [splash, setSplash]             = useState(true);
   const [page, setPage]               = useState("home");
-  const [masjids, setMasjids]         = useState(MASJIDS_DEFAULT);
+  const [masjids, setMasjids] = useState(() => {
+    try {
+      const saved = localStorage.getItem("minbar_masjids");
+      return saved ? JSON.parse(saved) : MASJIDS_DEFAULT;
+    } catch { return MASJIDS_DEFAULT; }
+  });
   const [adminTarget, setAdminTarget] = useState(null);
   const [loggedInAdmin, setLoggedInAdmin] = useState(null);
   const [showLogin, setShowLogin]     = useState(false);
   const [showAdminPanel, setShowAdminPanel] = useState(false);
 
   // ── Notifications ──
-  const [notifEnabled, setNotifEnabled] = useState(false);
+  const [notifEnabled, setNotifEnabled] = useState(() => {
+    const saved = localStorage.getItem("minbar_notif");
+    return saved === null ? true : saved === "true";
+  });
   const [notifPerm, setNotifPerm]       = useState(typeof Notification !== "undefined" ? Notification.permission : "default");
   const [currentNotif, setCurrentNotif] = useState(null);
 
@@ -1225,7 +1233,6 @@ export default function MinbarLiveApp() {
       setNotifEnabled(false);
     }
   };
-
   const { prompt, install } = useInstallPrompt();
 
   const navItems = [
@@ -1262,16 +1269,40 @@ export default function MinbarLiveApp() {
   };
 
   const handleUpdateMasjid = (id, updates) => {
-    setMasjids(prev => prev.map(m => m.id === id ? { ...m, ...updates } : m));
+    setMasjids(prev => {
+      const updated = prev.map(m => m.id === id ? { ...m, ...updates } : m);
+      localStorage.setItem("minbar_masjids", JSON.stringify(updated));
+      return updated;
+    });
   };
   const handleAddMasjid = (newMasjid) => {
-    setMasjids(prev => [...prev, newMasjid]);
+    setMasjids(prev => {
+      const updated = [...prev, newMasjid];
+      localStorage.setItem("minbar_masjids", JSON.stringify(updated));
+      return updated;
+    });
   };
   const handleDeleteMasjid = (id) => {
     if (window.confirm("Delete this masjid?")) {
-      setMasjids(prev => prev.filter(m => m.id !== id));
+      setMasjids(prev => {
+        const updated = prev.filter(m => m.id !== id);
+        localStorage.setItem("minbar_masjids", JSON.stringify(updated));
+        return updated;
+      });
     }
   };
+
+  // Auto request notification permission on first load
+  useEffect(() => {
+    if (typeof Notification !== "undefined" && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  // Save notif preference
+  useEffect(() => {
+    localStorage.setItem("minbar_notif", String(notifEnabled));
+  }, [notifEnabled]);
 
   return (
     <div style={{ maxWidth:390, margin:"0 auto", minHeight:"100vh", background:`linear-gradient(180deg,${DARK_GREEN} 0%,#050F08 100%)`, backgroundImage:arabicPattern, fontFamily:"'Lato',sans-serif", position:"relative" }}>
