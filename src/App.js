@@ -942,7 +942,24 @@ function LibraryPage() {
 }
 
 // ─── DUA PAGE ──────────────────────────────────────────────────────────────────
-// ─── ADD MASJID MODAL ──────────────────────────────────────────────────────────
+// ─── PWA INSTALL PROMPT ────────────────────────────────────────────────────────
+function useInstallPrompt() {
+  const [prompt, setPrompt] = useState(null);
+  useEffect(() => {
+    const handler = e => { e.preventDefault(); setPrompt(e); };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+  const install = async () => {
+    if (!prompt) return;
+    prompt.prompt();
+    await prompt.userChoice;
+    setPrompt(null);
+  };
+  return { prompt, install };
+}
+
+
 function AddMasjidModal({ onAdd, onClose }) {
   const [step, setStep]         = useState("password"); // password | form
   const [pw, setPw]             = useState("");
@@ -1060,22 +1077,30 @@ function AddMasjidModal({ onAdd, onClose }) {
   );
 }
 
-const QURAN_EMBED = "https://drive.google.com/file/d/1Th1kp5uMNWkjOymg8XXOHZmTDP9PoNr0/preview";
-const DUAS_EMBED  = "https://drive.google.com/file/d/1oRIJL3AQDwfYjjxK3U3crMIbA59ueUxt/preview";
+const QURAN_EMBED = "https://drive.google.com/file/d/1Th1kp5uMNWkjOymg8XXOHZmTDP9PoNr0/preview?usp=sharing";
+const DUAS_EMBED  = "https://drive.google.com/file/d/1oRIJL3AQDwfYjjxK3U3crMIbA59ueUxt/preview?usp=sharing";
 
 function PdfViewer({ url, title, onBack }) {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const directUrl = url.replace("/preview?usp=sharing", "/view?usp=sharing");
   return (
-    <div style={{ display:"flex", flexDirection:"column", position:"fixed", inset:0, zIndex:500, background:"#000" }}>
+    <div style={{ display:"flex", flexDirection:"column", position:"fixed", inset:0, zIndex:500, background:DARK_GREEN }}>
       <div style={{ background:`linear-gradient(135deg,${DARK_GREEN},${MID_GREEN})`, padding:"12px 16px", display:"flex", alignItems:"center", gap:12, flexShrink:0 }}>
         <button onClick={onBack} style={{ background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:10, padding:"7px 14px", color:GOLD, fontSize:13, fontWeight:700, cursor:"pointer" }}>← Back</button>
         <div style={{ color:LIGHT_GOLD, fontWeight:700, fontSize:15, fontFamily:"'Playfair Display',serif" }}>{title}</div>
       </div>
-      <iframe
-        src={url}
-        title={title}
-        style={{ flex:1, border:"none", width:"100%", background:"#fff" }}
-        allow="autoplay"
-      />
+      {isIOS ? (
+        <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:24, gap:20 }}>
+          <div style={{ fontSize:64 }}>📖</div>
+          <div style={{ color:LIGHT_GOLD, fontSize:18, fontWeight:700, textAlign:"center" }}>{title}</div>
+          <div style={{ color:"rgba(255,255,255,0.45)", fontSize:13, textAlign:"center", lineHeight:1.7 }}>Tap below to open the PDF</div>
+          <div onClick={() => window.open(directUrl, "_blank")} style={{ background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, color:DARK_GREEN, borderRadius:20, padding:"14px 36px", fontSize:16, fontWeight:700, cursor:"pointer" }}>
+            📖 Open PDF →
+          </div>
+        </div>
+      ) : (
+        <iframe src={url} title={title} style={{ flex:1, border:"none", width:"100%", background:"#fff" }} allow="autoplay" />
+      )}
     </div>
   );
 }
@@ -1200,6 +1225,8 @@ export default function MinbarLiveApp() {
       setNotifEnabled(false);
     }
   };
+
+  const { prompt, install } = useInstallPrompt();
 
   const navItems = [
     { id:"home",    icon:"🏠", label:"Home"    },
@@ -1352,6 +1379,19 @@ export default function MinbarLiveApp() {
               <span style={{ color:GOLD, fontWeight:700, fontSize:14 }}>Add New Masjid</span>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* PWA Install Banner */}
+      {prompt && (
+        <div style={{ position:"fixed", bottom:70, left:"50%", transform:"translateX(-50%)", width:"calc(100% - 32px)", maxWidth:358, background:`linear-gradient(135deg,${MID_GREEN},#1A3D2A)`, border:"1px solid rgba(201,168,76,0.4)", borderRadius:16, padding:"14px 16px", zIndex:400, display:"flex", alignItems:"center", gap:12, boxShadow:"0 8px 32px rgba(0,0,0,0.5)" }}>
+          <img src="/islamiclogo.png" alt="logo" style={{ width:40, height:40, borderRadius:10 }} />
+          <div style={{ flex:1 }}>
+            <div style={{ color:LIGHT_GOLD, fontWeight:700, fontSize:13 }}>Install Minbar Live</div>
+            <div style={{ color:"rgba(255,255,255,0.45)", fontSize:11 }}>Add to home screen for easy access</div>
+          </div>
+          <button onClick={install} style={{ background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, color:DARK_GREEN, border:"none", borderRadius:10, padding:"8px 14px", fontSize:12, fontWeight:700, cursor:"pointer" }}>Install</button>
+          <button onClick={() => {}} style={{ background:"none", border:"none", color:"rgba(255,255,255,0.3)", fontSize:18, cursor:"pointer", padding:0 }}>✕</button>
         </div>
       )}
 
