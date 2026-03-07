@@ -937,24 +937,6 @@ function LibraryPage() {
 
 // ─── DUA PAGE ──────────────────────────────────────────────────────────────────
 function DuaPage() {
-  const [open, setOpen] = useState(false);
-
-  if (open) {
-    return (
-      <div style={{ display:"flex", flexDirection:"column", height:"calc(100vh - 114px)" }}>
-        <div style={{ background:`linear-gradient(135deg,${DARK_GREEN},#1A2E4A)`, padding:"12px 16px", display:"flex", alignItems:"center", gap:12, flexShrink:0 }}>
-          <button onClick={() => setOpen(false)} style={{ background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:10, padding:"7px 14px", color:GOLD, fontSize:13, fontWeight:700, cursor:"pointer" }}>← Back</button>
-          <div style={{ color:LIGHT_GOLD, fontWeight:700, fontSize:15, fontFamily:"'Playfair Display',serif" }}>🤲 Daily Duas</div>
-        </div>
-        <iframe
-          src={DUAS_PDF_URL}
-          title="Daily Duas"
-          style={{ flex:1, border:"none", width:"100%", background:"#fff" }}
-        />
-      </div>
-    );
-  }
-
   return (
     <div style={{ padding:"20px 20px 80px" }}>
       <SectionTitle>🤲 Dua Collection</SectionTitle>
@@ -970,7 +952,7 @@ function DuaPage() {
         </div>
       </div>
 
-      <div onClick={() => setOpen(true)} style={{
+      <div onClick={() => window.open("/Daily-Essential-Duas.pdf", "_blank")} style={{
         background:`linear-gradient(135deg,#1A2E4A,#0A1A2E)`,
         border:`2px solid rgba(100,150,255,0.3)`,
         borderRadius:18, padding:"28px 20px", textAlign:"center", cursor:"pointer",
@@ -994,7 +976,7 @@ function DuaPage() {
           { icon:"🍽️", name:"After Eating" },
           { icon:"🤲", name:"Forgiveness"   },
         ].map(cat => (
-          <div key={cat.name} onClick={() => setOpen(true)} style={{ background:"rgba(26,77,46,0.4)", border:"1px solid rgba(201,168,76,0.15)", borderRadius:13, padding:"16px", display:"flex", flexDirection:"column", alignItems:"center", gap:8, cursor:"pointer" }}>
+          <div key={cat.name} onClick={() => window.open("/Daily-Essential-Duas.pdf", "_blank")} style={{ background:"rgba(26,77,46,0.4)", border:"1px solid rgba(201,168,76,0.15)", borderRadius:13, padding:"16px", display:"flex", flexDirection:"column", alignItems:"center", gap:8, cursor:"pointer" }}>
             <span style={{ fontSize:28 }}>{cat.icon}</span>
             <span style={{ color:OFF_WHITE, fontSize:12, fontWeight:600, textAlign:"center" }}>{cat.name}</span>
           </div>
@@ -1039,30 +1021,12 @@ function TasbeehPage() {
 // ─── QURAN PAGE ────────────────────────────────────────────────────────────────
 // ─── QURAN PAGE ────────────────────────────────────────────────────────────────
 function QuranPage() {
-  const [open, setOpen] = useState(false);
-
-  if (open) {
-    return (
-      <div style={{ display:"flex", flexDirection:"column", height:"calc(100vh - 114px)" }}>
-        <div style={{ background:`linear-gradient(135deg,${DARK_GREEN},${MID_GREEN})`, padding:"12px 16px", display:"flex", alignItems:"center", gap:12, flexShrink:0 }}>
-          <button onClick={() => setOpen(false)} style={{ background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:10, padding:"7px 14px", color:GOLD, fontSize:13, fontWeight:700, cursor:"pointer" }}>← Back</button>
-          <div style={{ color:LIGHT_GOLD, fontWeight:700, fontSize:15, fontFamily:"'Playfair Display',serif" }}>📖 Holy Quran</div>
-        </div>
-        <iframe
-          src={QURAN_PDF_URL}
-          title="Quran"
-          style={{ flex:1, border:"none", width:"100%", background:"#fff" }}
-        />
-      </div>
-    );
-  }
-
   return (
     <div style={{ padding:"20px 20px 80px" }}>
       <SectionTitle>📖 Holy Quran</SectionTitle>
-      <div style={{ color:"rgba(255,255,255,0.45)", fontSize:13, marginBottom:24 }}>Read the complete Quran — works offline too!</div>
+      <div style={{ color:"rgba(255,255,255,0.45)", fontSize:13, marginBottom:24 }}>Read the complete Quran</div>
 
-      <div onClick={() => setOpen(true)} style={{
+      <div onClick={() => window.open("/quran.pdf", "_blank")} style={{
         background:`linear-gradient(135deg,${MID_GREEN},#1A2E0A)`,
         border:`2px solid rgba(201,168,76,0.4)`,
         borderRadius:20, padding:"40px 20px", textAlign:"center", cursor:"pointer",
@@ -1070,9 +1034,9 @@ function QuranPage() {
       }}>
         <div style={{ fontSize:64, marginBottom:14 }}>📖</div>
         <div style={{ color:LIGHT_GOLD, fontSize:22, fontWeight:700, fontFamily:"'Playfair Display',serif", marginBottom:8 }}>Al-Quran Al-Kareem</div>
-        <div style={{ color:"rgba(255,255,255,0.5)", fontSize:13, marginBottom:20 }}>Complete Quran PDF • No internet needed</div>
+        <div style={{ color:"rgba(255,255,255,0.5)", fontSize:13, marginBottom:20 }}>Complete Quran PDF</div>
         <div style={{ background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, color:DARK_GREEN, borderRadius:20, padding:"12px 32px", fontSize:15, fontWeight:700, display:"inline-block" }}>
-          📖 Read Quran →
+          📖 Open Quran →
         </div>
       </div>
 
