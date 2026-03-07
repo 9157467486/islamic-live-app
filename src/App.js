@@ -879,6 +879,14 @@ function HomePage({ setPage, masjids }) {
         </div>
       </div>
 
+      {/* Tip Banner */}
+      <div style={{ margin:"14px 20px 0", background:"rgba(201,168,76,0.08)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:12, padding:"10px 14px", display:"flex", alignItems:"center", gap:10 }}>
+        <span style={{ fontSize:20 }}>💡</span>
+        <div style={{ color:"rgba(255,255,255,0.45)", fontSize:11, lineHeight:1.6 }}>
+          Keep this app <span style={{ color:GOLD, fontWeight:700 }}>open in background</span> to receive adhan sound &amp; notifications!
+        </div>
+      </div>
+
       {/* Live preview */}
       <div style={{ padding: "18px 20px 0" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
