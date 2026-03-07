@@ -942,7 +942,124 @@ function LibraryPage() {
 }
 
 // ─── DUA PAGE ──────────────────────────────────────────────────────────────────
-// ─── PDF VIEWER ────────────────────────────────────────────────────────────────
+// ─── ADD MASJID MODAL ──────────────────────────────────────────────────────────
+function AddMasjidModal({ onAdd, onClose }) {
+  const [step, setStep]         = useState("password"); // password | form
+  const [pw, setPw]             = useState("");
+  const [pwErr, setPwErr]       = useState("");
+  const [name, setName]         = useState("");
+  const [icon, setIcon]         = useState("🕌");
+  const [color, setColor]       = useState("#1A4D2E");
+  const [password, setPassword] = useState("");
+  const [ytChannel, setYtChannel] = useState("");
+  const ICONS = ["🕌","🕍","☪️","🌙","⭐","🤲","🕋","📿"];
+  const COLORS = ["#1A4D2E","#1A2E4D","#2E1A4D","#4D2E1A","#2E4D1A","#4D1A2E","#1A4D4D","#4D3D1A"];
+
+  const checkPw = () => {
+    if (pw.trim() === "minbarlive") { setStep("form"); setPwErr(""); }
+    else setPwErr("❌ Wrong master password!");
+  };
+
+  const handleAdd = () => {
+    if (!name.trim()) return alert("Please enter masjid name!");
+    if (!password.trim()) return alert("Please enter admin password!");
+    const newMasjid = {
+      id: "m" + Date.now(),
+      name: name.trim(),
+      icon, color,
+      password: password.trim(),
+      youtubeUrl: "",
+      youtubeChannel: ytChannel.trim(),
+      isLive: false,
+      prayerTimes: {
+        fajr:    { adhan:"05:15", iqamah:"05:30" },
+        dhuhr:   { adhan:"13:15", iqamah:"13:30" },
+        asr:     { adhan:"16:30", iqamah:"16:45" },
+        maghrib: { adhan:"18:35", iqamah:"18:40" },
+        isha:    { adhan:"19:55", iqamah:"20:10" },
+        jumuah:  { adhan:"13:00", iqamah:"13:15" },
+      },
+      recordings: [],
+    };
+    onAdd(newMasjid);
+    onClose();
+  };
+
+  return (
+    <div style={{ position:"fixed", inset:0, zIndex:300, background:"rgba(0,0,0,0.92)", display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
+      <div style={{ background:`linear-gradient(180deg,#0E2418,${DARK_GREEN})`, border:"1px solid rgba(201,168,76,0.3)", borderRadius:"24px 24px 0 0", width:"100%", maxWidth:390, padding:"24px 20px 44px", maxHeight:"90vh", overflowY:"auto" }}>
+        <div style={{ width:40, height:4, background:"rgba(201,168,76,0.3)", borderRadius:2, margin:"0 auto 18px" }} />
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
+          <div style={{ color:LIGHT_GOLD, fontSize:18, fontWeight:700, fontFamily:"'Playfair Display',serif" }}>➕ Add New Masjid</div>
+          <div onClick={onClose} style={{ color:"rgba(255,255,255,0.4)", fontSize:22, cursor:"pointer" }}>✕</div>
+        </div>
+
+        {step === "password" ? (
+          <>
+            <div style={{ color:"rgba(255,255,255,0.5)", fontSize:13, marginBottom:16 }}>Enter master password to add a new masjid</div>
+            <input
+              type="password"
+              placeholder="Master password"
+              value={pw}
+              onChange={e => setPw(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && checkPw()}
+              style={{ width:"100%", background:"rgba(255,255,255,0.07)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:12, padding:"14px 16px", color:"#fff", fontSize:15, marginBottom:8, outline:"none" }}
+            />
+            {pwErr && <div style={{ color:"#FF7777", fontSize:13, marginBottom:12 }}>{pwErr}</div>}
+            <button onClick={checkPw} style={{ width:"100%", background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, color:DARK_GREEN, border:"none", borderRadius:14, padding:"14px", fontSize:15, fontWeight:700, cursor:"pointer" }}>
+              Continue →
+            </button>
+          </>
+        ) : (
+          <>
+            {/* Icon picker */}
+            <div style={{ color:GOLD, fontSize:11, letterSpacing:1, marginBottom:8 }}>SELECT ICON</div>
+            <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
+              {ICONS.map(ic => (
+                <div key={ic} onClick={() => setIcon(ic)} style={{ fontSize:24, padding:8, borderRadius:10, background:icon===ic?"rgba(201,168,76,0.25)":"rgba(255,255,255,0.05)", border:`1px solid ${icon===ic?"rgba(201,168,76,0.5)":"transparent"}`, cursor:"pointer" }}>{ic}</div>
+              ))}
+            </div>
+
+            {/* Color picker */}
+            <div style={{ color:GOLD, fontSize:11, letterSpacing:1, marginBottom:8 }}>SELECT COLOR</div>
+            <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
+              {COLORS.map(c => (
+                <div key={c} onClick={() => setColor(c)} style={{ width:32, height:32, borderRadius:8, background:c, border:`2px solid ${color===c?"#F0D080":"transparent"}`, cursor:"pointer" }} />
+              ))}
+            </div>
+
+            {/* Fields */}
+            {[
+              { label:"MASJID NAME", val:name, set:setName, ph:"e.g. Masjid-e-Noor", type:"text" },
+              { label:"ADMIN PASSWORD", val:password, set:setPassword, ph:"e.g. noor123", type:"text" },
+              { label:"YOUTUBE CHANNEL (optional)", val:ytChannel, set:setYtChannel, ph:"https://www.youtube.com/@YourChannel", type:"text" },
+            ].map(f => (
+              <div key={f.label} style={{ marginBottom:14 }}>
+                <div style={{ color:GOLD, fontSize:11, letterSpacing:1, marginBottom:6 }}>{f.label}</div>
+                <input
+                  type={f.type}
+                  placeholder={f.ph}
+                  value={f.val}
+                  onChange={e => f.set(e.target.value)}
+                  style={{ width:"100%", background:"rgba(255,255,255,0.07)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:12, padding:"13px 16px", color:"#fff", fontSize:14, outline:"none" }}
+                />
+              </div>
+            ))}
+
+            <div style={{ color:"rgba(255,255,255,0.35)", fontSize:12, marginBottom:16 }}>
+              💡 Prayer times will be set to default — admin can change them in Settings after adding.
+            </div>
+
+            <button onClick={handleAdd} style={{ width:"100%", background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, color:DARK_GREEN, border:"none", borderRadius:14, padding:"14px", fontSize:15, fontWeight:700, cursor:"pointer" }}>
+              ✅ Add Masjid
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const QURAN_EMBED = "https://drive.google.com/file/d/1Th1kp5uMNWkjOymg8XXOHZmTDP9PoNr0/preview";
 const DUAS_EMBED  = "https://drive.google.com/file/d/1oRIJL3AQDwfYjjxK3U3crMIbA59ueUxt/preview";
 
@@ -1097,6 +1214,7 @@ export default function MinbarLiveApp() {
 
   // Admin button clicked — show masjid selector
   const [showMasjidSelect, setShowMasjidSelect] = useState(false);
+  const [showAddMasjid, setShowAddMasjid]       = useState(false);
 
   const handleAdminSelect = (masjid) => {
     setAdminTarget(masjid);
@@ -1118,6 +1236,14 @@ export default function MinbarLiveApp() {
 
   const handleUpdateMasjid = (id, updates) => {
     setMasjids(prev => prev.map(m => m.id === id ? { ...m, ...updates } : m));
+  };
+  const handleAddMasjid = (newMasjid) => {
+    setMasjids(prev => [...prev, newMasjid]);
+  };
+  const handleDeleteMasjid = (id) => {
+    if (window.confirm("Delete this masjid?")) {
+      setMasjids(prev => prev.filter(m => m.id !== id));
+    }
   };
 
   return (
@@ -1205,21 +1331,36 @@ export default function MinbarLiveApp() {
               Each masjid has its own admin password. Only the masjid admin can access their panel.
             </div>
             {masjids.map(m => (
-              <div key={m.id} onClick={() => handleAdminSelect(m)} style={{
-                background:`linear-gradient(135deg,${m.color},rgba(10,46,26,0.9))`,
-                border:"1px solid rgba(201,168,76,0.2)", borderRadius:14, padding:"14px 16px",
-                display:"flex", alignItems:"center", gap:14, cursor:"pointer", marginBottom:10,
-              }}>
-                <span style={{ fontSize:28 }}>{m.icon}</span>
-                <div style={{ flex:1 }}>
-                  <div style={{ color:OFF_WHITE, fontWeight:700, fontSize:15 }}>{m.name}</div>
-                  <div style={{ color:"rgba(255,255,255,0.35)", fontSize:11, marginTop:2 }}>Tap to login as admin</div>
+              <div key={m.id} style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
+                <div onClick={() => handleAdminSelect(m)} style={{
+                  background:`linear-gradient(135deg,${m.color},rgba(10,46,26,0.9))`,
+                  border:"1px solid rgba(201,168,76,0.2)", borderRadius:14, padding:"14px 16px",
+                  display:"flex", alignItems:"center", gap:14, cursor:"pointer", flex:1,
+                }}>
+                  <span style={{ fontSize:28 }}>{m.icon}</span>
+                  <div style={{ flex:1 }}>
+                    <div style={{ color:OFF_WHITE, fontWeight:700, fontSize:15 }}>{m.name}</div>
+                    <div style={{ color:"rgba(255,255,255,0.35)", fontSize:11, marginTop:2 }}>Tap to login as admin</div>
+                  </div>
+                  <div style={{ color:GOLD, fontSize:18 }}>🔒</div>
                 </div>
-                <div style={{ color:GOLD, fontSize:18 }}>🔒</div>
+                <div onClick={() => handleDeleteMasjid(m.id)} style={{ background:"rgba(255,50,50,0.15)", border:"1px solid rgba(255,50,50,0.3)", borderRadius:12, padding:"14px 10px", cursor:"pointer", color:"#FF7777", fontSize:16 }}>🗑️</div>
               </div>
             ))}
+            <div onClick={() => { setShowMasjidSelect(false); setShowAddMasjid(true); }} style={{ background:"rgba(201,168,76,0.1)", border:"1px dashed rgba(201,168,76,0.4)", borderRadius:14, padding:"14px 16px", display:"flex", alignItems:"center", justifyContent:"center", gap:10, cursor:"pointer", marginTop:4 }}>
+              <span style={{ color:GOLD, fontSize:20 }}>➕</span>
+              <span style={{ color:GOLD, fontWeight:700, fontSize:14 }}>Add New Masjid</span>
+            </div>
           </div>
         </div>
+      )}
+
+      {/* ── ADD MASJID MODAL ── */}
+      {showAddMasjid && (
+        <AddMasjidModal
+          onAdd={handleAddMasjid}
+          onClose={() => setShowAddMasjid(false)}
+        />
       )}
 
       {/* ── PASSWORD LOGIN ── */}
