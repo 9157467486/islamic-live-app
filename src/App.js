@@ -194,9 +194,6 @@ const OFF_WHITE  = "#F8F4E8";
 
 const arabicPattern = `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23C9A84C' fill-opacity='0.06'%3E%3Cpath d='M30 0 L60 30 L30 60 L0 30 Z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`;
 
-// ─── PDF LINKS ─────────────────────────────────────────────────────────────────
-const QURAN_PDF_URL = "/quran.pdf";
-const DUAS_PDF_URL  = "/Daily-Essential-Duas.pdf";
 // Change this to something only YOU know!
 const MASTER_PASSWORD = "minbar-master-2026";
 
