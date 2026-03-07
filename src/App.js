@@ -933,54 +933,74 @@ function LibraryPage() {
 }
 
 // ─── DUA PAGE ──────────────────────────────────────────────────────────────────
+// ─── PDF VIEWER ────────────────────────────────────────────────────────────────
+function PdfViewer({ url, title, onBack }) {
+  return (
+    <div style={{ display:"flex", flexDirection:"column", position:"fixed", inset:0, zIndex:500, background:"#000" }}>
+      <div style={{ background:`linear-gradient(135deg,${DARK_GREEN},${MID_GREEN})`, padding:"12px 16px", display:"flex", alignItems:"center", gap:12, flexShrink:0 }}>
+        <button onClick={onBack} style={{ background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:10, padding:"7px 14px", color:GOLD, fontSize:13, fontWeight:700, cursor:"pointer" }}>← Back</button>
+        <div style={{ color:LIGHT_GOLD, fontWeight:700, fontSize:15, fontFamily:"'Playfair Display',serif" }}>{title}</div>
+      </div>
+      <iframe src={url} title={title} style={{ flex:1, border:"none", width:"100%", background:"#fff" }} />
+    </div>
+  );
+}
+
+// ─── QURAN PAGE ────────────────────────────────────────────────────────────────
+function QuranPage() {
+  const [showPdf, setShowPdf] = useState(false);
+  if (showPdf) return <PdfViewer url="/quran.pdf" title="📖 Holy Quran" onBack={() => setShowPdf(false)} />;
+  return (
+    <div style={{ padding:"20px 20px 80px" }}>
+      <SectionTitle>📖 Holy Quran</SectionTitle>
+      <div style={{ color:"rgba(255,255,255,0.45)", fontSize:13, marginBottom:24 }}>Read the complete Quran</div>
+      <div onClick={() => setShowPdf(true)} style={{ background:`linear-gradient(135deg,${MID_GREEN},#1A2E0A)`, border:"2px solid rgba(201,168,76,0.4)", borderRadius:20, padding:"40px 20px", textAlign:"center", cursor:"pointer", boxShadow:"0 8px 32px rgba(0,0,0,0.4)", marginBottom:16 }}>
+        <div style={{ fontSize:64, marginBottom:14 }}>📖</div>
+        <div style={{ color:LIGHT_GOLD, fontSize:22, fontWeight:700, fontFamily:"'Playfair Display',serif", marginBottom:8 }}>Al-Quran Al-Kareem</div>
+        <div style={{ color:"rgba(255,255,255,0.5)", fontSize:13, marginBottom:20 }}>Complete Quran PDF</div>
+        <div style={{ background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, color:DARK_GREEN, borderRadius:20, padding:"12px 32px", fontSize:15, fontWeight:700, display:"inline-block" }}>📖 Read Quran →</div>
+      </div>
+      <div style={{ background:"rgba(201,168,76,0.08)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:14, padding:"16px", textAlign:"center" }}>
+        <div style={{ fontSize:18, direction:"rtl", fontFamily:"serif", color:LIGHT_GOLD, marginBottom:8 }}>بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+        <div style={{ color:"rgba(255,255,255,0.4)", fontSize:12, fontStyle:"italic" }}>"In the name of Allah, the Most Gracious, the Most Merciful"</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── DUA PAGE ──────────────────────────────────────────────────────────────────
 function DuaPage() {
+  const [showPdf, setShowPdf] = useState(false);
+  if (showPdf) return <PdfViewer url="/Daily-Essential-Duas.pdf" title="🤲 Daily Duas" onBack={() => setShowPdf(false)} />;
   return (
     <div style={{ padding:"20px 20px 80px" }}>
       <SectionTitle>🤲 Dua Collection</SectionTitle>
       <div style={{ color:"rgba(255,255,255,0.45)", fontSize:13, marginBottom:24 }}>Authentic duas from Quran & Sunnah</div>
-
       <div style={{ background:`linear-gradient(135deg,${MID_GREEN},#1A2E4A)`, border:"1px solid rgba(201,168,76,0.3)", borderRadius:20, padding:"20px", marginBottom:20, textAlign:"center" }}>
         <div style={{ color:GOLD, fontSize:11, letterSpacing:2, marginBottom:8 }}>DUA OF THE DAY</div>
-        <div style={{ color:LIGHT_GOLD, fontSize:21, lineHeight:1.6, fontFamily:"serif", marginBottom:10, direction:"rtl" }}>
-          رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً
-        </div>
-        <div style={{ color:"rgba(255,255,255,0.65)", fontSize:12, fontStyle:"italic" }}>
-          "Our Lord, give us good in this world and good in the Hereafter..."
-        </div>
+        <div style={{ color:LIGHT_GOLD, fontSize:21, lineHeight:1.6, fontFamily:"serif", marginBottom:10, direction:"rtl" }}>رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً</div>
+        <div style={{ color:"rgba(255,255,255,0.65)", fontSize:12, fontStyle:"italic" }}>"Our Lord, give us good in this world and good in the Hereafter..."</div>
       </div>
-
-      <a href="/Daily-Essential-Duas.pdf" target="_blank" rel="noreferrer" style={{ textDecoration:"none", display:"block", marginBottom:20 }}>
-        <div style={{
-          background:`linear-gradient(135deg,#1A2E4A,#0A1A2E)`,
-          border:`2px solid rgba(100,150,255,0.3)`,
-          borderRadius:18, padding:"28px 20px", textAlign:"center", cursor:"pointer",
-          boxShadow:"0 8px 28px rgba(0,0,0,0.4)",
-        }}>
-          <div style={{ fontSize:52, marginBottom:10 }}>🤲</div>
-          <div style={{ color:LIGHT_GOLD, fontSize:18, fontWeight:700, fontFamily:"'Playfair Display',serif", marginBottom:6 }}>40+ Daily Essential Duas</div>
-          <div style={{ color:"rgba(255,255,255,0.45)", fontSize:12, marginBottom:16 }}>Morning, Evening, Travel, Sleep & more</div>
-          <div style={{ background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, color:DARK_GREEN, borderRadius:20, padding:"10px 28px", fontSize:14, fontWeight:700, display:"inline-block" }}>
-            📖 Open Duas →
-          </div>
-        </div>
-      </a>
-
+      <div onClick={() => setShowPdf(true)} style={{ background:"linear-gradient(135deg,#1A2E4A,#0A1A2E)", border:"2px solid rgba(100,150,255,0.3)", borderRadius:18, padding:"28px 20px", textAlign:"center", cursor:"pointer", boxShadow:"0 8px 28px rgba(0,0,0,0.4)", marginBottom:20 }}>
+        <div style={{ fontSize:52, marginBottom:10 }}>🤲</div>
+        <div style={{ color:LIGHT_GOLD, fontSize:18, fontWeight:700, fontFamily:"'Playfair Display',serif", marginBottom:6 }}>40+ Daily Essential Duas</div>
+        <div style={{ color:"rgba(255,255,255,0.45)", fontSize:12, marginBottom:16 }}>Morning, Evening, Travel, Sleep & more</div>
+        <div style={{ background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, color:DARK_GREEN, borderRadius:20, padding:"10px 28px", fontSize:14, fontWeight:700, display:"inline-block" }}>📖 Open Duas →</div>
+      </div>
       <div style={{ color:OFF_WHITE, fontSize:14, fontWeight:700, marginBottom:12 }}>Categories</div>
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
         {[
-          { icon:"🌅", name:"Morning Duas"  },
-          { icon:"🌙", name:"Evening Duas"  },
-          { icon:"✈️", name:"Travel Dua"   },
-          { icon:"😴", name:"Before Sleep"  },
-          { icon:"🍽️", name:"After Eating" },
-          { icon:"🤲", name:"Forgiveness"   },
+          { icon:"🌅", name:"Morning Duas" },
+          { icon:"🌙", name:"Evening Duas" },
+          { icon:"✈️", name:"Travel Dua"  },
+          { icon:"😴", name:"Before Sleep" },
+          { icon:"🍽️", name:"After Eating"},
+          { icon:"🤲", name:"Forgiveness"  },
         ].map(cat => (
-          <a key={cat.name} href="/Daily-Essential-Duas.pdf" target="_blank" rel="noreferrer" style={{ textDecoration:"none" }}>
-            <div style={{ background:"rgba(26,77,46,0.4)", border:"1px solid rgba(201,168,76,0.15)", borderRadius:13, padding:"16px", display:"flex", flexDirection:"column", alignItems:"center", gap:8, cursor:"pointer" }}>
-              <span style={{ fontSize:28 }}>{cat.icon}</span>
-              <span style={{ color:OFF_WHITE, fontSize:12, fontWeight:600, textAlign:"center" }}>{cat.name}</span>
-            </div>
-          </a>
+          <div key={cat.name} onClick={() => setShowPdf(true)} style={{ background:"rgba(26,77,46,0.4)", border:"1px solid rgba(201,168,76,0.15)", borderRadius:13, padding:"16px", display:"flex", flexDirection:"column", alignItems:"center", gap:8, cursor:"pointer" }}>
+            <span style={{ fontSize:28 }}>{cat.icon}</span>
+            <span style={{ color:OFF_WHITE, fontSize:12, fontWeight:600, textAlign:"center" }}>{cat.name}</span>
+          </div>
         ))}
       </div>
     </div>
