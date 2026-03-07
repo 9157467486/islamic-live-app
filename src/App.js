@@ -69,17 +69,30 @@ function SplashScreen({ onDone }) {
 }
 
 // ─── NOTIFICATION SYSTEM ──────────────────────────────────────────────────────
+function playAdhanSound() {
+  try {
+    // Play real adhan from online source
+    const audio = new Audio("https://www.islamcan.com/audio/adhan/azan1.mp3");
+    audio.volume = 1.0;
+    audio.play().catch(() => {
+      // Fallback to beep if audio fails
+      playAdhanBeep();
+    });
+  } catch (_) { playAdhanBeep(); }
+}
+
 function playAdhanBeep() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    [0, 0.3, 0.6, 0.9, 1.2].forEach(t => {
+    [0, 0.4, 0.8, 1.2, 1.6].forEach(t => {
       const osc = ctx.createOscillator(), gain = ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = "sine";
       osc.frequency.setValueAtTime(880, ctx.currentTime + t);
-      osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + t + 0.25);
-      gain.gain.setValueAtTime(0.4, ctx.currentTime + t);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.28);
-      osc.start(ctx.currentTime + t); osc.stop(ctx.currentTime + t + 0.3);
+      osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + t + 0.35);
+      gain.gain.setValueAtTime(0.5, ctx.currentTime + t);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.38);
+      osc.start(ctx.currentTime + t); osc.stop(ctx.currentTime + t + 0.4);
     });
   } catch (_) {}
 }
@@ -87,13 +100,15 @@ function playAdhanBeep() {
 function playIqamahBeep() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    [0, 0.25, 0.5].forEach(t => {
+    // Deep low beep — 3 times
+    [0, 0.5, 1.0].forEach(t => {
       const osc = ctx.createOscillator(), gain = ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination);
-      osc.frequency.setValueAtTime(660, ctx.currentTime + t);
-      gain.gain.setValueAtTime(0.35, ctx.currentTime + t);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.22);
-      osc.start(ctx.currentTime + t); osc.stop(ctx.currentTime + t + 0.25);
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(220, ctx.currentTime + t);
+      gain.gain.setValueAtTime(0.6, ctx.currentTime + t);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.45);
+      osc.start(ctx.currentTime + t); osc.stop(ctx.currentTime + t + 0.5);
     });
   } catch (_) {}
 }
@@ -158,7 +173,7 @@ function usePrayerAlerts(masjids, enabled, onInAppNotif) {
           const ak = `${today}-${m.id}-${prayer}-adhan`;
           if (times.adhan === hhmm && !fired.current.has(ak)) {
             fired.current.add(ak);
-            playAdhanBeep();
+            playAdhanSound();
             sendBrowserNotif(
               `🕌 ${m.name} — Adhan ${label}`,
               `Adhan time for ${label} at ${m.name}\n🕐 ${times.adhan} • Allahu Akbar!`
