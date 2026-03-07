@@ -203,7 +203,8 @@ const MASJIDS_DEFAULT = [
     id: "m1", name: "Jumma Masjid",             icon: "🕌",
     color: "#1A4D2E",
     password: "jumma123",
-    youtubeUrl: "",   // ← Admin pastes YouTube Live link here from admin panel
+    youtubeUrl: "",
+    youtubeChannel: "https://www.youtube.com/@JummaMasjid-z7o",
     isLive: false,
     prayerTimes: {
       fajr:    { adhan: "05:15", iqamah: "05:30" },
@@ -220,6 +221,7 @@ const MASJIDS_DEFAULT = [
     color: "#1A2E4D",
     password: "aqsa456",
     youtubeUrl: "",
+    youtubeChannel: "",
     isLive: false,
     prayerTimes: {
       fajr:    { adhan: "05:10", iqamah: "05:25" },
@@ -236,6 +238,7 @@ const MASJIDS_DEFAULT = [
     color: "#2E1A4D",
     password: "muhammadi789",
     youtubeUrl: "",
+    youtubeChannel: "https://www.youtube.com/@Masjid-e-Muhammadi-o4t",
     isLive: false,
     prayerTimes: {
       fajr:    { adhan: "05:20", iqamah: "05:35" },
@@ -252,6 +255,7 @@ const MASJIDS_DEFAULT = [
     color: "#4D2E1A",
     password: "fatima321",
     youtubeUrl: "",
+    youtubeChannel: "",
     isLive: false,
     prayerTimes: {
       fajr:    { adhan: "05:18", iqamah: "05:33" },
@@ -719,11 +723,16 @@ function MasjidLivePlayer({ masjid, onBack }) {
         <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", background:"#000", padding:24 }}>
           <div style={{ fontSize:56, marginBottom:16 }}>{masjid.icon}</div>
           <div style={{ color:LIGHT_GOLD, fontSize:18, fontWeight:700, fontFamily:"'Playfair Display',serif", marginBottom:8, textAlign:"center" }}>{masjid.name}</div>
-          <div style={{ color:"rgba(255,255,255,0.35)", fontSize:14, textAlign:"center", lineHeight:1.7 }}>
-            No live stream right now.{"\n"}
+          <div style={{ color:"rgba(255,255,255,0.35)", fontSize:14, textAlign:"center", lineHeight:1.7, marginBottom:24 }}>
+            No live stream right now.<br/>
             <span style={{ color:"rgba(255,255,255,0.2)", fontSize:12 }}>Admin will start a YouTube Live session soon.</span>
           </div>
-          <div style={{ marginTop:24, background:"rgba(201,168,76,0.1)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:12, padding:"12px 20px", color:"rgba(255,255,255,0.4)", fontSize:12, textAlign:"center" }}>
+          {masjid.youtubeChannel ? (
+            <div onClick={() => window.open(masjid.youtubeChannel,"_blank")} style={{ background:"linear-gradient(135deg,#CC0000,#FF0000)", color:"#fff", borderRadius:20, padding:"14px 32px", fontSize:15, fontWeight:700, cursor:"pointer", display:"flex", alignItems:"center", gap:8, marginBottom:16 }}>
+              ▶ Watch on YouTube
+            </div>
+          ) : null}
+          <div style={{ background:"rgba(201,168,76,0.1)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:12, padding:"12px 20px", color:"rgba(255,255,255,0.4)", fontSize:12, textAlign:"center" }}>
             🔔 Turn on notifications to get alerted when stream starts
           </div>
         </div>
