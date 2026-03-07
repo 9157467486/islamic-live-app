@@ -934,9 +934,10 @@ function LibraryPage() {
 
 // ─── DUA PAGE ──────────────────────────────────────────────────────────────────
 // ─── PDF VIEWER ────────────────────────────────────────────────────────────────
+const QURAN_EMBED = "https://drive.google.com/file/d/1Th1kp5uMNWkjOymg8XXOHZmTDP9PoNr0/preview";
+const DUAS_EMBED  = "https://drive.google.com/file/d/1oRIJL3AQDwfYjjxK3U3crMIbA59ueUxt/preview";
+
 function PdfViewer({ url, title, onBack }) {
-  const fullUrl = window.location.origin + url;
-  const viewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(fullUrl)}&embedded=true`;
   return (
     <div style={{ display:"flex", flexDirection:"column", position:"fixed", inset:0, zIndex:500, background:"#000" }}>
       <div style={{ background:`linear-gradient(135deg,${DARK_GREEN},${MID_GREEN})`, padding:"12px 16px", display:"flex", alignItems:"center", gap:12, flexShrink:0 }}>
@@ -944,7 +945,7 @@ function PdfViewer({ url, title, onBack }) {
         <div style={{ color:LIGHT_GOLD, fontWeight:700, fontSize:15, fontFamily:"'Playfair Display',serif" }}>{title}</div>
       </div>
       <iframe
-        src={viewerUrl}
+        src={url}
         title={title}
         style={{ flex:1, border:"none", width:"100%", background:"#fff" }}
         allow="autoplay"
@@ -956,7 +957,7 @@ function PdfViewer({ url, title, onBack }) {
 // ─── QURAN PAGE ────────────────────────────────────────────────────────────────
 function QuranPage() {
   const [showPdf, setShowPdf] = useState(false);
-  if (showPdf) return <PdfViewer url="/quran.pdf" title="📖 Holy Quran" onBack={() => setShowPdf(false)} />;
+  if (showPdf) return <PdfViewer url={QURAN_EMBED} title="📖 Holy Quran" onBack={() => setShowPdf(false)} />;
   return (
     <div style={{ padding:"20px 20px 80px" }}>
       <SectionTitle>📖 Holy Quran</SectionTitle>
@@ -978,7 +979,7 @@ function QuranPage() {
 // ─── DUA PAGE ──────────────────────────────────────────────────────────────────
 function DuaPage() {
   const [showPdf, setShowPdf] = useState(false);
-  if (showPdf) return <PdfViewer url="/Daily-Essential-Duas.pdf" title="🤲 Daily Duas" onBack={() => setShowPdf(false)} />;
+  if (showPdf) return <PdfViewer url={DUAS_EMBED} title="🤲 Daily Duas" onBack={() => setShowPdf(false)} />;
   return (
     <div style={{ padding:"20px 20px 80px" }}>
       <SectionTitle>🤲 Dua Collection</SectionTitle>
@@ -1045,77 +1046,6 @@ function TasbeehPage() {
     </div>
   );
 }
-
-// ─── QURAN PAGE ────────────────────────────────────────────────────────────────
-// ─── QURAN PAGE ────────────────────────────────────────────────────────────────
-// ─── TASBEEH PAGE ──────────────────────────────────────────────────────────────
-function TasbeehPage() {
-  const [counts, setCounts] = useState({ sub:0, alh:0, all:0 });
-  const [active, setActive] = useState("sub");
-  const keys  = { sub:"SubhanAllah", alh:"Alhamdulillah", all:"Allahu Akbar" };
-  const total = counts.sub + counts.alh + counts.all;
-  return (
-    <div style={{ padding:"20px 20px 80px", display:"flex", flexDirection:"column", alignItems:"center" }}>
-      <div style={{ color:LIGHT_GOLD, fontSize:21, fontWeight:700, fontFamily:"'Playfair Display',serif", marginBottom:22, alignSelf:"flex-start" }}>📿 Digital Tasbeeh</div>
-      <div style={{ display:"flex", gap:8, marginBottom:28, width:"100%" }}>
-        {Object.entries(keys).map(([k,v]) => (
-          <div key={k} onClick={() => setActive(k)} style={{ flex:1, textAlign:"center", background:active===k?`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`:"rgba(26,77,46,0.4)", border:`1px solid ${active===k?"transparent":"rgba(201,168,76,0.2)"}`, borderRadius:10, padding:"9px 4px", color:active===k?DARK_GREEN:OFF_WHITE, fontSize:10, fontWeight:700, cursor:"pointer", lineHeight:1.3 }}>{v}</div>
-        ))}
-      </div>
-      <div onClick={() => setCounts(c => ({ ...c, [active]:c[active]+1 }))} style={{ width:190, height:190, borderRadius:"50%", background:`radial-gradient(circle at 40% 40%,${MID_GREEN},${DARK_GREEN})`, border:`3px solid ${GOLD}`, boxShadow:"0 0 50px rgba(201,168,76,0.3),inset 0 0 30px rgba(0,0,0,0.3)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", cursor:"pointer", userSelect:"none", marginBottom:20 }}>
-        <div style={{ color:LIGHT_GOLD, fontSize:48, fontWeight:700, lineHeight:1 }}>{counts[active]}</div>
-        <div style={{ color:"rgba(255,255,255,0.4)", fontSize:12, marginTop:4 }}>{keys[active]}</div>
-      </div>
-      <div style={{ color:"rgba(255,255,255,0.35)", fontSize:13, marginBottom:20 }}>Total: <span style={{ color:GOLD, fontWeight:700 }}>{total}</span></div>
-      <div onClick={() => setCounts({sub:0,alh:0,all:0})} style={{ background:"rgba(255,68,68,0.15)", border:"1px solid rgba(255,68,68,0.3)", borderRadius:10, padding:"9px 22px", color:"#FF8888", fontSize:13, cursor:"pointer" }}>Reset All</div>
-      <div style={{ display:"flex", gap:10, marginTop:20, width:"100%" }}>
-        {Object.entries(keys).map(([k,v]) => (
-          <div key={k} style={{ flex:1, background:"rgba(26,77,46,0.3)", border:"1px solid rgba(201,168,76,0.12)", borderRadius:10, padding:"9px", textAlign:"center" }}>
-            <div style={{ color:GOLD, fontSize:17, fontWeight:700 }}>{counts[k]}</div>
-            <div style={{ color:"rgba(255,255,255,0.35)", fontSize:9, lineHeight:1.3 }}>{v}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─── QURAN PAGE ────────────────────────────────────────────────────────────────
-// ─── QURAN PAGE ────────────────────────────────────────────────────────────────
-function QuranPage() {
-  return (
-    <div style={{ padding:"20px 20px 80px" }}>
-      <SectionTitle>📖 Holy Quran</SectionTitle>
-      <div style={{ color:"rgba(255,255,255,0.45)", fontSize:13, marginBottom:24 }}>Read the complete Quran</div>
-
-      <a href="/quran.pdf" target="_blank" rel="noreferrer" style={{ textDecoration:"none", display:"block" }}>
-        <div style={{
-          background:`linear-gradient(135deg,${MID_GREEN},#1A2E0A)`,
-          border:`2px solid rgba(201,168,76,0.4)`,
-          borderRadius:20, padding:"40px 20px", textAlign:"center", cursor:"pointer",
-          boxShadow:"0 8px 32px rgba(0,0,0,0.4)", marginBottom:16,
-        }}>
-          <div style={{ fontSize:64, marginBottom:14 }}>📖</div>
-          <div style={{ color:LIGHT_GOLD, fontSize:22, fontWeight:700, fontFamily:"'Playfair Display',serif", marginBottom:8 }}>Al-Quran Al-Kareem</div>
-          <div style={{ color:"rgba(255,255,255,0.5)", fontSize:13, marginBottom:20 }}>Complete Quran PDF</div>
-          <div style={{ background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, color:DARK_GREEN, borderRadius:20, padding:"12px 32px", fontSize:15, fontWeight:700, display:"inline-block" }}>
-            📖 Open Quran →
-          </div>
-        </div>
-      </a>
-
-      <div style={{ background:"rgba(201,168,76,0.08)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:14, padding:"16px", textAlign:"center" }}>
-        <div style={{ fontSize:18, direction:"rtl", fontFamily:"serif", color:LIGHT_GOLD, marginBottom:8 }}>
-          بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
-        </div>
-        <div style={{ color:"rgba(255,255,255,0.4)", fontSize:12, fontStyle:"italic" }}>
-          "In the name of Allah, the Most Gracious, the Most Merciful"
-        </div>
-      </div>
-    </div>
-  );
-}
-
 
 // ─── ROOT APP ──────────────────────────────────────────────────────────────────
 export default function MinbarLiveApp() {
