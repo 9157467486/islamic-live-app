@@ -563,9 +563,9 @@ function AdminPanel({ masjid, onClose, onUpdateMasjid }) {
               <div style={{ background:"rgba(255,50,50,0.08)", border:"1px solid rgba(255,100,100,0.2)", borderRadius:12, padding:"12px 14px", marginBottom:18 }}>
                 <div style={{ color:"#FF9999", fontWeight:700, fontSize:13, marginBottom:6 }}>📺 How YouTube Live Works</div>
                 <div style={{ color:"rgba(255,255,255,0.5)", fontSize:12, lineHeight:1.8 }}>
-                  1. Open <span style={{ color:GOLD }}>YouTube</span> app on your phone{"\n"}
-                  2. Tap ➕ → <span style={{ color:GOLD }}>Go Live</span>{"\n"}
-                  3. Copy the YouTube Live link{"\n"}
+                  1. Open <span style={{ color:GOLD }}>youtube.com</span> on your PC{"\n"}
+                  2. Click ➕ Create → <span style={{ color:GOLD }}>Go Live</span>{"\n"}
+                  3. Start stream → copy the live link from browser{"\n"}
                   4. Paste it below and tap <span style={{ color:GOLD }}>Go Live</span>
                 </div>
               </div>
