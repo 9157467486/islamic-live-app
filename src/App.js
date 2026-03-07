@@ -194,9 +194,9 @@ const OFF_WHITE  = "#F8F4E8";
 
 const arabicPattern = `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23C9A84C' fill-opacity='0.06'%3E%3Cpath d='M30 0 L60 30 L30 60 L0 30 Z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`;
 
-// ─── PDF LINKS (Google Drive) ─────────────────────────────────────────────────
-const QURAN_PDF_URL = "https://drive.google.com/file/d/1cg4z2yj9TBZS1s1pR0-g2C2rebyEyEs0/view";
-const DUAS_PDF_URL  = "https://drive.google.com/file/d/1uWigKqnSHGPte3nJt-JJ07lM7piucLVk/view";
+// ─── PDF LINKS ─────────────────────────────────────────────────────────────────
+const QURAN_PDF_URL = "/quran.pdf";
+const DUAS_PDF_URL  = "/Daily-Essential-Duas.pdf";
 // Change this to something only YOU know!
 const MASTER_PASSWORD = "minbar-master-2026";
 
@@ -937,12 +937,29 @@ function LibraryPage() {
 
 // ─── DUA PAGE ──────────────────────────────────────────────────────────────────
 function DuaPage() {
+  const [open, setOpen] = useState(false);
+
+  if (open) {
+    return (
+      <div style={{ display:"flex", flexDirection:"column", height:"calc(100vh - 114px)" }}>
+        <div style={{ background:`linear-gradient(135deg,${DARK_GREEN},#1A2E4A)`, padding:"12px 16px", display:"flex", alignItems:"center", gap:12, flexShrink:0 }}>
+          <button onClick={() => setOpen(false)} style={{ background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:10, padding:"7px 14px", color:GOLD, fontSize:13, fontWeight:700, cursor:"pointer" }}>← Back</button>
+          <div style={{ color:LIGHT_GOLD, fontWeight:700, fontSize:15, fontFamily:"'Playfair Display',serif" }}>🤲 Daily Duas</div>
+        </div>
+        <iframe
+          src={DUAS_PDF_URL}
+          title="Daily Duas"
+          style={{ flex:1, border:"none", width:"100%", background:"#fff" }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div style={{ padding:"20px 20px 80px" }}>
       <SectionTitle>🤲 Dua Collection</SectionTitle>
       <div style={{ color:"rgba(255,255,255,0.45)", fontSize:13, marginBottom:24 }}>Authentic duas from Quran & Sunnah</div>
 
-      {/* Featured Dua card */}
       <div style={{ background:`linear-gradient(135deg,${MID_GREEN},#1A2E4A)`, border:"1px solid rgba(201,168,76,0.3)", borderRadius:20, padding:"20px", marginBottom:20, textAlign:"center" }}>
         <div style={{ color:GOLD, fontSize:11, letterSpacing:2, marginBottom:8 }}>DUA OF THE DAY</div>
         <div style={{ color:LIGHT_GOLD, fontSize:21, lineHeight:1.6, fontFamily:"serif", marginBottom:10, direction:"rtl" }}>
@@ -953,8 +970,7 @@ function DuaPage() {
         </div>
       </div>
 
-      {/* Open PDF button */}
-      <div onClick={() => window.open(DUAS_PDF_URL, "_blank")} style={{
+      <div onClick={() => setOpen(true)} style={{
         background:`linear-gradient(135deg,#1A2E4A,#0A1A2E)`,
         border:`2px solid rgba(100,150,255,0.3)`,
         borderRadius:18, padding:"28px 20px", textAlign:"center", cursor:"pointer",
@@ -964,11 +980,10 @@ function DuaPage() {
         <div style={{ color:LIGHT_GOLD, fontSize:18, fontWeight:700, fontFamily:"'Playfair Display',serif", marginBottom:6 }}>40+ Daily Essential Duas</div>
         <div style={{ color:"rgba(255,255,255,0.45)", fontSize:12, marginBottom:16 }}>Morning, Evening, Travel, Sleep & more</div>
         <div style={{ background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, color:DARK_GREEN, borderRadius:20, padding:"10px 28px", fontSize:14, fontWeight:700, display:"inline-block" }}>
-          📂 Open Duas PDF →
+          📖 Open Duas →
         </div>
       </div>
 
-      {/* Categories */}
       <div style={{ color:OFF_WHITE, fontSize:14, fontWeight:700, marginBottom:12 }}>Categories</div>
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
         {[
@@ -979,7 +994,7 @@ function DuaPage() {
           { icon:"🍽️", name:"After Eating" },
           { icon:"🤲", name:"Forgiveness"   },
         ].map(cat => (
-          <div key={cat.name} onClick={() => window.open(DUAS_PDF_URL, "_blank")} style={{ background:"rgba(26,77,46,0.4)", border:"1px solid rgba(201,168,76,0.15)", borderRadius:13, padding:"16px", display:"flex", flexDirection:"column", alignItems:"center", gap:8, cursor:"pointer" }}>
+          <div key={cat.name} onClick={() => setOpen(true)} style={{ background:"rgba(26,77,46,0.4)", border:"1px solid rgba(201,168,76,0.15)", borderRadius:13, padding:"16px", display:"flex", flexDirection:"column", alignItems:"center", gap:8, cursor:"pointer" }}>
             <span style={{ fontSize:28 }}>{cat.icon}</span>
             <span style={{ color:OFF_WHITE, fontSize:12, fontWeight:600, textAlign:"center" }}>{cat.name}</span>
           </div>
@@ -1022,26 +1037,52 @@ function TasbeehPage() {
 }
 
 // ─── QURAN PAGE ────────────────────────────────────────────────────────────────
+// ─── QURAN PAGE ────────────────────────────────────────────────────────────────
 function QuranPage() {
+  const [open, setOpen] = useState(false);
+
+  if (open) {
+    return (
+      <div style={{ display:"flex", flexDirection:"column", height:"calc(100vh - 114px)" }}>
+        <div style={{ background:`linear-gradient(135deg,${DARK_GREEN},${MID_GREEN})`, padding:"12px 16px", display:"flex", alignItems:"center", gap:12, flexShrink:0 }}>
+          <button onClick={() => setOpen(false)} style={{ background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:10, padding:"7px 14px", color:GOLD, fontSize:13, fontWeight:700, cursor:"pointer" }}>← Back</button>
+          <div style={{ color:LIGHT_GOLD, fontWeight:700, fontSize:15, fontFamily:"'Playfair Display',serif" }}>📖 Holy Quran</div>
+        </div>
+        <iframe
+          src={QURAN_PDF_URL}
+          title="Quran"
+          style={{ flex:1, border:"none", width:"100%", background:"#fff" }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div style={{ padding:"20px 20px 80px" }}>
       <SectionTitle>📖 Holy Quran</SectionTitle>
-      <div style={{ color:"rgba(255,255,255,0.45)", fontSize:13, marginBottom:24 }}>Full Quran PDF — tap to open</div>
-      <div onClick={() => window.open(QURAN_PDF_URL, "_blank")} style={{
+      <div style={{ color:"rgba(255,255,255,0.45)", fontSize:13, marginBottom:24 }}>Read the complete Quran — works offline too!</div>
+
+      <div onClick={() => setOpen(true)} style={{
         background:`linear-gradient(135deg,${MID_GREEN},#1A2E0A)`,
-        border:"2px solid rgba(201,168,76,0.4)", borderRadius:20, padding:"40px 20px",
-        textAlign:"center", cursor:"pointer", boxShadow:"0 8px 32px rgba(0,0,0,0.4)", marginBottom:20,
+        border:`2px solid rgba(201,168,76,0.4)`,
+        borderRadius:20, padding:"40px 20px", textAlign:"center", cursor:"pointer",
+        boxShadow:"0 8px 32px rgba(0,0,0,0.4)", marginBottom:16,
       }}>
         <div style={{ fontSize:64, marginBottom:14 }}>📖</div>
         <div style={{ color:LIGHT_GOLD, fontSize:22, fontWeight:700, fontFamily:"'Playfair Display',serif", marginBottom:8 }}>Al-Quran Al-Kareem</div>
-        <div style={{ color:"rgba(255,255,255,0.5)", fontSize:13, marginBottom:20 }}>Complete Quran PDF</div>
+        <div style={{ color:"rgba(255,255,255,0.5)", fontSize:13, marginBottom:20 }}>Complete Quran PDF • No internet needed</div>
         <div style={{ background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, color:DARK_GREEN, borderRadius:20, padding:"12px 32px", fontSize:15, fontWeight:700, display:"inline-block" }}>
-          📂 Open Quran →
+          📖 Read Quran →
         </div>
       </div>
+
       <div style={{ background:"rgba(201,168,76,0.08)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:14, padding:"16px", textAlign:"center" }}>
-        <div style={{ fontSize:18, direction:"rtl", fontFamily:"serif", color:LIGHT_GOLD, marginBottom:8 }}>بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
-        <div style={{ color:"rgba(255,255,255,0.4)", fontSize:12, fontStyle:"italic" }}>"In the name of Allah, the Most Gracious, the Most Merciful"</div>
+        <div style={{ fontSize:18, direction:"rtl", fontFamily:"serif", color:LIGHT_GOLD, marginBottom:8 }}>
+          بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+        </div>
+        <div style={{ color:"rgba(255,255,255,0.4)", fontSize:12, fontStyle:"italic" }}>
+          "In the name of Allah, the Most Gracious, the Most Merciful"
+        </div>
       </div>
     </div>
   );
