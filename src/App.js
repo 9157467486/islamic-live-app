@@ -75,6 +75,7 @@ function playAdhanSound() {
     const audio = new Audio("https://cdn.islamic.network/quran/audio/128/ar.alafasy/1.mp3");
     audio.volume = 1.0;
     audio.crossOrigin = "anonymous";
+    audio.preload = "auto";
     audio.play().catch(() => {
       // Fallback to beep if audio fails
       playAdhanBeep();
@@ -195,7 +196,7 @@ function usePrayerAlerts(masjids, enabled, onInAppNotif) {
       });
     };
     check();
-    const id = setInterval(check, 60000);
+    const id = setInterval(check, 30000);
     return () => clearInterval(id);
   }, [masjids, enabled, onInAppNotif]);
 }
@@ -316,8 +317,8 @@ function PulsingDot({ color = "#FF4444" }) {
   );
 }
 
-function SectionTitle({ children }) {
-  return <div style={{ color: LIGHT_GOLD, fontSize: 20, fontWeight: 700, fontFamily: "'Playfair Display',serif", marginBottom: 4 }}>{children}</div>;
+function SectionTitle({ children, style={} }) {
+  return <div style={{ color: LIGHT_GOLD, fontSize: 20, fontWeight: 700, fontFamily: "'Playfair Display',serif", marginBottom: 4, ...style }}>{children}</div>;
 }
 
 // ─── YOUTUBE HELPERS ──────────────────────────────────────────────────────────
@@ -553,7 +554,7 @@ function AdminPanel({ masjid, onClose, onUpdateMasjid }) {
           </div>
         </div>
 
-        <div style={{ overflowY:"auto", flex:1, padding:"0 20px 40px" }}>
+        <div style={{ overflowY:"auto", flex:1, padding:"0 20px 40px", WebkitOverflowScrolling:"touch" }}>
 
           {/* ── LIVE TAB ── */}
           {tab === "live" && (
@@ -1192,7 +1193,7 @@ function QuranReader({ surah, onBack }) {
   }, [surah.n]);
 
   const playAudio = (ayahNum) => {
-    if (audio) { audio.pause(); setAudio(null); }
+    if (audio) { audio.pause(); audio.src = ""; setAudio(null); }
     if (playingAyah === ayahNum) { setPlayingAyah(null); return; }
     const offset = SURAHS.slice(0, surah.n-1).reduce((a,s) => a+s.ayahs, 0);
     const url = `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${offset + ayahNum}.mp3`;
@@ -1610,7 +1611,7 @@ function QiblaPage() {
             );
           })}
           {/* Needle pointing to Qibla */}
-          <div style={{ position:"absolute", top:"50%", left:"50%", transform:`translate(-50%, -50%) rotate(${needle}deg)`, transformOrigin:"50% 50%", width:4, height:200, display:"flex", flexDirection:"column", alignItems:"center" }}>
+          <div style={{ position:"absolute", top:"50%", left:"50%", transform:`translate(-50%, -50%) rotate(${needle}deg)`, transformOrigin:"50% 50%", width:4, height:200, display:"flex", flexDirection:"column", alignItems:"center", transition:"transform 0.3s ease" }}>
             <div style={{ width:0, height:0, borderLeft:"8px solid transparent", borderRight:"8px solid transparent", borderBottom:`80px solid ${GOLD}`, marginBottom:-2 }} />
             <div style={{ width:0, height:0, borderLeft:"8px solid transparent", borderRight:"8px solid transparent", borderTop:"80px solid rgba(255,255,255,0.15)" }} />
           </div>
@@ -1698,9 +1699,9 @@ JazakAllah Khair`);
 
   if (showScholars) return (
     <div style={{ padding:"20px 20px 80px" }}>
-      <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
-        <div onClick={() => setShowScholars(false)} style={{ color:GOLD, fontSize:14, cursor:"pointer" }}>← Back</div>
-        <SectionTitle style={{ margin:0 }}>👳 Choose a Scholar</SectionTitle>
+      <div style={{ background:`linear-gradient(135deg,${DARK_GREEN},${MID_GREEN})`, padding:"12px 16px", display:"flex", alignItems:"center", gap:10, marginBottom:16, borderRadius:"0 0 16px 16px" }}>
+        <button onClick={() => setShowScholars(false)} style={{ background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:10, padding:"7px 12px", color:GOLD, fontSize:12, fontWeight:700, cursor:"pointer" }}>← Back</button>
+        <div style={{ color:LIGHT_GOLD, fontWeight:700, fontSize:15 }}>👳 Choose a Scholar</div>
       </div>
       <div style={{ marginBottom:16 }}>
         <div style={{ color:"rgba(255,255,255,0.45)", fontSize:12, marginBottom:8 }}>Topic / Question:</div>
