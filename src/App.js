@@ -921,7 +921,9 @@ function HomePage({ setPage, masjids }) {
             { icon:"📖", label:"Quran",   color:"#2E5E3A", page:"quran"   },
             { icon:"🤲", label:"Duas",    color:"#1A3D5C", page:"dua"     },
             { icon:"🧭", label:"Qibla",   color:"#3D2A5C", page:"qibla"   },
+            { icon:"📿", label:"Tasbeeh", color:"#4D2A5C", page:"tasbeeh" },
             { icon:"💬", label:"Ask",     color:"#5C3D1A", page:"chat"    },
+            { icon:"📡", label:"Live",    color:"#5C1A1A", page:"live"    },
           ].map(item => (
             <div key={item.label} onClick={() => setPage(item.page)} style={{ background:`linear-gradient(135deg,${item.color},rgba(10,46,26,0.8))`, border:"1px solid rgba(201,168,76,0.18)", borderRadius:13, padding:"16px", display:"flex", alignItems:"center", gap:10, cursor:"pointer" }}>
               <span style={{ fontSize:26 }}>{item.icon}</span>
@@ -1809,12 +1811,11 @@ export default function MinbarLiveApp() {
   const { prompt, install } = useInstallPrompt();
 
   const navItems = [
-    { id:"home",    icon:"🏠", label:"Home"  },
-    { id:"live",    icon:"📡", label:"Live"  },
-    { id:"quran",   icon:"📖", label:"Quran" },
-    { id:"dua",     icon:"🤲", label:"Dua"   },
-    { id:"qibla",   icon:"🧭", label:"Qibla" },
-    { id:"chat",    icon:"💬", label:"Ask"   },
+    { id:"home",    icon:"🏠", label:"Home"    },
+    { id:"quran",   icon:"📖", label:"Quran"   },
+    { id:"dua",     icon:"🤲", label:"Dua"     },
+    { id:"tasbeeh", icon:"📿", label:"Tasbeeh" },
+    { id:"chat",    icon:"💬", label:"Ask"     },
   ];
 
   const pages = { home:HomePage, live:LivePage, library:LibraryPage, quran:QuranPage, dua:DuaPage, tasbeeh:TasbeehPage, qibla:QiblaPage, chat:ChatPage };
