@@ -172,6 +172,8 @@ function usePrayerAlerts(masjids, enabled, onInAppNotif) {
       masjids.forEach(m => {
         Object.entries(m.prayerTimes).forEach(([prayer, times]) => {
           const label = ({"fajr":"Fajr","dhuhr":"Dhuhr","asr":"Asr","maghrib":"Maghrib","isha":"Isha","jumuah":"Jumu'ah"})[prayer] || prayer;
+          // Jumu'ah only fires on Friday (day 5)
+          if (prayer === "jumuah" && new Date().getDay() !== 5) return;
           const ak = `${today}-${m.id}-${prayer}-adhan`;
           if (times.adhan === hhmm && !fired.current.has(ak)) {
             fired.current.add(ak);
@@ -812,18 +814,23 @@ function LivePage({ masjids }) {
 // ─── HOME PAGE ─────────────────────────────────────────────────────────────────
 function HomePage({ setPage, masjids }) {
   const jumma = masjids[0]; // Jumma Masjid is first
+  // Find next prayer based on current time
+  const now = new Date();
+  const isFriday = now.getDay() === 5; // 5 = Friday
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+  const toMins = t => { const [h,m] = t.split(":").map(Number); return h*60+m; };
+
+  // On Friday: replace Dhuhr with Jumu'ah
   const prayers = [
     { key:"fajr",    name:"Fajr",    icon:"🌙" },
-    { key:"dhuhr",   name:"Dhuhr",   icon:"☀️" },
+    isFriday
+      ? { key:"jumuah", name:"Jumu'ah", icon:"🕌" }
+      : { key:"dhuhr",  name:"Dhuhr",   icon:"☀️" },
     { key:"asr",     name:"Asr",     icon:"🌤"  },
     { key:"maghrib", name:"Maghrib", icon:"🌅" },
     { key:"isha",    name:"Isha",    icon:"⭐" },
   ];
 
-  // Find next prayer based on current time
-  const now = new Date();
-  const nowMins = now.getHours() * 60 + now.getMinutes();
-  const toMins = t => { const [h,m] = t.split(":").map(Number); return h*60+m; };
   const nextPrayer = prayers.find(p => toMins(jumma.prayerTimes[p.key].adhan) > nowMins) || prayers[0];
   return (
     <div style={{ padding: "0 0 80px" }}>
