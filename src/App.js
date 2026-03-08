@@ -1534,6 +1534,242 @@ function TasbeehPage() {
   );
 }
 
+
+// ─── QIBLA PAGE ───────────────────────────────────────────────────────────────
+function QiblaPage() {
+  const [qibla, setQibla]     = useState(null);
+  const [compass, setCompass] = useState(0);
+  const [error, setError]     = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const { latitude: lat, longitude: lng } = pos.coords;
+        // Makkah coordinates
+        const makkahLat = 21.4225, makkahLng = 39.8262;
+        const dLng = (makkahLng - lng) * Math.PI / 180;
+        const lat1 = lat * Math.PI / 180;
+        const lat2 = makkahLat * Math.PI / 180;
+        const y = Math.sin(dLng) * Math.cos(lat2);
+        const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+        const bearing = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+        setQibla(Math.round(bearing));
+        setLoading(false);
+      },
+      err => { setError("Please allow location access to find Qibla direction."); setLoading(false); }
+    );
+  }, []);
+
+  useEffect(() => {
+    const handler = e => {
+      const alpha = e.alpha || e.webkitCompassHeading || 0;
+      setCompass(Math.round(alpha));
+    };
+    if (window.DeviceOrientationEvent) {
+      if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission().then(p => {
+          if (p === 'granted') window.addEventListener('deviceorientation', handler);
+        }).catch(() => {});
+      } else {
+        window.addEventListener('deviceorientation', handler);
+      }
+    }
+    return () => window.removeEventListener('deviceorientation', handler);
+  }, []);
+
+  const needle = qibla !== null ? (qibla - compass + 360) % 360 : 0;
+
+  return (
+    <div style={{ padding:"20px 20px 80px", display:"flex", flexDirection:"column", alignItems:"center" }}>
+      <SectionTitle>🧭 Qibla Direction</SectionTitle>
+      <div style={{ color:"rgba(255,255,255,0.45)", fontSize:13, marginBottom:28, textAlign:"center" }}>Find the direction of the Holy Kaaba</div>
+
+      {loading && <div style={{ color:GOLD, fontSize:14, marginBottom:20 }}>📍 Getting your location...</div>}
+      {error && (
+        <div style={{ background:"rgba(255,68,68,0.1)", border:"1px solid rgba(255,68,68,0.3)", borderRadius:14, padding:"14px 18px", marginBottom:20, color:"#FF9999", fontSize:13, textAlign:"center", lineHeight:1.7 }}>
+          {error}
+        </div>
+      )}
+
+      {/* Compass */}
+      <div style={{ position:"relative", width:260, height:260, marginBottom:28 }}>
+        {/* Compass ring */}
+        <div style={{ position:"absolute", inset:0, borderRadius:"50%", background:"radial-gradient(circle at 40% 40%, #1A4D2E, #0A2E1A)", border:`3px solid ${GOLD}`, boxShadow:`0 0 40px rgba(201,168,76,0.3)` }}>
+          {/* Cardinal directions */}
+          {[{l:"N",d:0},{l:"E",d:90},{l:"S",d:180},{l:"W",d:270}].map(({l,d}) => {
+            const r = 110;
+            const rad = (d - 90) * Math.PI / 180;
+            return (
+              <div key={l} style={{ position:"absolute", top:"50%", left:"50%", transform:`translate(calc(-50% + ${Math.cos(rad)*r}px), calc(-50% + ${Math.sin(rad)*r}px))`, color: l==="N"?"#FF6666":GOLD, fontSize:14, fontWeight:700 }}>{l}</div>
+            );
+          })}
+          {/* Needle pointing to Qibla */}
+          <div style={{ position:"absolute", top:"50%", left:"50%", transform:`translate(-50%, -50%) rotate(${needle}deg)`, transformOrigin:"50% 50%", width:4, height:200, display:"flex", flexDirection:"column", alignItems:"center" }}>
+            <div style={{ width:0, height:0, borderLeft:"8px solid transparent", borderRight:"8px solid transparent", borderBottom:`80px solid ${GOLD}`, marginBottom:-2 }} />
+            <div style={{ width:0, height:0, borderLeft:"8px solid transparent", borderRight:"8px solid transparent", borderTop:"80px solid rgba(255,255,255,0.15)" }} />
+          </div>
+          {/* Kaaba icon center */}
+          <div style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)", fontSize:28 }}>🕋</div>
+        </div>
+      </div>
+
+      {qibla !== null && (
+        <div style={{ background:"rgba(201,168,76,0.1)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:16, padding:"16px 32px", textAlign:"center", marginBottom:20 }}>
+          <div style={{ color:"rgba(255,255,255,0.4)", fontSize:12, marginBottom:4 }}>QIBLA DIRECTION</div>
+          <div style={{ color:GOLD, fontSize:36, fontWeight:700 }}>{qibla}°</div>
+          <div style={{ color:"rgba(255,255,255,0.4)", fontSize:12, marginTop:4 }}>from North</div>
+        </div>
+      )}
+
+      <div style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(201,168,76,0.1)", borderRadius:14, padding:"14px 16px", width:"100%", textAlign:"center" }}>
+        <div style={{ color:LIGHT_GOLD, fontSize:16, fontFamily:"serif", direction:"rtl", marginBottom:6 }}>وَمِنْ حَيْثُ خَرَجْتَ فَوَلِّ وَجْهَكَ شَطْرَ الْمَسْجِدِ الْحَرَامِ</div>
+        <div style={{ color:"rgba(255,255,255,0.3)", fontSize:11, fontStyle:"italic" }}>"Turn your face toward the Sacred Mosque." — Quran 2:150</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── CHAT PAGE ─────────────────────────────────────────────────────────────────
+const SCHOLARS = [
+  { id:1, name:"Mufti Abdullah", role:"Head Imam — Jumma Masjid", speciality:"Fiqh & Daily Life", avatar:"👳", phone:"919000000001" },
+  { id:2, name:"Maulana Yusuf",  role:"Islamic Scholar",           speciality:"Quran & Tafseer",  avatar:"📚", phone:"919000000002" },
+  { id:3, name:"Sheikh Ibrahim", role:"Masjid Committee Head",     speciality:"General Guidance", avatar:"🕌", phone:"919000000003" },
+];
+
+const FAQ = [
+  { q:"What are the 5 pillars of Islam?",        a:"The 5 pillars are: 1) Shahada (Declaration of faith) 2) Salah (5 daily prayers) 3) Zakat (Charity) 4) Sawm (Fasting in Ramadan) 5) Hajj (Pilgrimage to Makkah)" },
+  { q:"How many times should I pray daily?",     a:"Muslims pray 5 times daily: Fajr (dawn), Dhuhr (midday), Asr (afternoon), Maghrib (sunset), and Isha (night). These prayers are obligatory for every adult Muslim." },
+  { q:"What breaks the fast in Ramadan?",        a:"The fast is broken at Maghrib time by eating dates and drinking water (Sunnah). Things that break the fast include eating, drinking, and smoking intentionally from Fajr to Maghrib." },
+  { q:"Is music halal or haram?",                a:"Scholars have different opinions on music. Most classical scholars consider instruments haram, while vocal nasheeds without instruments are generally permissible. It's best to consult a scholar for detailed guidance." },
+  { q:"What is Zakat and who must pay?",         a:"Zakat is 2.5% of savings held for one lunar year above the nisab threshold (value of 87.48g gold). It is obligatory on every adult Muslim who possesses wealth above this minimum." },
+  { q:"How to perform Wudu (ablution)?",         a:"1) Intention 2) Wash both hands 3) Rinse mouth 3x 4) Clean nose 3x 5) Wash face 3x 6) Wash arms to elbows 3x 7) Wipe head 8) Clean ears 9) Wash feet to ankles 3x. Right side before left." },
+  { q:"What is the ruling on missed prayers?",   a:"Missed prayers (Qada) must be made up as soon as possible. You should pray them in order. There is no expiry for making up missed prayers — repent and make them up sincerely." },
+  { q:"Can women pray during menstruation?",     a:"Women are exempt from prayer, fasting, and Tawaf during menstruation. These prayers do not need to be made up later. Fasts of Ramadan missed must be made up after the period ends." },
+  { q:"What is the Sunnah of Friday (Jumu'ah)?", a:"Sunnah of Friday: 1) Ghusl (bath) 2) Wear clean clothes 3) Apply perfume 4) Go early to masjid 5) Recite Surah Al-Kahf 6) Send Durood on Prophet ﷺ 7) Make dua between Asr and Maghrib." },
+  { q:"How to make Dua properly?",               a:"1) Face Qibla 2) Be in state of Wudu 3) Start with Alhamdulillah & Durood 4) Ask with humility and certainty 5) Use beautiful names of Allah 6) End with Durood & Ameen. Best times: last third of night, between Adhan & Iqamah, on Friday." },
+  { q:"What is Halal food?",                     a:"Halal food must: 1) Not contain pork or pork products 2) Not contain alcohol 3) Be slaughtered in Allah's name by a Muslim 4) Be from permitted animals. Haram foods include pork, blood, carrion, and animals not slaughtered properly." },
+  { q:"What is the importance of Hajj?",         a:"Hajj is the 5th pillar of Islam, obligatory once in a lifetime for every Muslim who is physically and financially able. It takes place in Dhul Hijjah. It is a complete forgiveness of past sins for those who perform it sincerely." },
+];
+
+function ChatPage() {
+  const [messages, setMessages]       = useState([{ from:"bot", text:"Assalamu Alaikum! 🌿 I am your Islamic FAQ assistant. Ask me any Islamic question or tap a question below!" }]);
+  const [input, setInput]             = useState("");
+  const [showScholars, setShowScholars] = useState(false);
+  const [selectedScholar, setSelectedScholar] = useState(null);
+  const [contactMsg, setContactMsg]   = useState("");
+  const [contactTopic, setContactTopic] = useState("");
+  const msgEndRef = useRef(null);
+
+  useEffect(() => { msgEndRef.current?.scrollIntoView({ behavior:"smooth" }); }, [messages]);
+
+  const sendMessage = (text) => {
+    const q = text || input.trim();
+    if (!q) return;
+    setInput("");
+    setMessages(prev => [...prev, { from:"user", text:q }]);
+    setTimeout(() => {
+      const match = FAQ.find(f => f.q.toLowerCase().includes(q.toLowerCase()) || q.toLowerCase().includes(f.q.toLowerCase().split(" ").slice(0,3).join(" ")));
+      const answer = match
+        ? match.a
+        : "JazakAllah Khair for your question! I don't have a specific answer for that. Would you like to contact one of our scholars for a detailed answer?";
+      setMessages(prev => [...prev, { from:"bot", text:answer, showContact:!match }]);
+    }, 600);
+  };
+
+  const openWhatsApp = (scholar) => {
+    const msg = encodeURIComponent(`Assalamu Alaikum ${scholar.name},
+
+I have a question about: *${contactTopic || "Islamic Guidance"}*
+
+${contactMsg}
+
+JazakAllah Khair`);
+    window.open(`https://wa.me/${scholar.phone}?text=${msg}`, "_blank");
+    setShowScholars(false);
+    setContactMsg("");
+    setContactTopic("");
+    setMessages(prev => [...prev, { from:"bot", text:`Your message has been sent to ${scholar.name}! They will reply within 24 hours Insha'Allah. 🤲` }]);
+  };
+
+  if (showScholars) return (
+    <div style={{ padding:"20px 20px 80px" }}>
+      <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
+        <div onClick={() => setShowScholars(false)} style={{ color:GOLD, fontSize:14, cursor:"pointer" }}>← Back</div>
+        <SectionTitle style={{ margin:0 }}>👳 Choose a Scholar</SectionTitle>
+      </div>
+      <div style={{ marginBottom:16 }}>
+        <div style={{ color:"rgba(255,255,255,0.45)", fontSize:12, marginBottom:8 }}>Topic / Question:</div>
+        <input value={contactTopic} onChange={e=>setContactTopic(e.target.value)} placeholder="e.g. Prayer, Fasting, Marriage..." style={{ width:"100%", background:"rgba(255,255,255,0.07)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:12, padding:"12px 14px", color:"#fff", fontSize:13, outline:"none", marginBottom:10 }}/>
+        <div style={{ color:"rgba(255,255,255,0.45)", fontSize:12, marginBottom:8 }}>Your Message:</div>
+        <textarea value={contactMsg} onChange={e=>setContactMsg(e.target.value)} placeholder="Write your question in detail..." rows={4} style={{ width:"100%", background:"rgba(255,255,255,0.07)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:12, padding:"12px 14px", color:"#fff", fontSize:13, outline:"none", resize:"none" }}/>
+      </div>
+      {SCHOLARS.map(s => (
+        <div key={s.id} style={{ background:`linear-gradient(135deg,#1A4D2E,#0A2E1A)`, border:"1px solid rgba(201,168,76,0.2)", borderRadius:16, padding:"16px", marginBottom:10 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12 }}>
+            <div style={{ fontSize:36 }}>{s.avatar}</div>
+            <div>
+              <div style={{ color:OFF_WHITE, fontWeight:700, fontSize:15 }}>{s.name}</div>
+              <div style={{ color:"rgba(255,255,255,0.35)", fontSize:11 }}>{s.role}</div>
+              <div style={{ color:GOLD, fontSize:11, marginTop:2 }}>📌 {s.speciality}</div>
+            </div>
+          </div>
+          <div onClick={() => openWhatsApp(s)} style={{ background:"linear-gradient(135deg,#25D366,#128C7E)", borderRadius:12, padding:"11px", textAlign:"center", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:8 }}>
+            <span style={{ fontSize:16 }}>💬</span>
+            <span style={{ color:"#fff", fontWeight:700, fontSize:13 }}>Send WhatsApp Message</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", height:"calc(100vh - 60px)", padding:"0" }}>
+      {/* Header */}
+      <div style={{ background:`linear-gradient(135deg,${DARK_GREEN},${MID_GREEN})`, padding:"16px 20px 12px", flexShrink:0 }}>
+        <SectionTitle>💬 Islamic Assistant</SectionTitle>
+        <div style={{ color:"rgba(255,255,255,0.35)", fontSize:12 }}>Ask any Islamic question</div>
+      </div>
+
+      {/* Messages */}
+      <div style={{ flex:1, overflowY:"auto", padding:"14px 16px", display:"flex", flexDirection:"column", gap:10 }}>
+        {messages.map((m, i) => (
+          <div key={i} style={{ display:"flex", flexDirection:"column", alignItems:m.from==="user"?"flex-end":"flex-start" }}>
+            <div style={{ maxWidth:"82%", background:m.from==="user"?`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`:"rgba(26,77,46,0.6)", border:m.from==="user"?"none":"1px solid rgba(201,168,76,0.15)", borderRadius:m.from==="user"?"18px 18px 4px 18px":"18px 18px 18px 4px", padding:"11px 14px", color:m.from==="user"?DARK_GREEN:OFF_WHITE, fontSize:13, lineHeight:1.7 }}>
+              {m.text}
+            </div>
+            {m.showContact && (
+              <div onClick={() => setShowScholars(true)} style={{ marginTop:8, background:"linear-gradient(135deg,#25D366,#128C7E)", borderRadius:12, padding:"9px 16px", cursor:"pointer", display:"flex", alignItems:"center", gap:6, maxWidth:"82%" }}>
+                <span style={{ fontSize:14 }}>💬</span>
+                <span style={{ color:"#fff", fontSize:12, fontWeight:700 }}>Contact a Scholar on WhatsApp</span>
+              </div>
+            )}
+          </div>
+        ))}
+        <div ref={msgEndRef} />
+      </div>
+
+      {/* FAQ Quick Questions */}
+      <div style={{ padding:"8px 12px", flexShrink:0, borderTop:"1px solid rgba(201,168,76,0.1)" }}>
+        <div style={{ display:"flex", gap:8, overflowX:"auto", paddingBottom:6, scrollbarWidth:"none" }}>
+          {FAQ.slice(0,6).map((f,i) => (
+            <div key={i} onClick={() => sendMessage(f.q)} style={{ flex:"0 0 auto", background:"rgba(201,168,76,0.1)", border:"1px solid rgba(201,168,76,0.25)", borderRadius:20, padding:"6px 12px", color:GOLD, fontSize:11, cursor:"pointer", whiteSpace:"nowrap" }}>
+              {f.q.length > 30 ? f.q.slice(0,30)+"..." : f.q}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Input */}
+      <div style={{ padding:"10px 12px 16px", display:"flex", gap:8, flexShrink:0, background:DARK_GREEN }}>
+        <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendMessage()} placeholder="Ask an Islamic question..." style={{ flex:1, background:"rgba(255,255,255,0.07)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:24, padding:"11px 16px", color:"#fff", fontSize:13, outline:"none" }}/>
+        <div onClick={() => sendMessage()} style={{ width:44, height:44, borderRadius:"50%", background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", fontSize:18, flexShrink:0 }}>➤</div>
+      </div>
+    </div>
+  );
+}
+
 // ─── ROOT APP ──────────────────────────────────────────────────────────────────
 export default function MinbarLiveApp() {
   const [splash, setSplash]             = useState(true);
@@ -1572,14 +1808,15 @@ export default function MinbarLiveApp() {
   const { prompt, install } = useInstallPrompt();
 
   const navItems = [
-    { id:"home",    icon:"🏠", label:"Home"    },
-    { id:"live",    icon:"📡", label:"Live"    },
-    { id:"library", icon:"🎧", label:"Library" },
-    { id:"quran",   icon:"📖", label:"Quran"   },
-    { id:"dua",     icon:"🤲", label:"Dua"     },
+    { id:"home",    icon:"🏠", label:"Home"  },
+    { id:"live",    icon:"📡", label:"Live"  },
+    { id:"quran",   icon:"📖", label:"Quran" },
+    { id:"dua",     icon:"🤲", label:"Dua"   },
+    { id:"qibla",   icon:"🧭", label:"Qibla" },
+    { id:"chat",    icon:"💬", label:"Ask"   },
   ];
 
-  const pages = { home:HomePage, live:LivePage, library:LibraryPage, quran:QuranPage, dua:DuaPage, tasbeeh:TasbeehPage };
+  const pages = { home:HomePage, live:LivePage, library:LibraryPage, quran:QuranPage, dua:DuaPage, tasbeeh:TasbeehPage, qibla:QiblaPage, chat:ChatPage };
   const CurrentPage = pages[page] || HomePage;
 
   // Admin button clicked — show masjid selector
