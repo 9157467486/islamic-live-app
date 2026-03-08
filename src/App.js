@@ -507,9 +507,11 @@ function AdminPanel({ masjid, onClose, onUpdateMasjid }) {
 
   const isLive = masjid.isLive;
 
-  const goLive = () => {
-    if (!ytUrl.trim()) return;
-    onUpdateMasjid(masjid.id, { youtubeUrl: ytUrl.trim(), isLive: true, topic, speaker });
+  const goLive = (overrideUrl) => {
+    const finalUrl = overrideUrl || ytUrl.trim();
+    if (!finalUrl) return;
+    if (overrideUrl) setYtUrl(overrideUrl);
+    onUpdateMasjid(masjid.id, { youtubeUrl: finalUrl, isLive: true, topic, speaker });
     setUrlSaved(true); setTimeout(() => setUrlSaved(false), 2000);
   };
 
@@ -582,10 +584,10 @@ function AdminPanel({ masjid, onClose, onUpdateMasjid }) {
               <div style={{ background:"rgba(255,50,50,0.08)", border:"1px solid rgba(255,100,100,0.2)", borderRadius:12, padding:"12px 14px", marginBottom:18 }}>
                 <div style={{ color:"#FF9999", fontWeight:700, fontSize:13, marginBottom:6 }}>📺 How YouTube Live Works</div>
                 <div style={{ color:"rgba(255,255,255,0.5)", fontSize:12, lineHeight:1.8 }}>
-                  1. Open <span style={{ color:GOLD }}>youtube.com</span> on your PC{"\n"}
-                  2. Click ➕ Create → <span style={{ color:GOLD }}>Go Live</span>{"\n"}
-                  3. Start stream → copy the live link from browser{"\n"}
-                  4. Paste it below and tap <span style={{ color:GOLD }}>Go Live</span>
+                  1. Open <span style={{ color:GOLD }}>YouTube Studio</span> app{"\n"}
+                  2. Tap Go Live 🔴 on YouTube{"\n"}
+                  3. Come back here → Enter bayan title{"\n"}
+                  4. Tap <span style={{ color:GOLD }}>Go Live</span> — Done! ✅
                 </div>
               </div>
 
@@ -601,27 +603,42 @@ function AdminPanel({ masjid, onClose, onUpdateMasjid }) {
                 </div>
               ))}
 
-              {/* YouTube URL */}
-              <div style={{ marginBottom:16 }}>
-                <div style={{ color:GOLD, fontSize:11, fontWeight:700, letterSpacing:1, marginBottom:6 }}>YOUTUBE LIVE LINK</div>
-                <input
-                  value={ytUrl}
-                  onChange={e => setYtUrl(e.target.value)}
-                  placeholder="https://youtube.com/live/XXXXXXXXX"
-                  style={{ width:"100%", background:"rgba(26,77,46,0.5)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:10, padding:"12px 14px", color:OFF_WHITE, fontSize:13, outline:"none" }}
-                />
-                <div style={{ color:"rgba(255,255,255,0.2)", fontSize:11, marginTop:6 }}>
-                  Paste any YouTube link — youtube.com/watch?v=... or youtu.be/...
+              {/* Auto Live URL Info */}
+              {masjid.permanentLiveUrl ? (
+                <div style={{ background:"rgba(26,201,76,0.08)", border:"1px solid rgba(26,201,76,0.25)", borderRadius:12, padding:"12px 14px", marginBottom:16 }}>
+                  <div style={{ color:"#99FFB3", fontWeight:700, fontSize:12, marginBottom:4 }}>✅ AUTO LIVE URL SAVED</div>
+                  <div style={{ color:"rgba(255,255,255,0.4)", fontSize:11, marginBottom:8 }}>No copy-paste needed! App will use your channel live URL automatically:</div>
+                  <div style={{ color:GOLD, fontSize:11, wordBreak:"break-all" }}>{masjid.permanentLiveUrl}</div>
                 </div>
-              </div>
+              ) : (
+                <div style={{ marginBottom:16 }}>
+                  <div style={{ color:GOLD, fontSize:11, fontWeight:700, letterSpacing:1, marginBottom:6 }}>YOUTUBE LIVE LINK</div>
+                  <input
+                    value={ytUrl}
+                    onChange={e => setYtUrl(e.target.value)}
+                    placeholder="https://youtube.com/live/XXXXXXXXX"
+                    style={{ width:"100%", background:"rgba(26,77,46,0.5)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:10, padding:"12px 14px", color:OFF_WHITE, fontSize:13, outline:"none" }}
+                  />
+                  <div style={{ color:"rgba(255,255,255,0.2)", fontSize:11, marginTop:6 }}>
+                    Paste any YouTube link — youtube.com/watch?v=... or youtu.be/...
+                  </div>
+                </div>
+              )}
 
               {!isLive ? (
-                <button onClick={goLive} disabled={!ytUrl.trim()} style={{
+                <button onClick={() => {
+                  if (masjid.permanentLiveUrl) {
+                    setYtUrl(masjid.permanentLiveUrl);
+                    goLive(masjid.permanentLiveUrl);
+                  } else {
+                    goLive();
+                  }
+                }} disabled={!masjid.permanentLiveUrl && !ytUrl.trim()} style={{
                   width:"100%", padding:"15px",
-                  background: ytUrl.trim() ? "linear-gradient(135deg,#AA1111,#EE3333)" : "rgba(255,68,68,0.2)",
+                  background: (masjid.permanentLiveUrl || ytUrl.trim()) ? "linear-gradient(135deg,#AA1111,#EE3333)" : "rgba(255,68,68,0.2)",
                   border:"none", borderRadius:14, color:"#fff", fontSize:16, fontWeight:700,
-                  cursor: ytUrl.trim() ? "pointer" : "not-allowed",
-                  boxShadow: ytUrl.trim() ? "0 4px 20px rgba(255,68,68,0.35)" : "none",
+                  cursor: (masjid.permanentLiveUrl || ytUrl.trim()) ? "pointer" : "not-allowed",
+                  boxShadow: (masjid.permanentLiveUrl || ytUrl.trim()) ? "0 4px 20px rgba(255,68,68,0.35)" : "none",
                 }}>
                   {urlSaved ? "✅ Now Live!" : "🔴 Go Live"}
                 </button>
