@@ -1100,7 +1100,6 @@ function AddMasjidModal({ onAdd, onClose }) {
   );
 }
 
-const QURAN_EMBED = "https://drive.google.com/file/d/1Th1kp5uMNWkjOymg8XXOHZmTDP9PoNr0/preview?usp=sharing";
 const DUAS_EMBED  = "https://drive.google.com/file/d/1oRIJL3AQDwfYjjxK3U3crMIbA59ueUxt/preview?usp=sharing";
 
 function PdfViewer({ url, title, onBack }) {
@@ -1322,36 +1321,204 @@ function QuranPage() {
 
 // ─── DUA PAGE ──────────────────────────────────────────────────────────────────
 function DuaPage() {
-  const [showPdf, setShowPdf] = useState(false);
-  if (showPdf) return <PdfViewer url={DUAS_EMBED} title="🤲 Daily Duas" onBack={() => setShowPdf(false)} />;
+  const [selectedCat, setSelectedCat] = useState(null);
+  const [selectedDua, setSelectedDua] = useState(null);
+  const [playingDua, setPlayingDua]   = useState(null);
+  const [audio, setAudio]             = useState(null);
+
+  const DUAS = {
+    morning: {
+      icon:"🌅", name:"Morning Duas", color:"#1A4D2E",
+      duas: [
+        { id:1, title:"Waking Up", arabic:"الْحَمْدُ لِلَّهِ الَّذِي أَحْيَانَا بَعْدَ مَا أَمَاتَنَا وَإِلَيْهِ النُّشُورُ", translation:"All praise is for Allah who gave us life after having taken it from us and unto Him is the resurrection.", ref:"Bukhari" },
+        { id:2, title:"After Waking Up", arabic:"لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ، وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ", translation:"None has the right to be worshipped except Allah, alone, without partner. To Him belongs all sovereignty and praise, and He is over all things omnipotent.", ref:"Bukhari" },
+        { id:3, title:"Morning Protection", arabic:"اللَّهُمَّ بِكَ أَصْبَحْنَا، وَبِكَ أَمْسَيْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ، وَإِلَيْكَ النُّشُورُ", translation:"O Allah, by You we enter the morning and by You we enter the evening, by You we live and by You we die, and to You is our resurrection.", ref:"Tirmidhi" },
+        { id:4, title:"Morning Dhikr", arabic:"سُبْحَانَ اللَّهِ وَبِحَمْدِهِ", translation:"Glory is to Allah and praise is to Him. (100 times in morning)", ref:"Muslim" },
+        { id:5, title:"Sayyidul Istighfar", arabic:"اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلَّا أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ، وَأَنَا عَلَى عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ", translation:"O Allah, You are my Lord, none has the right to be worshipped except You, You created me and I am Your servant and I abide to Your covenant and promise as best I can.", ref:"Bukhari" },
+        { id:6, title:"Morning Blessing", arabic:"اللَّهُمَّ مَا أَصْبَحَ بِي مِنْ نِعْمَةٍ أَوْ بِأَحَدٍ مِنْ خَلْقِكَ فَمِنْكَ وَحْدَكَ لَا شَرِيكَ لَكَ", translation:"O Allah, what blessing I or any of Your creation have risen upon, is from You alone, without partner.", ref:"Abu Dawud" },
+        { id:7, title:"Protection Morning", arabic:"اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَافِيَةَ فِي الدُّنْيَا وَالْآخِرَةِ", translation:"O Allah, I ask You for well-being in this world and the next.", ref:"Ibn Majah" },
+      ]
+    },
+    evening: {
+      icon:"🌙", name:"Evening Duas", color:"#1A2E4D",
+      duas: [
+        { id:8, title:"Evening Remembrance", arabic:"اللَّهُمَّ بِكَ أَمْسَيْنَا، وَبِكَ أَصْبَحْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ، وَإِلَيْكَ الْمَصِيرُ", translation:"O Allah, by You we enter the evening and by You we enter the morning, by You we live and by You we die, and to You is our return.", ref:"Tirmidhi" },
+        { id:9, title:"Evening Protection", arabic:"أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ", translation:"I seek refuge in the perfect words of Allah from the evil of what He has created.", ref:"Muslim" },
+        { id:10, title:"Evening Dhikr", arabic:"أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ", translation:"We have reached the evening and at this very time unto Allah belongs all sovereignty, and all praise is for Allah.", ref:"Abu Dawud" },
+        { id:11, title:"Ayatul Kursi", arabic:"اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ", translation:"Allah! There is no god but He, the Living, the Self-subsisting, Eternal. No slumber can seize Him nor sleep.", ref:"Quran 2:255" },
+        { id:12, title:"Evening Forgiveness", arabic:"اللَّهُمَّ إِنِّي أَمْسَيْتُ أُشْهِدُكَ وَأُشْهِدُ حَمَلَةَ عَرْشِكَ وَمَلَائِكَتَكَ وَجَمِيعَ خَلْقِكَ", translation:"O Allah, I have entered the evening calling You, the bearers of Your Throne, Your angels, and all of Your creation to witness.", ref:"Abu Dawud" },
+        { id:13, title:"Three Quls Evening", arabic:"قُلْ هُوَ اللَّهُ أَحَدٌ", translation:"Say: He is Allah, the One! (Recite Al-Ikhlas, Al-Falaq, An-Nas 3 times each)", ref:"Abu Dawud" },
+      ]
+    },
+    sleep: {
+      icon:"😴", name:"Before Sleep", color:"#2E1A4D",
+      duas: [
+        { id:14, title:"Before Sleeping", arabic:"بِاسْمِكَ اللَّهُمَّ أَمُوتُ وَأَحْيَا", translation:"In Your name O Allah, I die and I live.", ref:"Bukhari" },
+        { id:15, title:"Sleep Dua", arabic:"اللَّهُمَّ قِنِي عَذَابَكَ يَوْمَ تَبْعَثُ عِبَادَكَ", translation:"O Allah, protect me from Your punishment on the day Your servants are resurrected.", ref:"Abu Dawud" },
+        { id:16, title:"Tasbih Before Sleep", arabic:"سُبْحَانَ اللَّهِ ، الْحَمْدُ لِلَّهِ ، اللَّهُ أَكْبَرُ", translation:"Glory is to Allah (33x), All praise is for Allah (33x), Allah is the greatest (34x)", ref:"Bukhari" },
+        { id:17, title:"Kafirun Before Sleep", arabic:"قُلْ يَا أَيُّهَا الْكَافِرُونَ", translation:"Recite Surah Al-Kafirun before sleeping — it is a disavowal from shirk.", ref:"Abu Dawud" },
+        { id:18, title:"Protection Night", arabic:"اللَّهُمَّ إِنِّي أَسْلَمْتُ نَفْسِي إِلَيْكَ وَفَوَّضْتُ أَمْرِي إِلَيْكَ", translation:"O Allah, I submit myself to You, entrust my affairs to You.", ref:"Bukhari" },
+        { id:19, title:"Waking at Night", arabic:"لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ", translation:"None has the right to be worshipped except Allah alone, without partner.", ref:"Bukhari" },
+      ]
+    },
+    food: {
+      icon:"🍽️", name:"Food & Eating", color:"#2E4D1A",
+      duas: [
+        { id:20, title:"Before Eating", arabic:"بِسْمِ اللَّهِ", translation:"In the name of Allah. (Say at the beginning of eating)", ref:"Abu Dawud" },
+        { id:21, title:"Forgot Bismillah", arabic:"بِسْمِ اللَّهِ أَوَّلَهُ وَآخِرَهُ", translation:"In the name of Allah at its beginning and end. (If you forget to say Bismillah at start)", ref:"Abu Dawud" },
+        { id:22, title:"After Eating", arabic:"الْحَمْدُ لِلَّهِ الَّذِي أَطْعَمَنِي هَذَا وَرَزَقَنِيهِ مِنْ غَيْرِ حَوْلٍ مِنِّي وَلَا قُوَّةٍ", translation:"All praise is for Allah who fed me this and provided it for me without any might nor power from myself.", ref:"Tirmidhi" },
+        { id:23, title:"After Drinking Milk", arabic:"اللَّهُمَّ بَارِكْ لَنَا فِيهِ وَزِدْنَا مِنْهُ", translation:"O Allah, bless it for us and give us more of it.", ref:"Tirmidhi" },
+        { id:24, title:"When Fasting & Invited", arabic:"إِنِّي صَائِمٌ", translation:"I am fasting. (Say when invited to food while fasting)", ref:"Muslim" },
+        { id:25, title:"Breaking Fast", arabic:"اللَّهُمَّ لَكَ صُمْتُ وَعَلَى رِزْقِكَ أَفْطَرْتُ", translation:"O Allah, for You I have fasted and upon Your provision I have broken my fast.", ref:"Abu Dawud" },
+      ]
+    },
+    travel: {
+      icon:"✈️", name:"Travel Duas", color:"#4D2E1A",
+      duas: [
+        { id:26, title:"Leaving Home", arabic:"بِسْمِ اللَّهِ، تَوَكَّلْتُ عَلَى اللَّهِ، وَلَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ", translation:"In the name of Allah, I place my trust in Allah, and there is no might nor power except with Allah.", ref:"Abu Dawud" },
+        { id:27, title:"Entering Home", arabic:"اللَّهُمَّ إِنِّي أَسْأَلُكَ خَيْرَ الْمَوْلَجِ وَخَيْرَ الْمَخْرَجِ", translation:"O Allah, I ask You for the good of entering and the good of leaving.", ref:"Abu Dawud" },
+        { id:28, title:"Riding Vehicle", arabic:"سُبْحَانَ الَّذِي سَخَّرَ لَنَا هَٰذَا وَمَا كُنَّا لَهُ مُقْرِنِينَ وَإِنَّا إِلَىٰ رَبِّنَا لَمُنقَلِبُونَ", translation:"How perfect He is, the One Who has placed this (transport) at our service, for we ourselves would not have been capable of that.", ref:"Quran 43:13-14" },
+        { id:29, title:"During Journey", arabic:"اللَّهُمَّ هَوِّنْ عَلَيْنَا سَفَرَنَا هَذَا وَاطْوِ عَنَّا بُعْدَهُ", translation:"O Allah, lighten this journey for us and make its distance easy for us.", ref:"Muslim" },
+        { id:30, title:"Entering City", arabic:"اللَّهُمَّ رَبَّ السَّمَاوَاتِ السَّبْعِ وَمَا أَظْلَلْنَ، وَرَبَّ الْأَرَضِينَ وَمَا أَقْلَلْنَ", translation:"O Allah, Lord of the seven heavens and all they overshadow, and Lord of the seven earths and all they carry.", ref:"Ibn Sunni" },
+        { id:31, title:"Returning Home", arabic:"آيِبُونَ تَائِبُونَ عَابِدُونَ لِرَبِّنَا حَامِدُونَ", translation:"We return, repent, worship and praise our Lord.", ref:"Muslim" },
+      ]
+    },
+    forgiveness: {
+      icon:"🤲", name:"Forgiveness", color:"#1A4D4D",
+      duas: [
+        { id:32, title:"Seeking Forgiveness", arabic:"رَبِّ اغْفِرْ لِي وَتُبْ عَلَيَّ، إِنَّكَ أَنْتَ التَّوَّابُ الرَّحِيمُ", translation:"My Lord, forgive me and accept my repentance. Verily you are the Ever-Returning, the Most Merciful.", ref:"Ahmad" },
+        { id:33, title:"Complete Forgiveness", arabic:"اللَّهُمَّ اغْفِرْ لِي ذَنْبِي كُلَّهُ، دِقَّهُ وَجِلَّهُ، وَأَوَّلَهُ وَآخِرَهُ، وَعَلَانِيَتَهُ وَسِرَّهُ", translation:"O Allah, forgive me all my sins, great and small, the first and the last, those that are apparent and those that are hidden.", ref:"Muslim" },
+        { id:34, title:"Dua of Yunus", arabic:"لَّا إِلَٰهَ إِلَّا أَنتَ سُبْحَانَكَ إِنِّي كُنتُ مِنَ الظَّالِمِينَ", translation:"There is no deity except You; exalted are You. Indeed, I have been of the wrongdoers.", ref:"Quran 21:87" },
+        { id:35, title:"Best Forgiveness Dua", arabic:"أَسْتَغْفِرُ اللَّهَ الْعَظِيمَ الَّذِي لَا إِلَهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ وَأَتُوبُ إِلَيْهِ", translation:"I seek forgiveness from Allah the Magnificent, whom there is none worthy of worship except Him, the Ever-Living, the Sustainer, and I repent to Him.", ref:"Tirmidhi" },
+        { id:36, title:"Mercy Dua", arabic:"رَبَّنَا ظَلَمْنَا أَنفُسَنَا وَإِن لَّمْ تَغْفِرْ لَنَا وَتَرْحَمْنَا لَنَكُونَنَّ مِنَ الْخَاسِرِينَ", translation:"Our Lord, we have wronged ourselves, and if You do not forgive us and have mercy upon us, we will surely be among the losers.", ref:"Quran 7:23" },
+      ]
+    },
+    masjid: {
+      icon:"🕌", name:"Masjid Duas", color:"#4D3D1A",
+      duas: [
+        { id:37, title:"Entering Masjid", arabic:"اللَّهُمَّ افْتَحْ لِي أَبْوَابَ رَحْمَتِكَ", translation:"O Allah, open the gates of Your mercy for me.", ref:"Muslim" },
+        { id:38, title:"Leaving Masjid", arabic:"اللَّهُمَّ إِنِّي أَسْأَلُكَ مِنْ فَضْلِكَ", translation:"O Allah, I ask You from Your favour.", ref:"Muslim" },
+        { id:39, title:"After Adhan", arabic:"اللَّهُمَّ رَبَّ هَذِهِ الدَّعْوَةِ التَّامَّةِ وَالصَّلَاةِ الْقَائِمَةِ آتِ مُحَمَّدًا الْوَسِيلَةَ وَالْفَضِيلَةَ", translation:"O Allah, Lord of this perfect call and established prayer, grant Muhammad the intercession and favour.", ref:"Bukhari" },
+        { id:40, title:"Before Prayer", arabic:"اللَّهُمَّ بَاعِدْ بَيْنِي وَبَيْنَ خَطَايَايَ كَمَا بَاعَدْتَ بَيْنَ الْمَشْرِقِ وَالْمَغْرِبِ", translation:"O Allah, separate me from my sins as You have separated the East from the West.", ref:"Bukhari" },
+        { id:41, title:"After Prayer", arabic:"اللَّهُمَّ أَعِنِّي عَلَى ذِكْرِكَ وَشُكْرِكَ وَحُسْنِ عِبَادَتِكَ", translation:"O Allah, help me to remember You, to thank You, and to worship You in the best manner.", ref:"Abu Dawud" },
+        { id:42, title:"Friday Dua", arabic:"اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَعَلَى آلِ مُحَمَّدٍ", translation:"O Allah, send blessings upon Muhammad and the family of Muhammad. (Recite frequently on Friday)", ref:"Bukhari" },
+      ]
+    },
+    hardship: {
+      icon:"💪", name:"Times of Hardship", color:"#4D1A2E",
+      duas: [
+        { id:43, title:"Anxiety & Sorrow", arabic:"اللَّهُمَّ إِنِّي عَبْدُكَ، ابْنُ عَبْدِكَ، ابْنُ أَمَتِكَ، نَاصِيَتِي بِيَدِكَ", translation:"O Allah, I am Your servant, son of Your servant, son of Your female servant, my forelock is in Your hand.", ref:"Ahmad" },
+        { id:44, title:"Distress Dua", arabic:"لَا إِلَهَ إِلَّا اللَّهُ الْعَظِيمُ الْحَلِيمُ، لَا إِلَهَ إِلَّا اللَّهُ رَبُّ الْعَرْشِ الْعَظِيمِ", translation:"None has the right to be worshipped except Allah, the Mighty, the Forbearing. None has the right to be worshipped except Allah, Lord of the magnificent Throne.", ref:"Bukhari" },
+        { id:45, title:"When in Debt", arabic:"اللَّهُمَّ اكْفِنِي بِحَلَالِكَ عَنْ حَرَامِكَ، وَأَغْنِنِي بِفَضْلِكَ عَمَّنْ سِوَاكَ", translation:"O Allah, suffice me with what You have allowed instead of what You have forbidden, and make me independent of all others besides You.", ref:"Tirmidhi" },
+        { id:46, title:"For Good in Both Worlds", arabic:"رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ", translation:"Our Lord, give us good in this world and good in the Hereafter, and protect us from the punishment of the Fire.", ref:"Quran 2:201" },
+        { id:47, title:"Tawakkul Dua", arabic:"حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ", translation:"Allah is sufficient for us and He is the best disposer of affairs.", ref:"Quran 3:173" },
+        { id:48, title:"Patience Dua", arabic:"رَبَّنَا أَفْرِغْ عَلَيْنَا صَبْرًا وَثَبِّتْ أَقْدَامَنَا وَانصُرْنَا عَلَى الْقَوْمِ الْكَافِرِينَ", translation:"Our Lord, pour upon us patience and plant firmly our feet and give us victory over the disbelieving people.", ref:"Quran 2:250" },
+      ]
+    },
+  };
+
+  const playDuaAudio = (dua) => {
+    if (audio) { audio.pause(); setAudio(null); }
+    if (playingDua === dua.id) { setPlayingDua(null); return; }
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      [0, 0.4, 0.8].forEach(t => {
+        const osc = ctx.createOscillator(), gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(440, ctx.currentTime + t);
+        gain.gain.setValueAtTime(0.3, ctx.currentTime + t);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.35);
+        osc.start(ctx.currentTime + t); osc.stop(ctx.currentTime + t + 0.4);
+      });
+      setTimeout(() => setPlayingDua(null), 1500);
+      setPlayingDua(dua.id);
+    } catch(_) {}
+  };
+
+  // Dua detail view
+  if (selectedDua) {
+    const cat = DUAS[selectedCat];
+    return (
+      <div style={{ display:"flex", flexDirection:"column", position:"fixed", inset:0, zIndex:500, background:DARK_GREEN }}>
+        <div style={{ background:`linear-gradient(135deg,${DARK_GREEN},${cat.color})`, padding:"12px 16px", display:"flex", alignItems:"center", gap:10, flexShrink:0 }}>
+          <button onClick={() => setSelectedDua(null)} style={{ background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:10, padding:"7px 12px", color:GOLD, fontSize:12, fontWeight:700, cursor:"pointer" }}>← Back</button>
+          <div style={{ flex:1, color:LIGHT_GOLD, fontWeight:700, fontSize:14 }}>{selectedDua.title}</div>
+        </div>
+        <div style={{ flex:1, overflowY:"auto", padding:20 }}>
+          <div style={{ background:"rgba(201,168,76,0.08)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:18, padding:20, marginBottom:16 }}>
+            <div style={{ color:LIGHT_GOLD, fontSize:24, lineHeight:2.0, textAlign:"right", direction:"rtl", fontFamily:"serif", marginBottom:16 }}>
+              {selectedDua.arabic}
+            </div>
+            <div style={{ borderTop:"1px solid rgba(201,168,76,0.15)", paddingTop:14, color:"rgba(255,255,255,0.6)", fontSize:13, lineHeight:1.8, fontStyle:"italic" }}>
+              {selectedDua.translation}
+            </div>
+          </div>
+          <div style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(201,168,76,0.1)", borderRadius:12, padding:"10px 14px", marginBottom:20, display:"flex", alignItems:"center", gap:8 }}>
+            <span style={{ color:GOLD, fontSize:12 }}>📚</span>
+            <span style={{ color:"rgba(255,255,255,0.4)", fontSize:12 }}>Reference: <span style={{ color:GOLD }}>{selectedDua.ref}</span></span>
+          </div>
+          <div onClick={() => playDuaAudio(selectedDua)} style={{ background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, color:DARK_GREEN, borderRadius:20, padding:"14px", fontSize:15, fontWeight:700, cursor:"pointer", textAlign:"center" }}>
+            {playingDua === selectedDua.id ? "⏸ Stop" : "🔊 Listen"}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Category detail view
+  if (selectedCat) {
+    const cat = DUAS[selectedCat];
+    return (
+      <div style={{ display:"flex", flexDirection:"column", position:"fixed", inset:0, zIndex:500, background:DARK_GREEN }}>
+        <div style={{ background:`linear-gradient(135deg,${DARK_GREEN},${cat.color})`, padding:"12px 16px", display:"flex", alignItems:"center", gap:10, flexShrink:0 }}>
+          <button onClick={() => setSelectedCat(null)} style={{ background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:10, padding:"7px 12px", color:GOLD, fontSize:12, fontWeight:700, cursor:"pointer" }}>← Back</button>
+          <div style={{ flex:1 }}>
+            <div style={{ color:LIGHT_GOLD, fontWeight:700, fontSize:15 }}>{cat.icon} {cat.name}</div>
+            <div style={{ color:"rgba(255,255,255,0.35)", fontSize:11 }}>{cat.duas.length} Duas</div>
+          </div>
+        </div>
+        <div style={{ flex:1, overflowY:"auto", padding:"16px 16px 80px" }}>
+          {cat.duas.map(dua => (
+            <div key={dua.id} onClick={() => { setSelectedDua(dua); }} style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(201,168,76,0.12)", borderRadius:14, padding:"16px", marginBottom:10, cursor:"pointer" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+                <div style={{ color:GOLD, fontWeight:700, fontSize:13 }}>{dua.title}</div>
+                <div style={{ color:"rgba(255,255,255,0.25)", fontSize:10 }}>{dua.ref}</div>
+              </div>
+              <div style={{ color:LIGHT_GOLD, fontSize:18, lineHeight:1.9, textAlign:"right", direction:"rtl", fontFamily:"serif", marginBottom:8 }}>
+                {dua.arabic}
+              </div>
+              <div style={{ color:"rgba(255,255,255,0.4)", fontSize:11, lineHeight:1.6, fontStyle:"italic" }}>
+                {dua.translation.length > 80 ? dua.translation.slice(0,80) + "..." : dua.translation}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Main categories view
   return (
     <div style={{ padding:"20px 20px 80px" }}>
       <SectionTitle>🤲 Dua Collection</SectionTitle>
-      <div style={{ color:"rgba(255,255,255,0.45)", fontSize:13, marginBottom:24 }}>Authentic duas from Quran & Sunnah</div>
-      <div style={{ background:`linear-gradient(135deg,${MID_GREEN},#1A2E4A)`, border:"1px solid rgba(201,168,76,0.3)", borderRadius:20, padding:"20px", marginBottom:20, textAlign:"center" }}>
-        <div style={{ color:GOLD, fontSize:11, letterSpacing:2, marginBottom:8 }}>DUA OF THE DAY</div>
-        <div style={{ color:LIGHT_GOLD, fontSize:21, lineHeight:1.6, fontFamily:"serif", marginBottom:10, direction:"rtl" }}>رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً</div>
-        <div style={{ color:"rgba(255,255,255,0.65)", fontSize:12, fontStyle:"italic" }}>"Our Lord, give us good in this world and good in the Hereafter..."</div>
+      <div style={{ color:"rgba(255,255,255,0.45)", fontSize:13, marginBottom:16 }}>40+ Authentic Duas from Quran & Sunnah</div>
+
+      {/* Dua of the Day */}
+      <div style={{ background:`linear-gradient(135deg,${MID_GREEN},#1A2E4A)`, border:"1px solid rgba(201,168,76,0.3)", borderRadius:18, padding:"18px", marginBottom:20, textAlign:"center" }}>
+        <div style={{ color:GOLD, fontSize:10, letterSpacing:2, marginBottom:8 }}>✨ DUA OF THE DAY</div>
+        <div style={{ color:LIGHT_GOLD, fontSize:19, lineHeight:1.8, fontFamily:"serif", marginBottom:10, direction:"rtl" }}>رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً</div>
+        <div style={{ color:"rgba(255,255,255,0.5)", fontSize:11, fontStyle:"italic" }}>"Our Lord, give us good in this world and good in the Hereafter..."</div>
       </div>
-      <div onClick={() => setShowPdf(true)} style={{ background:"linear-gradient(135deg,#1A2E4A,#0A1A2E)", border:"2px solid rgba(100,150,255,0.3)", borderRadius:18, padding:"28px 20px", textAlign:"center", cursor:"pointer", boxShadow:"0 8px 28px rgba(0,0,0,0.4)", marginBottom:20 }}>
-        <div style={{ fontSize:52, marginBottom:10 }}>🤲</div>
-        <div style={{ color:LIGHT_GOLD, fontSize:18, fontWeight:700, fontFamily:"'Playfair Display',serif", marginBottom:6 }}>40+ Daily Essential Duas</div>
-        <div style={{ color:"rgba(255,255,255,0.45)", fontSize:12, marginBottom:16 }}>Morning, Evening, Travel, Sleep & more</div>
-        <div style={{ background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, color:DARK_GREEN, borderRadius:20, padding:"10px 28px", fontSize:14, fontWeight:700, display:"inline-block" }}>📖 Open Duas →</div>
-      </div>
-      <div style={{ color:OFF_WHITE, fontSize:14, fontWeight:700, marginBottom:12 }}>Categories</div>
+
+      {/* Categories */}
+      <div style={{ color:OFF_WHITE, fontSize:14, fontWeight:700, marginBottom:12 }}>📂 Categories</div>
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
-        {[
-          { icon:"🌅", name:"Morning Duas" },
-          { icon:"🌙", name:"Evening Duas" },
-          { icon:"✈️", name:"Travel Dua"  },
-          { icon:"😴", name:"Before Sleep" },
-          { icon:"🍽️", name:"After Eating"},
-          { icon:"🤲", name:"Forgiveness"  },
-        ].map(cat => (
-          <div key={cat.name} onClick={() => setShowPdf(true)} style={{ background:"rgba(26,77,46,0.4)", border:"1px solid rgba(201,168,76,0.15)", borderRadius:13, padding:"16px", display:"flex", flexDirection:"column", alignItems:"center", gap:8, cursor:"pointer" }}>
-            <span style={{ fontSize:28 }}>{cat.icon}</span>
-            <span style={{ color:OFF_WHITE, fontSize:12, fontWeight:600, textAlign:"center" }}>{cat.name}</span>
+        {Object.entries(DUAS).map(([key, cat]) => (
+          <div key={key} onClick={() => setSelectedCat(key)} style={{ background:`linear-gradient(135deg,${cat.color},rgba(10,46,26,0.8))`, border:"1px solid rgba(201,168,76,0.2)", borderRadius:16, padding:"18px 14px", display:"flex", flexDirection:"column", alignItems:"center", gap:8, cursor:"pointer" }}>
+            <span style={{ fontSize:32 }}>{cat.icon}</span>
+            <span style={{ color:OFF_WHITE, fontSize:12, fontWeight:700, textAlign:"center" }}>{cat.name}</span>
+            <span style={{ color:"rgba(255,255,255,0.3)", fontSize:10 }}>{cat.duas.length} Duas</span>
           </div>
         ))}
       </div>
