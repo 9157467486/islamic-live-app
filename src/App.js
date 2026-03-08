@@ -1176,11 +1176,38 @@ const SURAHS = [
 ];
 
 function QuranReader({ surah, onBack }) {
-  const [ayahs, setAyahs]           = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [playingAyah, setPlayingAyah] = useState(null);
-  const [audio, setAudio]           = useState(null);
+  const [ayahs, setAyahs]                     = useState([]);
+  const [loading, setLoading]                 = useState(true);
+  const [playingAyah, setPlayingAyah]         = useState(null);
+  const [playingAll, setPlayingAll]           = useState(false);
+  const [audio, setAudio]                     = useState(null);
   const [showTranslation, setShowTranslation] = useState(true);
+  const [viewMode, setViewMode]               = useState("ayah"); // "ayah" or "full"
+  const [isBookmarked, setIsBookmarked]       = useState(false);
+  const [currentAyahIdx, setCurrentAyahIdx]   = useState(0);
+
+  // Load bookmark state
+  useEffect(() => {
+    try {
+      const bookmarks = JSON.parse(localStorage.getItem("minbar_bookmarks") || "[]");
+      setIsBookmarked(bookmarks.includes(surah.n));
+    } catch(_) {}
+  }, [surah.n]);
+
+  // Toggle bookmark
+  const toggleBookmark = () => {
+    try {
+      const bookmarks = JSON.parse(localStorage.getItem("minbar_bookmarks") || "[]");
+      let updated;
+      if (isBookmarked) {
+        updated = bookmarks.filter(n => n !== surah.n);
+      } else {
+        updated = [...bookmarks, surah.n];
+      }
+      localStorage.setItem("minbar_bookmarks", JSON.stringify(updated));
+      setIsBookmarked(!isBookmarked);
+    } catch(_) {}
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -1199,9 +1226,15 @@ function QuranReader({ surah, onBack }) {
       .catch(() => setLoading(false));
   }, [surah.n]);
 
-  const playAudio = (ayahNum) => {
+  const stopAudio = () => {
     if (audio) { audio.pause(); audio.src = ""; setAudio(null); }
-    if (playingAyah === ayahNum) { setPlayingAyah(null); return; }
+    setPlayingAyah(null);
+    setPlayingAll(false);
+  };
+
+  const playAudio = (ayahNum) => {
+    stopAudio();
+    if (playingAyah === ayahNum) return;
     const offset = SURAHS.slice(0, surah.n-1).reduce((a,s) => a+s.ayahs, 0);
     const url = `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${offset + ayahNum}.mp3`;
     const a = new Audio(url);
@@ -1211,34 +1244,95 @@ function QuranReader({ surah, onBack }) {
     setPlayingAyah(ayahNum);
   };
 
+  // Play full surah ayah by ayah automatically
+  const playFullSurah = (idx = 0) => {
+    if (idx >= ayahs.length) { setPlayingAll(false); setPlayingAyah(null); return; }
+    setPlayingAll(true);
+    setCurrentAyahIdx(idx);
+    const ayahNum = ayahs[idx].number;
+    if (audio) { audio.pause(); audio.src = ""; }
+    const offset = SURAHS.slice(0, surah.n-1).reduce((a,s) => a+s.ayahs, 0);
+    const url = `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${offset + ayahNum}.mp3`;
+    const a = new Audio(url);
+    a.play();
+    a.onended = () => playFullSurah(idx + 1);
+    setAudio(a);
+    setPlayingAyah(ayahNum);
+  };
+
   return (
     <div style={{ display:"flex", flexDirection:"column", position:"fixed", inset:0, zIndex:500, background:DARK_GREEN }}>
       {/* Header */}
-      <div style={{ background:`linear-gradient(135deg,${DARK_GREEN},${MID_GREEN})`, padding:"12px 16px", display:"flex", alignItems:"center", gap:10, flexShrink:0 }}>
-        <button onClick={onBack} style={{ background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:10, padding:"7px 12px", color:GOLD, fontSize:12, fontWeight:700, cursor:"pointer" }}>← Back</button>
+      <div style={{ background:`linear-gradient(135deg,${DARK_GREEN},${MID_GREEN})`, padding:"12px 16px", display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
+        <button onClick={() => { stopAudio(); onBack(); }} style={{ background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:10, padding:"7px 12px", color:GOLD, fontSize:12, fontWeight:700, cursor:"pointer" }}>← Back</button>
         <div style={{ flex:1 }}>
           <div style={{ color:LIGHT_GOLD, fontWeight:700, fontSize:14, fontFamily:"'Playfair Display',serif" }}>{surah.name}</div>
           <div style={{ color:"rgba(255,255,255,0.35)", fontSize:10 }}>{surah.arabic} • {surah.ayahs} Ayahs</div>
         </div>
-        <div onClick={() => setShowTranslation(!showTranslation)} style={{ background:showTranslation?"rgba(201,168,76,0.2)":"rgba(255,255,255,0.05)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:10, padding:"6px 10px", color:GOLD, fontSize:11, fontWeight:700, cursor:"pointer" }}>
-          {showTranslation ? "🌍 ON" : "🌍 OFF"}
+        {/* Bookmark */}
+        <div onClick={toggleBookmark} style={{ fontSize:20, cursor:"pointer", padding:"4px 6px" }}>
+          {isBookmarked ? "🔖" : "📄"}
+        </div>
+        {/* Translation toggle */}
+        <div onClick={() => setShowTranslation(!showTranslation)} style={{ background:showTranslation?"rgba(201,168,76,0.2)":"rgba(255,255,255,0.05)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:10, padding:"6px 8px", color:GOLD, fontSize:11, fontWeight:700, cursor:"pointer" }}>
+          🌍
+        </div>
+      </div>
+
+      {/* View Mode + Audio Controls */}
+      <div style={{ background:"rgba(0,0,0,0.3)", padding:"8px 16px", display:"flex", gap:8, alignItems:"center", flexShrink:0 }}>
+        {/* View mode tabs */}
+        <div style={{ display:"flex", background:"rgba(255,255,255,0.05)", borderRadius:10, padding:3, flex:1 }}>
+          <div onClick={() => setViewMode("ayah")} style={{ flex:1, textAlign:"center", padding:"6px", borderRadius:8, background:viewMode==="ayah"?`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`:"transparent", color:viewMode==="ayah"?DARK_GREEN:GOLD, fontSize:11, fontWeight:700, cursor:"pointer" }}>
+            📖 Ayah by Ayah
+          </div>
+          <div onClick={() => setViewMode("full")} style={{ flex:1, textAlign:"center", padding:"6px", borderRadius:8, background:viewMode==="full"?`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`:"transparent", color:viewMode==="full"?DARK_GREEN:GOLD, fontSize:11, fontWeight:700, cursor:"pointer" }}>
+            📜 Full Surah
+          </div>
+        </div>
+        {/* Play full surah button */}
+        <div onClick={() => playingAll ? stopAudio() : playFullSurah(0)} style={{ background:playingAll?"rgba(255,68,68,0.2)":"rgba(201,168,76,0.15)", border:`1px solid ${playingAll?"rgba(255,68,68,0.5)":"rgba(201,168,76,0.3)"}`, borderRadius:10, padding:"6px 10px", color:playingAll?"#FF9999":GOLD, fontSize:11, fontWeight:700, cursor:"pointer", whiteSpace:"nowrap" }}>
+          {playingAll ? "⏹ Stop" : "▶ Play All"}
         </div>
       </div>
 
       {/* Bismillah */}
       {surah.n !== 9 && (
-        <div style={{ background:"rgba(201,168,76,0.08)", padding:"14px 20px", textAlign:"center", borderBottom:"1px solid rgba(201,168,76,0.1)" }}>
-          <div style={{ color:LIGHT_GOLD, fontSize:20, fontFamily:"serif", direction:"rtl" }}>بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+        <div style={{ background:"rgba(201,168,76,0.08)", padding:"12px 20px", textAlign:"center", borderBottom:"1px solid rgba(201,168,76,0.1)", flexShrink:0 }}>
+          <div style={{ color:LIGHT_GOLD, fontSize:18, fontFamily:"serif", direction:"rtl" }}>بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
         </div>
       )}
 
-      {/* Ayahs */}
-      <div style={{ flex:1, overflowY:"auto", padding:"16px 16px 80px" }}>
+      {/* Content */}
+      <div style={{ flex:1, overflowY:"auto", padding:"16px 16px 80px", WebkitOverflowScrolling:"touch" }}>
         {loading ? (
           <div style={{ textAlign:"center", color:GOLD, padding:40, fontSize:14 }}>Loading Surah {surah.name}...</div>
+        ) : viewMode === "full" ? (
+          // ── FULL SURAH VIEW ──
+          <div>
+            <div style={{ color:LIGHT_GOLD, fontSize:24, lineHeight:2.2, textAlign:"right", direction:"rtl", fontFamily:"serif", marginBottom:16 }}>
+              {ayahs.map(ayah => (
+                <span key={ayah.number}>
+                  {ayah.arabic}
+                  <span style={{ color:GOLD, fontSize:16, fontFamily:"serif" }}> ﴿{ayah.number}﴾ </span>
+                </span>
+              ))}
+            </div>
+            {showTranslation && (
+              <div style={{ borderTop:"1px solid rgba(201,168,76,0.15)", paddingTop:16 }}>
+                {ayahs.map(ayah => (
+                  <div key={ayah.number} style={{ marginBottom:12, paddingBottom:12, borderBottom:"1px solid rgba(255,255,255,0.05)" }}>
+                    <span style={{ color:GOLD, fontSize:11, fontWeight:700 }}>[{ayah.number}] </span>
+                    <span style={{ color:"rgba(255,255,255,0.5)", fontSize:12, lineHeight:1.7, fontStyle:"italic" }}>{ayah.translation}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         ) : (
+          // ── AYAH BY AYAH VIEW ──
           ayahs.map(ayah => (
-            <div key={ayah.number} style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(201,168,76,0.1)", borderRadius:14, padding:"16px", marginBottom:12 }}>
+            <div key={ayah.number} style={{ background:playingAyah===ayah.number?"rgba(201,168,76,0.08)":"rgba(255,255,255,0.03)", border:`1px solid ${playingAyah===ayah.number?"rgba(201,168,76,0.4)":"rgba(201,168,76,0.1)"}`, borderRadius:14, padding:"16px", marginBottom:10, transition:"all 0.3s" }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
                 <div style={{ width:28, height:28, borderRadius:"50%", background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.3)", display:"flex", alignItems:"center", justifyContent:"center", color:GOLD, fontSize:10, fontWeight:700 }}>{ayah.number}</div>
                 <div onClick={() => playAudio(ayah.number)} style={{ background:playingAyah===ayah.number?"rgba(201,168,76,0.3)":"rgba(201,168,76,0.1)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:20, padding:"5px 12px", color:GOLD, fontSize:12, cursor:"pointer", display:"flex", alignItems:"center", gap:5 }}>
@@ -1257,6 +1351,16 @@ function QuranReader({ surah, onBack }) {
           ))
         )}
       </div>
+
+      {/* Now Playing bar */}
+      {playingAll && (
+        <div style={{ background:`linear-gradient(135deg,${MID_GREEN},${DARK_GREEN})`, borderTop:`1px solid rgba(201,168,76,0.3)`, padding:"10px 16px", display:"flex", alignItems:"center", gap:10, flexShrink:0 }}>
+          <div style={{ width:8, height:8, borderRadius:"50%", background:"#FF4444", animation:"pulse 1s infinite" }} />
+          <div style={{ flex:1, color:LIGHT_GOLD, fontSize:12 }}>Playing Ayah {playingAyah} of {surah.name}</div>
+          <div style={{ color:"rgba(255,255,255,0.35)", fontSize:11 }}>{currentAyahIdx + 1}/{ayahs.length}</div>
+          <div onClick={stopAudio} style={{ color:"#FF9999", fontSize:12, cursor:"pointer", fontWeight:700 }}>⏹ Stop</div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1264,6 +1368,15 @@ function QuranReader({ surah, onBack }) {
 function QuranPage() {
   const [selectedSurah, setSelectedSurah] = useState(null);
   const [search, setSearch]               = useState("");
+  const [tab, setTab]                     = useState("all"); // "all" or "bookmarks"
+  const [bookmarks, setBookmarks]         = useState([]);
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("minbar_bookmarks") || "[]");
+      setBookmarks(saved);
+    } catch(_) {}
+  }, [selectedSurah]); // refresh when coming back from reader
 
   if (selectedSurah) return <QuranReader surah={selectedSurah} onBack={() => setSelectedSurah(null)} />;
 
@@ -1271,6 +1384,22 @@ function QuranPage() {
     s.name.toLowerCase().includes(search.toLowerCase()) ||
     s.arabic.includes(search) ||
     String(s.n).includes(search)
+  );
+
+  const bookmarkedSurahs = SURAHS.filter(s => bookmarks.includes(s.n));
+
+  const SurahCard = ({ s }) => (
+    <div key={s.n} onClick={() => setSelectedSurah(s)} style={{ background:`linear-gradient(135deg,rgba(26,77,46,0.4),rgba(10,46,26,0.6))`, border:"1px solid rgba(201,168,76,0.15)", borderRadius:13, padding:"12px 14px", display:"flex", alignItems:"center", gap:12, cursor:"pointer", marginBottom:8 }}>
+      <div style={{ width:36, height:36, borderRadius:10, background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.3)", display:"flex", alignItems:"center", justifyContent:"center", color:GOLD, fontSize:11, fontWeight:700, flexShrink:0 }}>{s.n}</div>
+      <div style={{ flex:1 }}>
+        <div style={{ color:OFF_WHITE, fontWeight:700, fontSize:14 }}>{s.name}</div>
+        <div style={{ color:"rgba(255,255,255,0.3)", fontSize:11 }}>{s.ayahs} Ayahs</div>
+      </div>
+      <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+        {bookmarks.includes(s.n) && <span style={{ fontSize:14 }}>🔖</span>}
+        <div style={{ color:LIGHT_GOLD, fontSize:16, fontFamily:"serif" }}>{s.arabic}</div>
+      </div>
+    </div>
   );
 
   return (
@@ -1284,25 +1413,38 @@ function QuranPage() {
         <div style={{ color:"rgba(255,255,255,0.3)", fontSize:11, fontStyle:"italic" }}>In the name of Allah, the Most Gracious, the Most Merciful</div>
       </div>
 
-      {/* Search */}
-      <input
-        placeholder="🔍 Search surah..."
-        value={search}
-        onChange={e => setSearch(e.target.value)}
-        style={{ width:"100%", background:"rgba(255,255,255,0.07)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:12, padding:"12px 16px", color:"#fff", fontSize:14, outline:"none", marginBottom:16 }}
-      />
-
-      {/* Surah list */}
-      {filtered.map(s => (
-        <div key={s.n} onClick={() => setSelectedSurah(s)} style={{ background:`linear-gradient(135deg,rgba(26,77,46,0.4),rgba(10,46,26,0.6))`, border:"1px solid rgba(201,168,76,0.15)", borderRadius:13, padding:"12px 14px", display:"flex", alignItems:"center", gap:12, cursor:"pointer", marginBottom:8 }}>
-          <div style={{ width:36, height:36, borderRadius:10, background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.3)", display:"flex", alignItems:"center", justifyContent:"center", color:GOLD, fontSize:11, fontWeight:700, flexShrink:0 }}>{s.n}</div>
-          <div style={{ flex:1 }}>
-            <div style={{ color:OFF_WHITE, fontWeight:700, fontSize:14 }}>{s.name}</div>
-            <div style={{ color:"rgba(255,255,255,0.3)", fontSize:11 }}>{s.ayahs} Ayahs</div>
-          </div>
-          <div style={{ color:LIGHT_GOLD, fontSize:16, fontFamily:"serif" }}>{s.arabic}</div>
+      {/* Tabs */}
+      <div style={{ display:"flex", background:"rgba(255,255,255,0.05)", borderRadius:12, padding:4, marginBottom:16, gap:4 }}>
+        <div onClick={() => setTab("all")} style={{ flex:1, textAlign:"center", padding:"8px", borderRadius:10, background:tab==="all"?`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`:"transparent", color:tab==="all"?DARK_GREEN:GOLD, fontSize:12, fontWeight:700, cursor:"pointer" }}>
+          📖 All Surahs
         </div>
-      ))}
+        <div onClick={() => setTab("bookmarks")} style={{ flex:1, textAlign:"center", padding:"8px", borderRadius:10, background:tab==="bookmarks"?`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`:"transparent", color:tab==="bookmarks"?DARK_GREEN:GOLD, fontSize:12, fontWeight:700, cursor:"pointer" }}>
+          🔖 Saved ({bookmarkedSurahs.length})
+        </div>
+      </div>
+
+      {tab === "bookmarks" ? (
+        bookmarkedSurahs.length === 0 ? (
+          <div style={{ textAlign:"center", padding:"40px 20px" }}>
+            <div style={{ fontSize:40, marginBottom:12 }}>🔖</div>
+            <div style={{ color:GOLD, fontWeight:700, fontSize:15, marginBottom:8 }}>No Saved Surahs Yet</div>
+            <div style={{ color:"rgba(255,255,255,0.35)", fontSize:12 }}>Open any Surah and tap 🔖 to save it here!</div>
+          </div>
+        ) : (
+          bookmarkedSurahs.map(s => <SurahCard key={s.n} s={s} />)
+        )
+      ) : (
+        <>
+          {/* Search */}
+          <input
+            placeholder="🔍 Search surah..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{ width:"100%", background:"rgba(255,255,255,0.07)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:12, padding:"12px 16px", color:"#fff", fontSize:14, outline:"none", marginBottom:16, boxSizing:"border-box" }}
+          />
+          {filtered.map(s => <SurahCard key={s.n} s={s} />)}
+        </>
+      )}
     </div>
   );
 }
@@ -1831,7 +1973,7 @@ export default function MinbarLiveApp() {
 
   // Admin button clicked — show masjid selector
   const [showMasjidSelect, setShowMasjidSelect] = useState(false);
-  const [showAddMasjid, setShowAddMasjid]       = useState(false);
+  const [showAddMasjid, setShowAddMasjid]       = useState(false); // eslint-disable-line no-unused-vars
 
   const handleAdminSelect = (masjid) => {
     setAdminTarget(masjid);
@@ -1858,6 +2000,7 @@ export default function MinbarLiveApp() {
       return updated;
     });
   };
+  // eslint-disable-next-line no-unused-vars
   const handleAddMasjid = (newMasjid) => {
     setMasjids(prev => {
       const updated = [...prev, newMasjid];
@@ -1865,6 +2008,7 @@ export default function MinbarLiveApp() {
       return updated;
     });
   };
+  // eslint-disable-next-line no-unused-vars
   const handleDeleteMasjid = (id) => {
     if (window.confirm("Delete this masjid?")) {
       setMasjids(prev => {
@@ -1985,12 +2129,22 @@ export default function MinbarLiveApp() {
                   </div>
                   <div style={{ color:GOLD, fontSize:18 }}>🔒</div>
                 </div>
-                <div onClick={() => handleDeleteMasjid(m.id)} style={{ background:"rgba(255,50,50,0.15)", border:"1px solid rgba(255,50,50,0.3)", borderRadius:12, padding:"14px 10px", cursor:"pointer", color:"#FF7777", fontSize:16 }}>🗑️</div>
+
               </div>
             ))}
-            <div onClick={() => { setShowMasjidSelect(false); setShowAddMasjid(true); }} style={{ background:"rgba(201,168,76,0.1)", border:"1px dashed rgba(201,168,76,0.4)", borderRadius:14, padding:"14px 16px", display:"flex", alignItems:"center", justifyContent:"center", gap:10, cursor:"pointer", marginTop:4 }}>
-              <span style={{ color:GOLD, fontSize:20 }}>➕</span>
-              <span style={{ color:GOLD, fontWeight:700, fontSize:14 }}>Add New Masjid</span>
+            <div style={{ background:"rgba(201,168,76,0.06)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:14, padding:"14px 16px", marginTop:8 }}>
+              <div style={{ color:"rgba(255,255,255,0.45)", fontSize:11, textAlign:"center", marginBottom:10 }}>Want to add or remove a Masjid?</div>
+              <div style={{ display:"flex", gap:8 }}>
+                <div onClick={() => window.open("https://wa.me/919157467486?text=Assalamu%20Alaikum%20Ibrahim%2C%20I%20want%20to%20add%2Fremove%20a%20Masjid%20on%20Minbar%20Live%20app.", "_blank")} style={{ flex:1, background:"linear-gradient(135deg,#25D366,#128C7E)", borderRadius:12, padding:"11px", textAlign:"center", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                  <span style={{ fontSize:16 }}>💬</span>
+                  <span style={{ color:"#fff", fontWeight:700, fontSize:12 }}>WhatsApp</span>
+                </div>
+                <div onClick={() => window.open("tel:+919157467486")} style={{ flex:1, background:"linear-gradient(135deg,#1A4D2E,#0A2E1A)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:12, padding:"11px", textAlign:"center", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
+                  <span style={{ fontSize:16 }}>📞</span>
+                  <span style={{ color:GOLD, fontWeight:700, fontSize:12 }}>Call</span>
+                </div>
+              </div>
+              <div style={{ color:"rgba(255,255,255,0.25)", fontSize:10, textAlign:"center", marginTop:8 }}>Contact Ibrahim AI Labs • We'll add it within 24 hours!</div>
             </div>
           </div>
         </div>
