@@ -72,8 +72,9 @@ function SplashScreen({ onDone }) {
 function playAdhanSound() {
   try {
     // Play real adhan from online source
-    const audio = new Audio("https://www.islamcan.com/audio/adhan/azan1.mp3");
+    const audio = new Audio("https://cdn.islamic.network/quran/audio/128/ar.alafasy/1.mp3");
     audio.volume = 1.0;
+    audio.crossOrigin = "anonymous";
     audio.play().catch(() => {
       // Fallback to beep if audio fails
       playAdhanBeep();
@@ -194,7 +195,7 @@ function usePrayerAlerts(masjids, enabled, onInAppNotif) {
       });
     };
     check();
-    const id = setInterval(check, 30000);
+    const id = setInterval(check, 60000);
     return () => clearInterval(id);
   }, [masjids, enabled, onInAppNotif]);
 }
@@ -919,8 +920,8 @@ function HomePage({ setPage, masjids }) {
           {[
             { icon:"📖", label:"Quran",   color:"#2E5E3A", page:"quran"   },
             { icon:"🤲", label:"Duas",    color:"#1A3D5C", page:"dua"     },
-            { icon:"📿", label:"Tasbeeh", color:"#3D2A5C", page:"tasbeeh" },
-            { icon:"🎧", label:"Library", color:"#5C3D1A", page:"library" },
+            { icon:"🧭", label:"Qibla",   color:"#3D2A5C", page:"qibla"   },
+            { icon:"💬", label:"Ask",     color:"#5C3D1A", page:"chat"    },
           ].map(item => (
             <div key={item.label} onClick={() => setPage(item.page)} style={{ background:`linear-gradient(135deg,${item.color},rgba(10,46,26,0.8))`, border:"1px solid rgba(201,168,76,0.18)", borderRadius:13, padding:"16px", display:"flex", alignItems:"center", gap:10, cursor:"pointer" }}>
               <span style={{ fontSize:26 }}>{item.icon}</span>
@@ -1191,7 +1192,8 @@ function QuranReader({ surah, onBack }) {
   const playAudio = (ayahNum) => {
     if (audio) { audio.pause(); setAudio(null); }
     if (playingAyah === ayahNum) { setPlayingAyah(null); return; }
-    const url = `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${(surah.n === 1 ? 0 : SURAHS.slice(0, surah.n-1).reduce((a,s) => a+s.ayahs, 0)) + ayahNum}.mp3`;
+    const offset = SURAHS.slice(0, surah.n-1).reduce((a,s) => a+s.ayahs, 0);
+    const url = `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${offset + ayahNum}.mp3`;
     const a = new Audio(url);
     a.play();
     a.onended = () => setPlayingAyah(null);
@@ -1657,7 +1659,6 @@ function ChatPage() {
   const [messages, setMessages]       = useState([{ from:"bot", text:"Assalamu Alaikum! 🌿 I am your Islamic FAQ assistant. Ask me any Islamic question or tap a question below!" }]);
   const [input, setInput]             = useState("");
   const [showScholars, setShowScholars] = useState(false);
-  const [selectedScholar, setSelectedScholar] = useState(null);
   const [contactMsg, setContactMsg]   = useState("");
   const [contactTopic, setContactTopic] = useState("");
   const msgEndRef = useRef(null);
