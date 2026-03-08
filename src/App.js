@@ -1129,23 +1129,193 @@ function PdfViewer({ url, title, onBack }) {
 }
 
 // ─── QURAN PAGE ────────────────────────────────────────────────────────────────
+const SURAHS = [
+  {n:1,name:"Al-Fatiha",arabic:"الفاتحة",ayahs:7},{n:2,name:"Al-Baqarah",arabic:"البقرة",ayahs:286},
+  {n:3,name:"Al-Imran",arabic:"آل عمران",ayahs:200},{n:4,name:"An-Nisa",arabic:"النساء",ayahs:176},
+  {n:5,name:"Al-Maidah",arabic:"المائدة",ayahs:120},{n:6,name:"Al-An'am",arabic:"الأنعام",ayahs:165},
+  {n:7,name:"Al-A'raf",arabic:"الأعراف",ayahs:206},{n:8,name:"Al-Anfal",arabic:"الأنفال",ayahs:75},
+  {n:9,name:"At-Tawbah",arabic:"التوبة",ayahs:129},{n:10,name:"Yunus",arabic:"يونس",ayahs:109},
+  {n:11,name:"Hud",arabic:"هود",ayahs:123},{n:12,name:"Yusuf",arabic:"يوسف",ayahs:111},
+  {n:13,name:"Ar-Ra'd",arabic:"الرعد",ayahs:43},{n:14,name:"Ibrahim",arabic:"إبراهيم",ayahs:52},
+  {n:15,name:"Al-Hijr",arabic:"الحجر",ayahs:99},{n:16,name:"An-Nahl",arabic:"النحل",ayahs:128},
+  {n:17,name:"Al-Isra",arabic:"الإسراء",ayahs:111},{n:18,name:"Al-Kahf",arabic:"الكهف",ayahs:110},
+  {n:19,name:"Maryam",arabic:"مريم",ayahs:98},{n:20,name:"Ta-Ha",arabic:"طه",ayahs:135},
+  {n:21,name:"Al-Anbiya",arabic:"الأنبياء",ayahs:112},{n:22,name:"Al-Hajj",arabic:"الحج",ayahs:78},
+  {n:23,name:"Al-Mu'minun",arabic:"المؤمنون",ayahs:118},{n:24,name:"An-Nur",arabic:"النور",ayahs:64},
+  {n:25,name:"Al-Furqan",arabic:"الفرقان",ayahs:77},{n:26,name:"Ash-Shu'ara",arabic:"الشعراء",ayahs:227},
+  {n:27,name:"An-Naml",arabic:"النمل",ayahs:93},{n:28,name:"Al-Qasas",arabic:"القصص",ayahs:88},
+  {n:29,name:"Al-Ankabut",arabic:"العنكبوت",ayahs:69},{n:30,name:"Ar-Rum",arabic:"الروم",ayahs:60},
+  {n:31,name:"Luqman",arabic:"لقمان",ayahs:34},{n:32,name:"As-Sajdah",arabic:"السجدة",ayahs:30},
+  {n:33,name:"Al-Ahzab",arabic:"الأحزاب",ayahs:73},{n:34,name:"Saba",arabic:"سبأ",ayahs:54},
+  {n:35,name:"Fatir",arabic:"فاطر",ayahs:45},{n:36,name:"Ya-Sin",arabic:"يس",ayahs:83},
+  {n:37,name:"As-Saffat",arabic:"الصافات",ayahs:182},{n:38,name:"Sad",arabic:"ص",ayahs:88},
+  {n:39,name:"Az-Zumar",arabic:"الزمر",ayahs:75},{n:40,name:"Ghafir",arabic:"غافر",ayahs:85},
+  {n:41,name:"Fussilat",arabic:"فصلت",ayahs:54},{n:42,name:"Ash-Shura",arabic:"الشورى",ayahs:53},
+  {n:43,name:"Az-Zukhruf",arabic:"الزخرف",ayahs:89},{n:44,name:"Ad-Dukhan",arabic:"الدخان",ayahs:59},
+  {n:45,name:"Al-Jathiyah",arabic:"الجاثية",ayahs:37},{n:46,name:"Al-Ahqaf",arabic:"الأحقاف",ayahs:35},
+  {n:47,name:"Muhammad",arabic:"محمد",ayahs:38},{n:48,name:"Al-Fath",arabic:"الفتح",ayahs:29},
+  {n:49,name:"Al-Hujurat",arabic:"الحجرات",ayahs:18},{n:50,name:"Qaf",arabic:"ق",ayahs:45},
+  {n:51,name:"Adh-Dhariyat",arabic:"الذاريات",ayahs:60},{n:52,name:"At-Tur",arabic:"الطور",ayahs:49},
+  {n:53,name:"An-Najm",arabic:"النجم",ayahs:62},{n:54,name:"Al-Qamar",arabic:"القمر",ayahs:55},
+  {n:55,name:"Ar-Rahman",arabic:"الرحمن",ayahs:78},{n:56,name:"Al-Waqi'ah",arabic:"الواقعة",ayahs:96},
+  {n:57,name:"Al-Hadid",arabic:"الحديد",ayahs:29},{n:58,name:"Al-Mujadila",arabic:"المجادلة",ayahs:22},
+  {n:59,name:"Al-Hashr",arabic:"الحشر",ayahs:24},{n:60,name:"Al-Mumtahanah",arabic:"الممتحنة",ayahs:13},
+  {n:61,name:"As-Saf",arabic:"الصف",ayahs:14},{n:62,name:"Al-Jumu'ah",arabic:"الجمعة",ayahs:11},
+  {n:63,name:"Al-Munafiqun",arabic:"المنافقون",ayahs:11},{n:64,name:"At-Taghabun",arabic:"التغابن",ayahs:18},
+  {n:65,name:"At-Talaq",arabic:"الطلاق",ayahs:12},{n:66,name:"At-Tahrim",arabic:"التحريم",ayahs:12},
+  {n:67,name:"Al-Mulk",arabic:"الملك",ayahs:30},{n:68,name:"Al-Qalam",arabic:"القلم",ayahs:52},
+  {n:69,name:"Al-Haqqah",arabic:"الحاقة",ayahs:52},{n:70,name:"Al-Ma'arij",arabic:"المعارج",ayahs:44},
+  {n:71,name:"Nuh",arabic:"نوح",ayahs:28},{n:72,name:"Al-Jinn",arabic:"الجن",ayahs:28},
+  {n:73,name:"Al-Muzzammil",arabic:"المزمل",ayahs:20},{n:74,name:"Al-Muddaththir",arabic:"المدثر",ayahs:56},
+  {n:75,name:"Al-Qiyamah",arabic:"القيامة",ayahs:40},{n:76,name:"Al-Insan",arabic:"الإنسان",ayahs:31},
+  {n:77,name:"Al-Mursalat",arabic:"المرسلات",ayahs:50},{n:78,name:"An-Naba",arabic:"النبأ",ayahs:40},
+  {n:79,name:"An-Nazi'at",arabic:"النازعات",ayahs:46},{n:80,name:"Abasa",arabic:"عبس",ayahs:42},
+  {n:81,name:"At-Takwir",arabic:"التكوير",ayahs:29},{n:82,name:"Al-Infitar",arabic:"الانفطار",ayahs:19},
+  {n:83,name:"Al-Mutaffifin",arabic:"المطففين",ayahs:36},{n:84,name:"Al-Inshiqaq",arabic:"الانشقاق",ayahs:25},
+  {n:85,name:"Al-Buruj",arabic:"البروج",ayahs:22},{n:86,name:"At-Tariq",arabic:"الطارق",ayahs:17},
+  {n:87,name:"Al-A'la",arabic:"الأعلى",ayahs:19},{n:88,name:"Al-Ghashiyah",arabic:"الغاشية",ayahs:26},
+  {n:89,name:"Al-Fajr",arabic:"الفجر",ayahs:30},{n:90,name:"Al-Balad",arabic:"البلد",ayahs:20},
+  {n:91,name:"Ash-Shams",arabic:"الشمس",ayahs:15},{n:92,name:"Al-Layl",arabic:"الليل",ayahs:21},
+  {n:93,name:"Ad-Duha",arabic:"الضحى",ayahs:11},{n:94,name:"Ash-Sharh",arabic:"الشرح",ayahs:8},
+  {n:95,name:"At-Tin",arabic:"التين",ayahs:8},{n:96,name:"Al-Alaq",arabic:"العلق",ayahs:19},
+  {n:97,name:"Al-Qadr",arabic:"القدر",ayahs:5},{n:98,name:"Al-Bayyinah",arabic:"البينة",ayahs:8},
+  {n:99,name:"Az-Zalzalah",arabic:"الزلزلة",ayahs:8},{n:100,name:"Al-Adiyat",arabic:"العاديات",ayahs:11},
+  {n:101,name:"Al-Qari'ah",arabic:"القارعة",ayahs:11},{n:102,name:"At-Takathur",arabic:"التكاثر",ayahs:8},
+  {n:103,name:"Al-Asr",arabic:"العصر",ayahs:3},{n:104,name:"Al-Humazah",arabic:"الهمزة",ayahs:9},
+  {n:105,name:"Al-Fil",arabic:"الفيل",ayahs:5},{n:106,name:"Quraysh",arabic:"قريش",ayahs:4},
+  {n:107,name:"Al-Ma'un",arabic:"الماعون",ayahs:7},{n:108,name:"Al-Kawthar",arabic:"الكوثر",ayahs:3},
+  {n:109,name:"Al-Kafirun",arabic:"الكافرون",ayahs:6},{n:110,name:"An-Nasr",arabic:"النصر",ayahs:3},
+  {n:111,name:"Al-Masad",arabic:"المسد",ayahs:5},{n:112,name:"Al-Ikhlas",arabic:"الإخلاص",ayahs:4},
+  {n:113,name:"Al-Falaq",arabic:"الفلق",ayahs:5},{n:114,name:"An-Nas",arabic:"الناس",ayahs:6},
+];
+
+function QuranReader({ surah, onBack }) {
+  const [ayahs, setAyahs]           = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [playingAyah, setPlayingAyah] = useState(null);
+  const [audio, setAudio]           = useState(null);
+  const [showTranslation, setShowTranslation] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch(`https://api.alquran.cloud/v1/surah/${surah.n}/editions/quran-uthmani,en.asad`)
+      .then(r => r.json())
+      .then(data => {
+        const arabic = data.data[0].ayahs;
+        const english = data.data[1].ayahs;
+        setAyahs(arabic.map((a, i) => ({
+          number: a.numberInSurah,
+          arabic: a.text,
+          translation: english[i].text,
+        })));
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [surah.n]);
+
+  const playAudio = (ayahNum) => {
+    if (audio) { audio.pause(); setAudio(null); }
+    if (playingAyah === ayahNum) { setPlayingAyah(null); return; }
+    const url = `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${(surah.n === 1 ? 0 : SURAHS.slice(0, surah.n-1).reduce((a,s) => a+s.ayahs, 0)) + ayahNum}.mp3`;
+    const a = new Audio(url);
+    a.play();
+    a.onended = () => setPlayingAyah(null);
+    setAudio(a);
+    setPlayingAyah(ayahNum);
+  };
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", position:"fixed", inset:0, zIndex:500, background:DARK_GREEN }}>
+      {/* Header */}
+      <div style={{ background:`linear-gradient(135deg,${DARK_GREEN},${MID_GREEN})`, padding:"12px 16px", display:"flex", alignItems:"center", gap:10, flexShrink:0 }}>
+        <button onClick={onBack} style={{ background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:10, padding:"7px 12px", color:GOLD, fontSize:12, fontWeight:700, cursor:"pointer" }}>← Back</button>
+        <div style={{ flex:1 }}>
+          <div style={{ color:LIGHT_GOLD, fontWeight:700, fontSize:14, fontFamily:"'Playfair Display',serif" }}>{surah.name}</div>
+          <div style={{ color:"rgba(255,255,255,0.35)", fontSize:10 }}>{surah.arabic} • {surah.ayahs} Ayahs</div>
+        </div>
+        <div onClick={() => setShowTranslation(!showTranslation)} style={{ background:showTranslation?"rgba(201,168,76,0.2)":"rgba(255,255,255,0.05)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:10, padding:"6px 10px", color:GOLD, fontSize:11, fontWeight:700, cursor:"pointer" }}>
+          {showTranslation ? "🌍 ON" : "🌍 OFF"}
+        </div>
+      </div>
+
+      {/* Bismillah */}
+      {surah.n !== 9 && (
+        <div style={{ background:"rgba(201,168,76,0.08)", padding:"14px 20px", textAlign:"center", borderBottom:"1px solid rgba(201,168,76,0.1)" }}>
+          <div style={{ color:LIGHT_GOLD, fontSize:20, fontFamily:"serif", direction:"rtl" }}>بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+        </div>
+      )}
+
+      {/* Ayahs */}
+      <div style={{ flex:1, overflowY:"auto", padding:"16px 16px 80px" }}>
+        {loading ? (
+          <div style={{ textAlign:"center", color:GOLD, padding:40, fontSize:14 }}>Loading Surah {surah.name}...</div>
+        ) : (
+          ayahs.map(ayah => (
+            <div key={ayah.number} style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(201,168,76,0.1)", borderRadius:14, padding:"16px", marginBottom:12 }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+                <div style={{ width:28, height:28, borderRadius:"50%", background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.3)", display:"flex", alignItems:"center", justifyContent:"center", color:GOLD, fontSize:10, fontWeight:700 }}>{ayah.number}</div>
+                <div onClick={() => playAudio(ayah.number)} style={{ background:playingAyah===ayah.number?"rgba(201,168,76,0.3)":"rgba(201,168,76,0.1)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:20, padding:"5px 12px", color:GOLD, fontSize:12, cursor:"pointer", display:"flex", alignItems:"center", gap:5 }}>
+                  {playingAyah===ayah.number ? "⏸ Stop" : "▶ Play"}
+                </div>
+              </div>
+              <div style={{ color:LIGHT_GOLD, fontSize:22, lineHeight:1.9, textAlign:"right", direction:"rtl", fontFamily:"serif", marginBottom:showTranslation?10:0 }}>
+                {ayah.arabic}
+              </div>
+              {showTranslation && (
+                <div style={{ color:"rgba(255,255,255,0.45)", fontSize:12, lineHeight:1.7, fontStyle:"italic", borderTop:"1px solid rgba(201,168,76,0.1)", paddingTop:8 }}>
+                  {ayah.translation}
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
 function QuranPage() {
-  const [showPdf, setShowPdf] = useState(false);
-  if (showPdf) return <PdfViewer url={QURAN_EMBED} title="📖 Holy Quran" onBack={() => setShowPdf(false)} />;
+  const [selectedSurah, setSelectedSurah] = useState(null);
+  const [search, setSearch]               = useState("");
+
+  if (selectedSurah) return <QuranReader surah={selectedSurah} onBack={() => setSelectedSurah(null)} />;
+
+  const filtered = SURAHS.filter(s =>
+    s.name.toLowerCase().includes(search.toLowerCase()) ||
+    s.arabic.includes(search) ||
+    String(s.n).includes(search)
+  );
+
   return (
     <div style={{ padding:"20px 20px 80px" }}>
       <SectionTitle>📖 Holy Quran</SectionTitle>
-      <div style={{ color:"rgba(255,255,255,0.45)", fontSize:13, marginBottom:24 }}>Read the complete Quran</div>
-      <div onClick={() => setShowPdf(true)} style={{ background:`linear-gradient(135deg,${MID_GREEN},#1A2E0A)`, border:"2px solid rgba(201,168,76,0.4)", borderRadius:20, padding:"40px 20px", textAlign:"center", cursor:"pointer", boxShadow:"0 8px 32px rgba(0,0,0,0.4)", marginBottom:16 }}>
-        <div style={{ fontSize:64, marginBottom:14 }}>📖</div>
-        <div style={{ color:LIGHT_GOLD, fontSize:22, fontWeight:700, fontFamily:"'Playfair Display',serif", marginBottom:8 }}>Al-Quran Al-Kareem</div>
-        <div style={{ color:"rgba(255,255,255,0.5)", fontSize:13, marginBottom:20 }}>Complete Quran PDF</div>
-        <div style={{ background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, color:DARK_GREEN, borderRadius:20, padding:"12px 32px", fontSize:15, fontWeight:700, display:"inline-block" }}>📖 Read Quran →</div>
+      <div style={{ color:"rgba(255,255,255,0.45)", fontSize:13, marginBottom:16 }}>114 Surahs • Arabic + Translation + Audio</div>
+
+      {/* Bismillah */}
+      <div style={{ background:"rgba(201,168,76,0.08)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:14, padding:"14px 16px", textAlign:"center", marginBottom:16 }}>
+        <div style={{ fontSize:16, direction:"rtl", fontFamily:"serif", color:LIGHT_GOLD, marginBottom:4 }}>بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+        <div style={{ color:"rgba(255,255,255,0.3)", fontSize:11, fontStyle:"italic" }}>In the name of Allah, the Most Gracious, the Most Merciful</div>
       </div>
-      <div style={{ background:"rgba(201,168,76,0.08)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:14, padding:"16px", textAlign:"center" }}>
-        <div style={{ fontSize:18, direction:"rtl", fontFamily:"serif", color:LIGHT_GOLD, marginBottom:8 }}>بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
-        <div style={{ color:"rgba(255,255,255,0.4)", fontSize:12, fontStyle:"italic" }}>"In the name of Allah, the Most Gracious, the Most Merciful"</div>
-      </div>
+
+      {/* Search */}
+      <input
+        placeholder="🔍 Search surah..."
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        style={{ width:"100%", background:"rgba(255,255,255,0.07)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:12, padding:"12px 16px", color:"#fff", fontSize:14, outline:"none", marginBottom:16 }}
+      />
+
+      {/* Surah list */}
+      {filtered.map(s => (
+        <div key={s.n} onClick={() => setSelectedSurah(s)} style={{ background:`linear-gradient(135deg,rgba(26,77,46,0.4),rgba(10,46,26,0.6))`, border:"1px solid rgba(201,168,76,0.15)", borderRadius:13, padding:"12px 14px", display:"flex", alignItems:"center", gap:12, cursor:"pointer", marginBottom:8 }}>
+          <div style={{ width:36, height:36, borderRadius:10, background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.3)", display:"flex", alignItems:"center", justifyContent:"center", color:GOLD, fontSize:11, fontWeight:700, flexShrink:0 }}>{s.n}</div>
+          <div style={{ flex:1 }}>
+            <div style={{ color:OFF_WHITE, fontWeight:700, fontSize:14 }}>{s.name}</div>
+            <div style={{ color:"rgba(255,255,255,0.3)", fontSize:11 }}>{s.ayahs} Ayahs</div>
+          </div>
+          <div style={{ color:LIGHT_GOLD, fontSize:16, fontFamily:"serif" }}>{s.arabic}</div>
+        </div>
+      ))}
     </div>
   );
 }
