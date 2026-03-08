@@ -1100,32 +1100,8 @@ function AddMasjidModal({ onAdd, onClose }) {
   );
 }
 
-const DUAS_EMBED  = "https://drive.google.com/file/d/1oRIJL3AQDwfYjjxK3U3crMIbA59ueUxt/preview?usp=sharing";
 
-function PdfViewer({ url, title, onBack }) {
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  const directUrl = url.replace("/preview?usp=sharing", "/view?usp=sharing");
-  return (
-    <div style={{ display:"flex", flexDirection:"column", position:"fixed", inset:0, zIndex:500, background:DARK_GREEN }}>
-      <div style={{ background:`linear-gradient(135deg,${DARK_GREEN},${MID_GREEN})`, padding:"12px 16px", display:"flex", alignItems:"center", gap:12, flexShrink:0 }}>
-        <button onClick={onBack} style={{ background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:10, padding:"7px 14px", color:GOLD, fontSize:13, fontWeight:700, cursor:"pointer" }}>← Back</button>
-        <div style={{ color:LIGHT_GOLD, fontWeight:700, fontSize:15, fontFamily:"'Playfair Display',serif" }}>{title}</div>
-      </div>
-      {isIOS ? (
-        <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:24, gap:20 }}>
-          <div style={{ fontSize:64 }}>📖</div>
-          <div style={{ color:LIGHT_GOLD, fontSize:18, fontWeight:700, textAlign:"center" }}>{title}</div>
-          <div style={{ color:"rgba(255,255,255,0.45)", fontSize:13, textAlign:"center", lineHeight:1.7 }}>Tap below to open the PDF</div>
-          <div onClick={() => window.open(directUrl, "_blank")} style={{ background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, color:DARK_GREEN, borderRadius:20, padding:"14px 36px", fontSize:16, fontWeight:700, cursor:"pointer" }}>
-            📖 Open PDF →
-          </div>
-        </div>
-      ) : (
-        <iframe src={url} title={title} style={{ flex:1, border:"none", width:"100%", background:"#fff" }} allow="autoplay" />
-      )}
-    </div>
-  );
-}
+
 
 // ─── QURAN PAGE ────────────────────────────────────────────────────────────────
 const SURAHS = [
