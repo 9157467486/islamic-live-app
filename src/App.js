@@ -1548,22 +1548,45 @@ function DuaPage() {
   };
 
   const playDuaAudio = (dua) => {
-    if (audio) { audio.pause(); setAudio(null); }
+    if (audio) { audio.pause(); audio.src = ""; setAudio(null); }
     if (playingDua === dua.id) { setPlayingDua(null); return; }
+    // Use text-to-speech for Arabic dua recitation
     try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      [0, 0.4, 0.8].forEach(t => {
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(dua.arabic);
+        utterance.lang = "ar-SA";
+        utterance.rate = 0.75;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+        // Try to find Arabic voice
+        const voices = window.speechSynthesis.getVoices();
+        const arabicVoice = voices.find(v => v.lang.startsWith("ar"));
+        if (arabicVoice) utterance.voice = arabicVoice;
+        utterance.onend = () => setPlayingDua(null);
+        utterance.onerror = () => setPlayingDua(null);
+        window.speechSynthesis.speak(utterance);
+        setPlayingDua(dua.id);
+      } else {
+        // Fallback: play a gentle tone
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = ctx.createOscillator(), gain = ctx.createGain();
         osc.connect(gain); gain.connect(ctx.destination);
         osc.type = "sine";
-        osc.frequency.setValueAtTime(440, ctx.currentTime + t);
-        gain.gain.setValueAtTime(0.3, ctx.currentTime + t);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.35);
-        osc.start(ctx.currentTime + t); osc.stop(ctx.currentTime + t + 0.4);
-      });
-      setTimeout(() => setPlayingDua(null), 1500);
-      setPlayingDua(dua.id);
-    } catch(_) {}
+        osc.frequency.setValueAtTime(396, ctx.currentTime);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.5);
+        osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 1.5);
+        setTimeout(() => setPlayingDua(null), 1500);
+        setPlayingDua(dua.id);
+      }
+    } catch(_) { setPlayingDua(null); }
+  };
+
+  const stopDuaAudio = () => {
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    if (audio) { audio.pause(); audio.src = ""; setAudio(null); }
+    setPlayingDua(null);
   };
 
   // Dua detail view
@@ -1588,8 +1611,8 @@ function DuaPage() {
             <span style={{ color:GOLD, fontSize:12 }}>📚</span>
             <span style={{ color:"rgba(255,255,255,0.4)", fontSize:12 }}>Reference: <span style={{ color:GOLD }}>{selectedDua.ref}</span></span>
           </div>
-          <div onClick={() => playDuaAudio(selectedDua)} style={{ background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, color:DARK_GREEN, borderRadius:20, padding:"14px", fontSize:15, fontWeight:700, cursor:"pointer", textAlign:"center" }}>
-            {playingDua === selectedDua.id ? "⏸ Stop" : "🔊 Listen"}
+          <div onClick={() => playingDua === selectedDua.id ? stopDuaAudio() : playDuaAudio(selectedDua)} style={{ background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, color:DARK_GREEN, borderRadius:20, padding:"14px", fontSize:15, fontWeight:700, cursor:"pointer", textAlign:"center" }}>
+            {playingDua === selectedDua.id ? "⏸ Stop" : "🔊 Listen Arabic"}
           </div>
         </div>
       </div>
