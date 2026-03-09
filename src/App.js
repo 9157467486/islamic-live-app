@@ -13,25 +13,37 @@ const FIREBASE_CONFIG = {
 const VAPID_KEY = "BPB3XM_3GWOduj16rr4KtiDwZp3SWxilvT-TYTa4WVgX-b0r9oAC5TXn_ONURnSbqO5Fy9RBuyUm7RDB380hy7A";
 
 // ─── FCM HELPERS ──────────────────────────────────────────────────────────────
-async function initFirebaseMessaging() {
-  try {
-    if (!("Notification" in window) || !("serviceWorker" in navigator)) return null;
-    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js");
-    const { getMessaging, getToken, onMessage } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js");
-    const app = initializeApp(FIREBASE_CONFIG);
-    const messaging = getMessaging(app);
-    return { messaging, getToken, onMessage };
-  } catch(e) { console.log("FCM init error:", e); return null; }
+function loadFirebaseScripts() {
+  return new Promise((resolve) => {
+    if (window.firebase && window.firebase.messaging) { resolve(); return; }
+    const s1 = document.createElement("script");
+    s1.src = "https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js";
+    s1.onload = () => {
+      const s2 = document.createElement("script");
+      s2.src = "https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js";
+      s2.onload = () => {
+        if (!window.firebase.apps.length) window.firebase.initializeApp(FIREBASE_CONFIG);
+        resolve();
+      };
+      document.head.appendChild(s2);
+    };
+    document.head.appendChild(s1);
+  });
 }
 
 async function getFCMToken() {
   try {
-    const fcm = await initFirebaseMessaging();
-    if (!fcm) return null;
+    if (!("Notification" in window) || !("serviceWorker" in navigator)) return null;
+    await loadFirebaseScripts();
     const permission = await Notification.requestPermission();
     if (permission !== "granted") return null;
+    const messaging = window.firebase.messaging();
+    await navigator.serviceWorker.register("/firebase-messaging-sw.js");
     const reg = await navigator.serviceWorker.ready;
-    const token = await fcm.getToken(fcm.messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
+    const token = await messaging.getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
+    const tokens = JSON.parse(localStorage.getItem("minbar_fcm_tokens") || "[]");
+    if (!tokens.includes(token)) { tokens.push(token); localStorage.setItem("minbar_fcm_tokens", JSON.stringify(tokens)); }
+    localStorage.setItem("minbar_fcm_token", token);
     return token;
   } catch(e) { console.log("FCM token error:", e); return null; }
 }
