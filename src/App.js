@@ -51,7 +51,7 @@ async function sendLiveNotification(masjidName, bayanTitle) {
       body: JSON.stringify({
         registration_ids: tokens,
         notification: {
-          title: \`🔴 \${masjidName} is LIVE!\`,
+          title: "🔴 " + masjidName + " is LIVE!",
           body: bayanTitle || "Live stream has started. Tap to watch!",
           icon: "/logo192.png",
           click_action: "https://islamic-live-app.vercel.app"
