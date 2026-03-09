@@ -1,5 +1,72 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
+// ─── FIREBASE CONFIG ──────────────────────────────────────────────────────────
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAq_nm6YX_5d7DMOqmEmQ8MgKsXLoqKeKY",
+  authDomain: "minbar-live.firebaseapp.com",
+  projectId: "minbar-live",
+  storageBucket: "minbar-live.firebasestorage.app",
+  messagingSenderId: "645939734747",
+  appId: "1:645939734747:web:daf3aae436ce0f5c3884fe",
+  measurementId: "G-QEY8E2RP3M"
+};
+const VAPID_KEY = "BPB3XM_3GWOduj16rr4KtiDwZp3SWxilvT-TYTa4WVgX-b0r9oAC5TXn_ONURnSbqO5Fy9RBuyUm7RDB380hy7A";
+
+// ─── FCM HELPERS ──────────────────────────────────────────────────────────────
+async function initFirebaseMessaging() {
+  try {
+    if (!("Notification" in window) || !("serviceWorker" in navigator)) return null;
+    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js");
+    const { getMessaging, getToken, onMessage } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js");
+    const app = initializeApp(FIREBASE_CONFIG);
+    const messaging = getMessaging(app);
+    return { messaging, getToken, onMessage };
+  } catch(e) { console.log("FCM init error:", e); return null; }
+}
+
+async function getFCMToken() {
+  try {
+    const fcm = await initFirebaseMessaging();
+    if (!fcm) return null;
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") return null;
+    const reg = await navigator.serviceWorker.ready;
+    const token = await fcm.getToken(fcm.messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
+    return token;
+  } catch(e) { console.log("FCM token error:", e); return null; }
+}
+
+async function sendLiveNotification(masjidName, bayanTitle) {
+  try {
+    // Get all subscriber tokens from localStorage
+    const tokens = JSON.parse(localStorage.getItem("minbar_fcm_tokens") || "[]");
+    if (tokens.length === 0) return;
+    // Send via Firebase Cloud Messaging HTTP v1 API
+    const response = await fetch("https://fcm.googleapis.com/fcm/send", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "key=645939734747"
+      },
+      body: JSON.stringify({
+        registration_ids: tokens,
+        notification: {
+          title: \`🔴 \${masjidName} is LIVE!\`,
+          body: bayanTitle || "Live stream has started. Tap to watch!",
+          icon: "/logo192.png",
+          click_action: "https://islamic-live-app.vercel.app"
+        },
+        data: {
+          masjid: masjidName,
+          url: "https://islamic-live-app.vercel.app"
+        }
+      })
+    });
+    console.log("Notification sent!", await response.json());
+  } catch(e) { console.log("Send notif error:", e); }
+}
+
+
 // ─── SPLASH SCREEN ────────────────────────────────────────────────────────────
 function SplashScreen({ onDone }) {
   useEffect(() => { const t = setTimeout(onDone, 3200); return () => clearTimeout(t); }, [onDone]);
@@ -515,6 +582,8 @@ function AdminPanel({ masjid, onClose, onUpdateMasjid }) {
     if (overrideUrl) setYtUrl(overrideUrl);
     onUpdateMasjid(masjid.id, { youtubeUrl: finalUrl, isLive: true, topic, speaker });
     setUrlSaved(true); setTimeout(() => setUrlSaved(false), 2000);
+    // Send push notification to all subscribers
+    sendLiveNotification(masjid.name, topic || "Live stream has started!");
   };
 
   const endLive = () => {
@@ -586,10 +655,10 @@ function AdminPanel({ masjid, onClose, onUpdateMasjid }) {
               <div style={{ background:"rgba(255,50,50,0.08)", border:"1px solid rgba(255,100,100,0.2)", borderRadius:12, padding:"12px 14px", marginBottom:18 }}>
                 <div style={{ color:"#FF9999", fontWeight:700, fontSize:13, marginBottom:6 }}>📺 How YouTube Live Works</div>
                 <div style={{ color:"rgba(255,255,255,0.5)", fontSize:12, lineHeight:1.8 }}>
-                  1. Open <span style={{ color:GOLD }}>YouTube Studio</span> → Go Live 🔴{"\n"}
-                  2. Come back to this app{"\n"}
-                  3. Enter <span style={{ color:GOLD }}>Bayan title</span> below{"\n"}
-                  4. Tap <span style={{ color:GOLD }}>🔴 Go Live</span> — Users watching! ✅
+                  1. Open <span style={{ color:GOLD }}>YouTube Studio</span> app{"\n"}
+                  2. Tap Go Live 🔴 on YouTube{"\n"}
+                  3. Come back here → Enter bayan title{"\n"}
+                  4. Tap <span style={{ color:GOLD }}>Go Live</span> — Done! ✅
                 </div>
               </div>
 
@@ -1974,7 +2043,6 @@ export default function MinbarLiveApp() {
       const saved = localStorage.getItem("minbar_masjids");
       if (!saved) return MASJIDS_DEFAULT;
       const parsed = JSON.parse(saved);
-      // Merge with defaults to always have permanentLiveUrl
       return MASJIDS_DEFAULT.map(def => {
         const found = parsed.find(p => p.id === def.id);
         return found ? { ...def, ...found, permanentLiveUrl: def.permanentLiveUrl } : def;
