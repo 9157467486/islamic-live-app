@@ -988,8 +988,27 @@ function HomePage({ setPage, masjids }) {
         </div>
       </div>
 
+      {/* Push Notification Banner */}
+      {typeof Notification !== "undefined" && Notification.permission === "default" && (
+        <div style={{ margin:"14px 20px 0", background:"rgba(26,77,46,0.6)", border:"1px solid rgba(201,168,76,0.35)", borderRadius:12, padding:"10px 14px", display:"flex", alignItems:"center", gap:10 }}>
+          <span style={{ fontSize:18 }}>🔔</span>
+          <div style={{ flex:1 }}>
+            <div style={{ color:GOLD, fontSize:11, fontWeight:700 }}>Enable Live Notifications!</div>
+            <div style={{ color:"rgba(255,255,255,0.45)", fontSize:10 }}>Get notified when Masjid goes LIVE</div>
+          </div>
+          <button onClick={() => getFCMToken().then(t => { if(t) alert("Notifications enabled! You will be notified when Masjid goes live!"); })} style={{ background:"linear-gradient(135deg,#C9A84C,#E8C97A)", border:"none", borderRadius:8, padding:"6px 10px", color:"#1A4D2E", fontSize:10, fontWeight:700, cursor:"pointer", whiteSpace:"nowrap" }}>
+            Enable 🔔
+          </button>
+        </div>
+      )}
+      {typeof Notification !== "undefined" && Notification.permission === "granted" && (
+        <div style={{ margin:"14px 20px 0", background:"rgba(26,201,76,0.08)", border:"1px solid rgba(26,201,76,0.2)", borderRadius:12, padding:"10px 14px", display:"flex", alignItems:"center", gap:8 }}>
+          <span style={{ fontSize:16 }}>🔔</span>
+          <div style={{ color:"#99FFB3", fontSize:11 }}>Live notifications enabled! ✅</div>
+        </div>
+      )}
       {/* Tip Banner */}
-      <div style={{ margin:"14px 20px 0", background:"rgba(201,168,76,0.08)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:12, padding:"10px 14px", display:"flex", alignItems:"center", gap:10 }}>
+      <div style={{ margin:"10px 20px 0", background:"rgba(201,168,76,0.08)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:12, padding:"10px 14px", display:"flex", alignItems:"center", gap:10 }}>
         <span style={{ fontSize:20 }}>💡</span>
         <div style={{ color:"rgba(255,255,255,0.45)", fontSize:11, lineHeight:1.6 }}>
           Keep this app <span style={{ color:GOLD, fontWeight:700 }}>open in background</span> to receive adhan sound &amp; notifications!
