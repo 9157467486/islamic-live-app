@@ -224,6 +224,7 @@ const MASJIDS_DEFAULT = [
     password: "jumma123",
     youtubeUrl: "",
     youtubeChannel: "https://www.youtube.com/@JummaMasjid-z7o",
+    permanentLiveUrl: "https://www.youtube.com/@JummaMasjid-z7o/live",
     isLive: false,
     prayerTimes: {
       fajr:    { adhan: "05:15", iqamah: "05:30" },
@@ -258,6 +259,7 @@ const MASJIDS_DEFAULT = [
     password: "muhammadi789",
     youtubeUrl: "",
     youtubeChannel: "https://www.youtube.com/@Masjid-e-Muhammadi-o4t",
+    permanentLiveUrl: "https://www.youtube.com/@Masjid-e-Muhammadi-o4t/live",
     isLive: false,
     prayerTimes: {
       fajr:    { adhan: "05:20", iqamah: "05:35" },
@@ -584,10 +586,10 @@ function AdminPanel({ masjid, onClose, onUpdateMasjid }) {
               <div style={{ background:"rgba(255,50,50,0.08)", border:"1px solid rgba(255,100,100,0.2)", borderRadius:12, padding:"12px 14px", marginBottom:18 }}>
                 <div style={{ color:"#FF9999", fontWeight:700, fontSize:13, marginBottom:6 }}>📺 How YouTube Live Works</div>
                 <div style={{ color:"rgba(255,255,255,0.5)", fontSize:12, lineHeight:1.8 }}>
-                  1. Open <span style={{ color:GOLD }}>YouTube Studio</span> app{"\n"}
-                  2. Tap Go Live 🔴 on YouTube{"\n"}
-                  3. Come back here → Enter bayan title{"\n"}
-                  4. Tap <span style={{ color:GOLD }}>Go Live</span> — Done! ✅
+                  1. Open <span style={{ color:GOLD }}>YouTube Studio</span> → Go Live 🔴{"\n"}
+                  2. Come back to this app{"\n"}
+                  3. Enter <span style={{ color:GOLD }}>Bayan title</span> below{"\n"}
+                  4. Tap <span style={{ color:GOLD }}>🔴 Go Live</span> — Users watching! ✅
                 </div>
               </div>
 
@@ -1970,7 +1972,13 @@ export default function MinbarLiveApp() {
   const [masjids, setMasjids] = useState(() => {
     try {
       const saved = localStorage.getItem("minbar_masjids");
-      return saved ? JSON.parse(saved) : MASJIDS_DEFAULT;
+      if (!saved) return MASJIDS_DEFAULT;
+      const parsed = JSON.parse(saved);
+      // Merge with defaults to always have permanentLiveUrl
+      return MASJIDS_DEFAULT.map(def => {
+        const found = parsed.find(p => p.id === def.id);
+        return found ? { ...def, ...found, permanentLiveUrl: def.permanentLiveUrl } : def;
+      });
     } catch { return MASJIDS_DEFAULT; }
   });
   const [adminTarget, setAdminTarget] = useState(null);
