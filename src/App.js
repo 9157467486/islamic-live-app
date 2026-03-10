@@ -31,7 +31,6 @@ function loadFirebaseScripts() {
   });
 }
 
-// eslint-disable-next-line no-unused-vars
 async function getFCMToken() {
   try {
     if (!("Notification" in window) || !("serviceWorker" in navigator)) return null;
@@ -249,8 +248,7 @@ function usePrayerAlerts(masjids, enabled, onInAppNotif) {
       const now   = new Date();
       const hhmm  = `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
       const today = now.toDateString();
-      const userMasjidId = localStorage.getItem("minbar_user_masjid") || "m1";
-      masjids.filter(m => m.id === userMasjidId).forEach(m => {
+      masjids.forEach(m => {
         Object.entries(m.prayerTimes).forEach(([prayer, times]) => {
           const label = ({"fajr":"Fajr","dhuhr":"Dhuhr","asr":"Asr","maghrib":"Maghrib","isha":"Isha","jumuah":"Jumu'ah"})[prayer] || prayer;
           // Jumu'ah only fires on Friday (day 5)
@@ -914,17 +912,8 @@ function LivePage({ masjids }) {
 }
 
 // ─── HOME PAGE ─────────────────────────────────────────────────────────────────
-function HomePage({ setPage, masjids, notifEnabled, toggleNotifications }) {
-  const [userMasjidId, setUserMasjidId] = useState(() => localStorage.getItem("minbar_user_masjid") || "m1");
-  const [showMasjidPicker, setShowMasjidPicker] = useState(false);
-  const jumma = masjids.find(m => m.id === userMasjidId) || masjids[0];
-
-  const selectMasjid = (id) => {
-    setUserMasjidId(id);
-    localStorage.setItem("minbar_user_masjid", id);
-    setShowMasjidPicker(false);
-  };
-
+function HomePage({ setPage, masjids }) {
+  const jumma = masjids[0]; // Jumma Masjid is first
   // Find next prayer based on current time
   const now = new Date();
   const isFriday = now.getDay() === 5; // 5 = Friday
@@ -951,10 +940,7 @@ function HomePage({ setPage, masjids, notifEnabled, toggleNotifications }) {
             <div style={{ color: GOLD, fontSize: 11, fontFamily: "'Cinzel',serif", letterSpacing: 2 }}>MINBAR LIVE</div>
             <div style={{ color: OFF_WHITE, fontSize: 17, fontWeight: 700, fontFamily: "'Playfair Display',serif" }}>Assalamu Alaikum 🌿</div>
           </div>
-          <div onClick={() => setShowMasjidPicker(true)} style={{ background:"rgba(201,168,76,0.1)", border:`1px solid rgba(201,168,76,0.3)`, borderRadius:20, padding:"7px 12px", cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
-            <span style={{ fontSize:14 }}>{jumma.icon}</span>
-            <span style={{ color:GOLD, fontSize:11, fontWeight:700 }}>Change</span>
-          </div>
+          <div style={{ width: 42, height: 42, borderRadius: "50%", border: `2px solid ${GOLD}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, cursor: "pointer", background: "rgba(201,168,76,0.1)" }}>🔔</div>
         </div>
 
         {/* Next Prayer — from Jumma Masjid live data */}
@@ -974,7 +960,6 @@ function HomePage({ setPage, masjids, notifEnabled, toggleNotifications }) {
             <div style={{ display:"flex", alignItems:"center", gap:6 }}>
               <span style={{ fontSize:14 }}>{jumma.icon}</span>
               <span style={{ color: GOLD, fontSize: 12, fontWeight:700 }}>{jumma.name}</span>
-              <span onClick={() => setShowMasjidPicker(true)} style={{ color:"rgba(201,168,76,0.7)", fontSize:10, cursor:"pointer", background:"rgba(201,168,76,0.1)", borderRadius:6, padding:"2px 6px" }}>Change ▾</span>
             </div>
             <div style={{ color:"rgba(255,255,255,0.35)", fontSize:11 }}>
               Iqamah: <span style={{ color:GOLD }}>{jumma.prayerTimes[nextPrayer.key].iqamah}</span>
@@ -1003,42 +988,32 @@ function HomePage({ setPage, masjids, notifEnabled, toggleNotifications }) {
         </div>
       </div>
 
-      {/* Single Notification Toggle */}
-      <div style={{ margin:"14px 20px 0", background: notifEnabled ? "rgba(26,77,46,0.6)" : "rgba(255,255,255,0.05)", border: notifEnabled ? "1px solid rgba(201,168,76,0.35)" : "1px solid rgba(255,255,255,0.1)", borderRadius:12, padding:"12px 14px", display:"flex", alignItems:"center", gap:10 }}>
-        <span style={{ fontSize:20 }}>{notifEnabled ? "🔔" : "🔕"}</span>
-        <div style={{ flex:1 }}>
-          <div style={{ color: notifEnabled ? GOLD : "rgba(255,255,255,0.4)", fontSize:12, fontWeight:700 }}>
-            {notifEnabled ? "Notifications ON" : "Notifications OFF"}
+      {/* Push Notification Banner */}
+      {typeof Notification !== "undefined" && Notification.permission === "default" && (
+        <div style={{ margin:"14px 20px 0", background:"rgba(26,77,46,0.6)", border:"1px solid rgba(201,168,76,0.35)", borderRadius:12, padding:"10px 14px", display:"flex", alignItems:"center", gap:10 }}>
+          <span style={{ fontSize:18 }}>🔔</span>
+          <div style={{ flex:1 }}>
+            <div style={{ color:GOLD, fontSize:11, fontWeight:700 }}>Enable Live Notifications!</div>
+            <div style={{ color:"rgba(255,255,255,0.45)", fontSize:10 }}>Get notified when Masjid goes LIVE</div>
           </div>
-          <div style={{ color:"rgba(255,255,255,0.35)", fontSize:10, marginTop:2 }}>
-            {notifEnabled ? "Adhan, Iqamah & Live alerts active ✅" : "Tap to enable Adhan, Iqamah & Live alerts"}
-          </div>
-        </div>
-        <button onClick={toggleNotifications} style={{ background: notifEnabled ? "linear-gradient(135deg,#C9A84C,#E8C97A)" : "rgba(201,168,76,0.15)", border: notifEnabled ? "none" : "1px solid rgba(201,168,76,0.3)", borderRadius:20, padding:"8px 16px", color: notifEnabled ? DARK_GREEN : GOLD, fontSize:12, fontWeight:700, cursor:"pointer" }}>
-          {notifEnabled ? "ON ✓" : "OFF"}
-        </button>
-      </div>
-
-      {/* Masjid Picker Modal */}
-      {showMasjidPicker && (
-        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", zIndex:999, display:"flex", alignItems:"flex-end" }} onClick={() => setShowMasjidPicker(false)}>
-          <div style={{ background:"#0A2E1A", borderRadius:"20px 20px 0 0", width:"100%", padding:"20px", maxHeight:"80vh", overflowY:"auto" }} onClick={e => e.stopPropagation()}>
-            <div style={{ width:40, height:4, background:"rgba(201,168,76,0.3)", borderRadius:2, margin:"0 auto 16px" }} />
-            <div style={{ color:GOLD, fontWeight:700, fontSize:16, marginBottom:6, textAlign:"center" }}>🕌 Select Your Masjid</div>
-            <div style={{ color:"rgba(255,255,255,0.4)", fontSize:12, textAlign:"center", marginBottom:16 }}>Prayer times & notifications based on your selection</div>
-            {masjids.map(m => (
-              <div key={m.id} onClick={() => selectMasjid(m.id)} style={{ background: userMasjidId === m.id ? "linear-gradient(135deg,#1A4D2E,#2E6B3A)" : "rgba(255,255,255,0.05)", border: userMasjidId === m.id ? "1px solid rgba(201,168,76,0.5)" : "1px solid rgba(255,255,255,0.08)", borderRadius:14, padding:"14px 16px", marginBottom:10, cursor:"pointer", display:"flex", alignItems:"center", gap:12 }}>
-                <div style={{ fontSize:28 }}>{m.icon}</div>
-                <div style={{ flex:1 }}>
-                  <div style={{ color: userMasjidId === m.id ? GOLD : OFF_WHITE, fontWeight:700, fontSize:14 }}>{m.name}</div>
-                  <div style={{ color:"rgba(255,255,255,0.35)", fontSize:11, marginTop:3 }}>Fajr: {m.prayerTimes.fajr.adhan} • Dhuhr: {m.prayerTimes.dhuhr.adhan} • Isha: {m.prayerTimes.isha.adhan}</div>
-                </div>
-                {userMasjidId === m.id && <div style={{ color:GOLD, fontSize:18 }}>✅</div>}
-              </div>
-            ))}
-          </div>
+          <button onClick={() => getFCMToken().then(t => { if(t) alert("Notifications enabled! You will be notified when Masjid goes live!"); })} style={{ background:"linear-gradient(135deg,#C9A84C,#E8C97A)", border:"none", borderRadius:8, padding:"6px 10px", color:"#1A4D2E", fontSize:10, fontWeight:700, cursor:"pointer", whiteSpace:"nowrap" }}>
+            Enable 🔔
+          </button>
         </div>
       )}
+      {typeof Notification !== "undefined" && Notification.permission === "granted" && (
+        <div style={{ margin:"14px 20px 0", background:"rgba(26,201,76,0.08)", border:"1px solid rgba(26,201,76,0.2)", borderRadius:12, padding:"10px 14px", display:"flex", alignItems:"center", gap:8 }}>
+          <span style={{ fontSize:16 }}>🔔</span>
+          <div style={{ color:"#99FFB3", fontSize:11 }}>Live notifications enabled! ✅</div>
+        </div>
+      )}
+      {/* Tip Banner */}
+      <div style={{ margin:"10px 20px 0", background:"rgba(201,168,76,0.08)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:12, padding:"10px 14px", display:"flex", alignItems:"center", gap:10 }}>
+        <span style={{ fontSize:20 }}>💡</span>
+        <div style={{ color:"rgba(255,255,255,0.45)", fontSize:11, lineHeight:1.6 }}>
+          Keep this app <span style={{ color:GOLD, fontWeight:700 }}>open in background</span> to receive adhan sound &amp; notifications!
+        </div>
+      </div>
 
       {/* Live preview */}
       <div style={{ padding: "18px 20px 0" }}>
@@ -1319,6 +1294,41 @@ const SURAHS = [
   {n:113,name:"Al-Falaq",arabic:"الفلق",ayahs:5},{n:114,name:"An-Nas",arabic:"الناس",ayahs:6},
 ];
 
+
+// ─── JUZ (PARA) DATA ───────────────────────────────────────────────────────────
+const JUZ_DATA = [
+  { juz:1,  name:"Alif Lam Meem",      start:{surah:1,ayah:1},   end:{surah:2,ayah:141},  surahs:[1,2] },
+  { juz:2,  name:"Sayaqool",           start:{surah:2,ayah:142},  end:{surah:2,ayah:252},  surahs:[2] },
+  { juz:3,  name:"Tilkar Rusul",       start:{surah:2,ayah:253},  end:{surah:3,ayah:92},   surahs:[2,3] },
+  { juz:4,  name:"Lan Tanaloo",        start:{surah:3,ayah:93},   end:{surah:4,ayah:23},   surahs:[3,4] },
+  { juz:5,  name:"Wal Mohsanat",       start:{surah:4,ayah:24},   end:{surah:4,ayah:147},  surahs:[4] },
+  { juz:6,  name:"La Yuhibbullah",     start:{surah:4,ayah:148},  end:{surah:5,ayah:81},   surahs:[4,5] },
+  { juz:7,  name:"Wa Iza Samiu",       start:{surah:5,ayah:82},   end:{surah:6,ayah:110},  surahs:[5,6] },
+  { juz:8,  name:"Wa Lau Annana",      start:{surah:6,ayah:111},  end:{surah:7,ayah:87},   surahs:[6,7] },
+  { juz:9,  name:"Qalal Malao",        start:{surah:7,ayah:88},   end:{surah:8,ayah:40},   surahs:[7,8] },
+  { juz:10, name:"Wa Alamu",           start:{surah:8,ayah:41},   end:{surah:9,ayah:92},   surahs:[8,9] },
+  { juz:11, name:"Yatazeroon",         start:{surah:9,ayah:93},   end:{surah:11,ayah:5},   surahs:[9,10,11] },
+  { juz:12, name:"Wa Ma Min Daabbah",  start:{surah:11,ayah:6},   end:{surah:12,ayah:52},  surahs:[11,12] },
+  { juz:13, name:"Wa Ma Obarrio",      start:{surah:12,ayah:53},  end:{surah:14,ayah:52},  surahs:[12,13,14] },
+  { juz:14, name:"Rubama",             start:{surah:15,ayah:1},   end:{surah:16,ayah:128}, surahs:[15,16] },
+  { juz:15, name:"Subhanallazi",       start:{surah:17,ayah:1},   end:{surah:18,ayah:74},  surahs:[17,18] },
+  { juz:16, name:"Qal Alam",           start:{surah:18,ayah:75},  end:{surah:20,ayah:135}, surahs:[18,19,20] },
+  { juz:17, name:"Iqtarabo",           start:{surah:21,ayah:1},   end:{surah:22,ayah:78},  surahs:[21,22] },
+  { juz:18, name:"Qad Aflaha",         start:{surah:23,ayah:1},   end:{surah:25,ayah:20},  surahs:[23,24,25] },
+  { juz:19, name:"Wa Qalallazina",     start:{surah:25,ayah:21},  end:{surah:27,ayah:55},  surahs:[25,26,27] },
+  { juz:20, name:"Amman Khalaq",       start:{surah:27,ayah:56},  end:{surah:29,ayah:45},  surahs:[27,28,29] },
+  { juz:21, name:"Utlu Ma Oohiya",     start:{surah:29,ayah:46},  end:{surah:33,ayah:30},  surahs:[29,30,31,32,33] },
+  { juz:22, name:"Wa Man Yaqnut",      start:{surah:33,ayah:31},  end:{surah:36,ayah:27},  surahs:[33,34,35,36] },
+  { juz:23, name:"Wa Mali",            start:{surah:36,ayah:28},  end:{surah:39,ayah:31},  surahs:[36,37,38,39] },
+  { juz:24, name:"Faman Azlam",        start:{surah:39,ayah:32},  end:{surah:41,ayah:46},  surahs:[39,40,41] },
+  { juz:25, name:"Elahe Yoraddo",      start:{surah:41,ayah:47},  end:{surah:45,ayah:37},  surahs:[41,42,43,44,45] },
+  { juz:26, name:"Ha Meem",            start:{surah:46,ayah:1},   end:{surah:51,ayah:30},  surahs:[46,47,48,49,50,51] },
+  { juz:27, name:"Qala Fama Khatbokum",start:{surah:51,ayah:31},  end:{surah:57,ayah:29},  surahs:[51,52,53,54,55,56,57] },
+  { juz:28, name:"Qad Sami Allah",     start:{surah:58,ayah:1},   end:{surah:66,ayah:12},  surahs:[58,59,60,61,62,63,64,65,66] },
+  { juz:29, name:"Tabarakallazi",      start:{surah:67,ayah:1},   end:{surah:77,ayah:50},  surahs:[67,68,69,70,71,72,73,74,75,76,77] },
+  { juz:30, name:"Amma Yatasa'aloon",  start:{surah:78,ayah:1},   end:{surah:114,ayah:6},  surahs:[78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114] },
+];
+
 function QuranReader({ surah, onBack }) {
   const [ayahs, setAyahs]                     = useState([]);
   const [loading, setLoading]                 = useState(true);
@@ -1330,15 +1340,22 @@ function QuranReader({ surah, onBack }) {
   const [isBookmarked, setIsBookmarked]       = useState(false);
   const [currentAyahIdx, setCurrentAyahIdx]   = useState(0);
 
+  const [ayahBookmarks, setAyahBookmarks] = useState([]);
+
   // Load bookmark state
   useEffect(() => {
     try {
       const bookmarks = JSON.parse(localStorage.getItem("minbar_bookmarks") || "[]");
       setIsBookmarked(bookmarks.includes(surah.n));
+      const ayahBMs = JSON.parse(localStorage.getItem("minbar_ayah_bookmarks") || "[]");
+      setAyahBookmarks(ayahBMs.filter(b => b.surahN === surah.n));
+      // Save last read
+      const lr = { surahN: surah.n, surahName: surah.name, time: new Date().toLocaleDateString() };
+      localStorage.setItem("minbar_last_read", JSON.stringify(lr));
     } catch(_) {}
-  }, [surah.n]);
+  }, [surah.n, surah.name]);
 
-  // Toggle bookmark
+  // Toggle surah bookmark
   const toggleBookmark = () => {
     try {
       const bookmarks = JSON.parse(localStorage.getItem("minbar_bookmarks") || "[]");
@@ -1352,6 +1369,24 @@ function QuranReader({ surah, onBack }) {
       setIsBookmarked(!isBookmarked);
     } catch(_) {}
   };
+
+  // Toggle ayah bookmark
+  const toggleAyahBookmark = (ayahNum) => {
+    try {
+      const all = JSON.parse(localStorage.getItem("minbar_ayah_bookmarks") || "[]");
+      const exists = all.find(b => b.surahN === surah.n && b.ayah === ayahNum);
+      let updated;
+      if (exists) {
+        updated = all.filter(b => !(b.surahN === surah.n && b.ayah === ayahNum));
+      } else {
+        updated = [...all, { surahN: surah.n, surahName: surah.name, ayah: ayahNum, time: new Date().toLocaleDateString() }];
+      }
+      localStorage.setItem("minbar_ayah_bookmarks", JSON.stringify(updated));
+      setAyahBookmarks(updated.filter(b => b.surahN === surah.n));
+    } catch(_) {}
+  };
+
+  const isAyahBookmarked = (ayahNum) => ayahBookmarks.some(b => b.ayah === ayahNum);
 
   useEffect(() => {
     setLoading(true);
@@ -1478,7 +1513,10 @@ function QuranReader({ surah, onBack }) {
           ayahs.map(ayah => (
             <div key={ayah.number} style={{ background:playingAyah===ayah.number?"rgba(201,168,76,0.08)":"rgba(255,255,255,0.03)", border:`1px solid ${playingAyah===ayah.number?"rgba(201,168,76,0.4)":"rgba(201,168,76,0.1)"}`, borderRadius:14, padding:"16px", marginBottom:10, transition:"all 0.3s" }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
-                <div style={{ width:28, height:28, borderRadius:"50%", background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.3)", display:"flex", alignItems:"center", justifyContent:"center", color:GOLD, fontSize:10, fontWeight:700 }}>{ayah.number}</div>
+                <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                  <div style={{ width:28, height:28, borderRadius:"50%", background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.3)", display:"flex", alignItems:"center", justifyContent:"center", color:GOLD, fontSize:10, fontWeight:700 }}>{ayah.number}</div>
+                  <div onClick={() => toggleAyahBookmark(ayah.number)} style={{ fontSize:16, cursor:"pointer", opacity: isAyahBookmarked(ayah.number) ? 1 : 0.3 }}>🔖</div>
+                </div>
                 <div onClick={() => playAudio(ayah.number)} style={{ background:playingAyah===ayah.number?"rgba(201,168,76,0.3)":"rgba(201,168,76,0.1)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:20, padding:"5px 12px", color:GOLD, fontSize:12, cursor:"pointer", display:"flex", alignItems:"center", gap:5 }}>
                   {playingAyah===ayah.number ? "⏸ Stop" : "▶ Play"}
                 </div>
@@ -1510,17 +1548,24 @@ function QuranReader({ surah, onBack }) {
 }
 
 function QuranPage() {
-  const [selectedSurah, setSelectedSurah] = useState(null);
-  const [search, setSearch]               = useState("");
-  const [tab, setTab]                     = useState("all"); // "all" or "bookmarks"
-  const [bookmarks, setBookmarks]         = useState([]);
+  const [selectedSurah, setSelectedSurah]   = useState(null);
+  const [search, setSearch]                 = useState("");
+  const [tab, setTab]                       = useState("surah");
+  const [bookmarks, setBookmarks]           = useState([]);
+  const [ayahBookmarks, setAyahBookmarks]   = useState([]);
+  const [lastRead, setLastRead]             = useState(null);
+  const [expandedJuz, setExpandedJuz]       = useState(null);
 
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem("minbar_bookmarks") || "[]");
       setBookmarks(saved);
+      const ayahBMs = JSON.parse(localStorage.getItem("minbar_ayah_bookmarks") || "[]");
+      setAyahBookmarks(ayahBMs);
+      const lr = JSON.parse(localStorage.getItem("minbar_last_read") || "null");
+      setLastRead(lr);
     } catch(_) {}
-  }, [selectedSurah]); // refresh when coming back from reader
+  }, [selectedSurah]);
 
   if (selectedSurah) return <QuranReader surah={selectedSurah} onBack={() => setSelectedSurah(null)} />;
 
@@ -1533,7 +1578,7 @@ function QuranPage() {
   const bookmarkedSurahs = SURAHS.filter(s => bookmarks.includes(s.n));
 
   const SurahCard = ({ s }) => (
-    <div key={s.n} onClick={() => setSelectedSurah(s)} style={{ background:`linear-gradient(135deg,rgba(26,77,46,0.4),rgba(10,46,26,0.6))`, border:"1px solid rgba(201,168,76,0.15)", borderRadius:13, padding:"12px 14px", display:"flex", alignItems:"center", gap:12, cursor:"pointer", marginBottom:8 }}>
+    <div onClick={() => setSelectedSurah(s)} style={{ background:`linear-gradient(135deg,rgba(26,77,46,0.4),rgba(10,46,26,0.6))`, border:"1px solid rgba(201,168,76,0.15)", borderRadius:13, padding:"12px 14px", display:"flex", alignItems:"center", gap:12, cursor:"pointer", marginBottom:8 }}>
       <div style={{ width:36, height:36, borderRadius:10, background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.3)", display:"flex", alignItems:"center", justifyContent:"center", color:GOLD, fontSize:11, fontWeight:700, flexShrink:0 }}>{s.n}</div>
       <div style={{ flex:1 }}>
         <div style={{ color:OFF_WHITE, fontWeight:700, fontSize:14 }}>{s.name}</div>
@@ -1549,45 +1594,120 @@ function QuranPage() {
   return (
     <div style={{ padding:"20px 20px 80px" }}>
       <SectionTitle>📖 Holy Quran</SectionTitle>
-      <div style={{ color:"rgba(255,255,255,0.45)", fontSize:13, marginBottom:16 }}>114 Surahs • Arabic + Translation + Audio</div>
 
       {/* Bismillah */}
-      <div style={{ background:"rgba(201,168,76,0.08)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:14, padding:"14px 16px", textAlign:"center", marginBottom:16 }}>
-        <div style={{ fontSize:16, direction:"rtl", fontFamily:"serif", color:LIGHT_GOLD, marginBottom:4 }}>بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+      <div style={{ background:"rgba(201,168,76,0.08)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:14, padding:"12px 16px", textAlign:"center", marginBottom:14 }}>
+        <div style={{ fontSize:15, direction:"rtl", fontFamily:"serif", color:LIGHT_GOLD, marginBottom:3 }}>بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
         <div style={{ color:"rgba(255,255,255,0.3)", fontSize:11, fontStyle:"italic" }}>In the name of Allah, the Most Gracious, the Most Merciful</div>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display:"flex", background:"rgba(255,255,255,0.05)", borderRadius:12, padding:4, marginBottom:16, gap:4 }}>
-        <div onClick={() => setTab("all")} style={{ flex:1, textAlign:"center", padding:"8px", borderRadius:10, background:tab==="all"?`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`:"transparent", color:tab==="all"?DARK_GREEN:GOLD, fontSize:12, fontWeight:700, cursor:"pointer" }}>
-          📖 All Surahs
+      {/* Last Read */}
+      {lastRead && (
+        <div onClick={() => { const s = SURAHS.find(s => s.n === lastRead.surahN); if(s) setSelectedSurah(s); }} style={{ background:"rgba(26,77,46,0.4)", border:"1px solid rgba(201,168,76,0.25)", borderRadius:12, padding:"10px 14px", marginBottom:14, display:"flex", alignItems:"center", gap:10, cursor:"pointer" }}>
+          <span style={{ fontSize:18 }}>📌</span>
+          <div style={{ flex:1 }}>
+            <div style={{ color:GOLD, fontSize:11, fontWeight:700 }}>Continue Reading</div>
+            <div style={{ color:OFF_WHITE, fontSize:13, fontWeight:700 }}>{lastRead.surahName}</div>
+          </div>
+          <div style={{ color:"rgba(255,255,255,0.3)", fontSize:10 }}>{lastRead.time} →</div>
         </div>
-        <div onClick={() => setTab("bookmarks")} style={{ flex:1, textAlign:"center", padding:"8px", borderRadius:10, background:tab==="bookmarks"?`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`:"transparent", color:tab==="bookmarks"?DARK_GREEN:GOLD, fontSize:12, fontWeight:700, cursor:"pointer" }}>
-          🔖 Saved ({bookmarkedSurahs.length})
-        </div>
+      )}
+
+      {/* 3 Tabs */}
+      <div style={{ display:"flex", background:"rgba(255,255,255,0.05)", borderRadius:12, padding:3, marginBottom:14, gap:3 }}>
+        {[{id:"surah",label:"📖 Surah"},{id:"juz",label:"📚 Juz/Para"},{id:"saved",label:`🔖 Saved`}].map(t => (
+          <div key={t.id} onClick={() => setTab(t.id)} style={{ flex:1, textAlign:"center", padding:"8px 4px", borderRadius:10, background:tab===t.id?`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`:"transparent", color:tab===t.id?DARK_GREEN:GOLD, fontSize:11, fontWeight:700, cursor:"pointer" }}>
+            {t.label}
+          </div>
+        ))}
       </div>
 
-      {tab === "bookmarks" ? (
-        bookmarkedSurahs.length === 0 ? (
-          <div style={{ textAlign:"center", padding:"40px 20px" }}>
-            <div style={{ fontSize:40, marginBottom:12 }}>🔖</div>
-            <div style={{ color:GOLD, fontWeight:700, fontSize:15, marginBottom:8 }}>No Saved Surahs Yet</div>
-            <div style={{ color:"rgba(255,255,255,0.35)", fontSize:12 }}>Open any Surah and tap 🔖 to save it here!</div>
-          </div>
-        ) : (
-          bookmarkedSurahs.map(s => <SurahCard key={s.n} s={s} />)
-        )
-      ) : (
+      {/* SURAH TAB */}
+      {tab === "surah" && (
         <>
-          {/* Search */}
-          <input
-            placeholder="🔍 Search surah..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            style={{ width:"100%", background:"rgba(255,255,255,0.07)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:12, padding:"12px 16px", color:"#fff", fontSize:14, outline:"none", marginBottom:16, boxSizing:"border-box" }}
-          />
+          <input placeholder="🔍 Search surah name or number..." value={search} onChange={e => setSearch(e.target.value)}
+            style={{ width:"100%", background:"rgba(255,255,255,0.07)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:12, padding:"11px 16px", color:"#fff", fontSize:13, outline:"none", marginBottom:14, boxSizing:"border-box" }} />
           {filtered.map(s => <SurahCard key={s.n} s={s} />)}
         </>
+      )}
+
+      {/* JUZ/PARA TAB */}
+      {tab === "juz" && (
+        <div>
+          <div style={{ color:"rgba(255,255,255,0.4)", fontSize:12, marginBottom:12, textAlign:"center" }}>30 Juz (Para) — tap to see Surahs inside</div>
+          {JUZ_DATA.map(juz => (
+            <div key={juz.juz} style={{ marginBottom:8 }}>
+              <div onClick={() => setExpandedJuz(expandedJuz === juz.juz ? null : juz.juz)} style={{ background:`linear-gradient(135deg,rgba(26,77,46,0.5),rgba(10,46,26,0.7))`, border:"1px solid rgba(201,168,76,0.2)", borderRadius:13, padding:"13px 16px", display:"flex", alignItems:"center", gap:12, cursor:"pointer" }}>
+                <div style={{ width:38, height:38, borderRadius:10, background:"rgba(201,168,76,0.2)", border:"1px solid rgba(201,168,76,0.4)", display:"flex", alignItems:"center", justifyContent:"center", color:GOLD, fontWeight:700, fontSize:13, flexShrink:0 }}>{juz.juz}</div>
+                <div style={{ flex:1 }}>
+                  <div style={{ color:GOLD, fontWeight:700, fontSize:13 }}>Para {juz.juz} — {juz.name}</div>
+                  <div style={{ color:"rgba(255,255,255,0.35)", fontSize:11, marginTop:2 }}>Surah {juz.start.surah}:{juz.start.ayah} → {juz.end.surah}:{juz.end.ayah}</div>
+                </div>
+                <div style={{ color:"rgba(255,255,255,0.3)", fontSize:14 }}>{expandedJuz === juz.juz ? "▲" : "▼"}</div>
+              </div>
+              {expandedJuz === juz.juz && (
+                <div style={{ background:"rgba(0,0,0,0.2)", borderRadius:"0 0 13px 13px", padding:"8px 10px", border:"1px solid rgba(201,168,76,0.1)", borderTop:"none" }}>
+                  {juz.surahs.map(sn => {
+                    const s = SURAHS.find(x => x.n === sn);
+                    if (!s) return null;
+                    return (
+                      <div key={s.n} onClick={() => setSelectedSurah(s)} style={{ display:"flex", alignItems:"center", gap:10, padding:"9px 12px", borderRadius:10, cursor:"pointer", marginBottom:4, background:"rgba(26,77,46,0.3)" }}>
+                        <div style={{ width:28, height:28, borderRadius:8, background:"rgba(201,168,76,0.15)", display:"flex", alignItems:"center", justifyContent:"center", color:GOLD, fontSize:10, fontWeight:700 }}>{s.n}</div>
+                        <div style={{ flex:1 }}>
+                          <div style={{ color:OFF_WHITE, fontSize:13, fontWeight:700 }}>{s.name}</div>
+                          <div style={{ color:"rgba(255,255,255,0.3)", fontSize:10 }}>{s.ayahs} Ayahs</div>
+                        </div>
+                        {bookmarks.includes(s.n) && <span style={{ fontSize:12 }}>🔖</span>}
+                        <div style={{ color:LIGHT_GOLD, fontSize:14, fontFamily:"serif" }}>{s.arabic}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* SAVED TAB */}
+      {tab === "saved" && (
+        <div>
+          {/* Saved Surahs */}
+          {bookmarkedSurahs.length > 0 && (
+            <>
+              <div style={{ color:GOLD, fontSize:12, fontWeight:700, marginBottom:10 }}>🕌 Saved Surahs ({bookmarkedSurahs.length})</div>
+              {bookmarkedSurahs.map(s => <SurahCard key={s.n} s={s} />)}
+            </>
+          )}
+
+          {/* Saved Ayahs */}
+          {ayahBookmarks.length > 0 && (
+            <>
+              <div style={{ color:GOLD, fontSize:12, fontWeight:700, margin:"16px 0 10px" }}>📌 Saved Ayahs ({ayahBookmarks.length})</div>
+              {ayahBookmarks.map((b, i) => (
+                <div key={i} onClick={() => { const s = SURAHS.find(x => x.n === b.surahN); if(s) setSelectedSurah(s); }} style={{ background:"rgba(26,77,46,0.35)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:12, padding:"12px 14px", marginBottom:8, cursor:"pointer", display:"flex", alignItems:"center", gap:10 }}>
+                  <span style={{ fontSize:20 }}>🔖</span>
+                  <div style={{ flex:1 }}>
+                    <div style={{ color:OFF_WHITE, fontWeight:700, fontSize:13 }}>{b.surahName} — Ayah {b.ayah}</div>
+                    <div style={{ color:"rgba(255,255,255,0.35)", fontSize:11 }}>Saved on {b.time}</div>
+                  </div>
+                  <div style={{ color:GOLD, fontSize:12 }}>→</div>
+                </div>
+              ))}
+            </>
+          )}
+
+          {bookmarkedSurahs.length === 0 && ayahBookmarks.length === 0 && (
+            <div style={{ textAlign:"center", padding:"40px 20px" }}>
+              <div style={{ fontSize:40, marginBottom:12 }}>🔖</div>
+              <div style={{ color:GOLD, fontWeight:700, fontSize:15, marginBottom:8 }}>No Bookmarks Yet</div>
+              <div style={{ color:"rgba(255,255,255,0.35)", fontSize:12, lineHeight:1.7 }}>
+                Open any Surah → tap 🔖 on the header to save Surah<br/>
+                Or tap 🔖 on any Ayah to save that Ayah!
+              </div>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
@@ -1960,27 +2080,18 @@ const SCHOLARS = [
 ];
 
 const FAQ = [
-  { keys:["5 pillars","five pillars","pillars of islam","arkan"],       q:"What are the 5 pillars of Islam?",        a:"The 5 pillars of Islam are: 1) Shahada — Declaration of faith (There is no god but Allah, Muhammad ﷺ is His messenger) 2) Salah — 5 daily prayers 3) Zakat — Giving 2.5% of wealth to poor 4) Sawm — Fasting in Ramadan 5) Hajj — Pilgrimage to Makkah once in lifetime if able." },
-  { keys:["how many times","pray daily","daily prayer","5 times","five times","salah times"], q:"How many times should I pray daily?", a:"Muslims pray 5 times daily: 🌙 Fajr (before sunrise), ☀️ Dhuhr (midday), 🌤 Asr (afternoon), 🌅 Maghrib (after sunset), ⭐ Isha (night). These 5 prayers are obligatory (Fard) for every adult Muslim." },
-  { keys:["fast","roza","ramadan","sehri","iftar","break fast","rozah"],  q:"What breaks the fast in Ramadan?",       a:"Fast (Roza) runs from Sehri (before Fajr) to Iftar (Maghrib time). Things that break the fast: eating, drinking, smoking intentionally. Sunnah is to break fast with dates and water. Unintentional eating does NOT break the fast." },
-  { keys:["music","song","haram","halal","nasheed","instrument"],         q:"Is music halal or haram?",               a:"Most classical scholars consider musical instruments haram. However, vocal nasheeds (without instruments) are generally permissible. Scholars differ — it is best to avoid music that distracts from Allah and consult a qualified scholar for detailed guidance." },
-  { keys:["zakat","zakah","charity","nisab","2.5","poor"],                q:"What is Zakat and who must pay?",        a:"Zakat is 2.5% of total savings held for one lunar year above the Nisab (value of 87.48g gold or 612.36g silver). It is obligatory on every adult Muslim who has wealth above Nisab. It purifies wealth and helps the poor." },
-  { keys:["wudu","ablution","wudhu","wash","purity","taharah"],           q:"How to perform Wudu?",                   a:"Steps of Wudu: 1) Make Niyyah (intention) 2) Say Bismillah 3) Wash both hands 3x 4) Rinse mouth 3x 5) Clean nose 3x 6) Wash face 3x 7) Wash arms to elbows 3x (right first) 8) Wipe head once 9) Clean ears 10) Wash feet to ankles 3x (right first)." },
-  { keys:["missed prayer","qada","qaza","make up","missed salah"],        q:"What is the ruling on missed prayers?",  a:"Missed prayers (Qada/Qaza) must be made up as soon as possible. Pray them in order if you remember the sequence. There is no expiry — repent sincerely and make them up. Deliberately missing prayers without valid reason is a major sin." },
-  { keys:["women pray","menstruation","haid","period","ladies prayer"],   q:"Can women pray during menstruation?",    a:"Women are EXEMPT from Salah, fasting, and Tawaf during menstruation (Haid). These missed Salah do NOT need to be made up. However, missed Ramadan fasts MUST be made up (Qada) after the period ends." },
-  { keys:["friday","jumuah","jummah","jumma","khutbah","sunnah friday"],  q:"What is the Sunnah of Friday (Jumu'ah)?", a:"Sunnah of Friday: 1) Take Ghusl (full bath) 2) Wear clean/new clothes 3) Apply itr (perfume) 4) Go early to Masjid 5) Recite Surah Al-Kahf 6) Send lots of Durood on Prophet ﷺ 7) Make Dua between Asr and Maghrib (special time of acceptance)." },
-  { keys:["dua","supplication","how to pray","make dua","ask allah"],     q:"How to make Dua properly?",              a:"How to make Dua: 1) Face Qibla 2) Be in state of Wudu 3) Raise both hands 4) Start with Alhamdulillah & Durood 5) Ask with humility, certainty & full trust in Allah 6) Use Allah's beautiful names (Asmaul Husna) 7) End with Durood & Ameen. Best times: last 1/3 of night, between Adhan & Iqamah, Friday afternoon." },
-  { keys:["halal food","haram food","eat","meat","slaughter","zabiha"],   q:"What is Halal food?",                    a:"Halal food rules: ✅ Allowed: meat slaughtered in Allah's name by a Muslim/Christian/Jew (Zabiha), fish, vegetables, fruits. ❌ Haram: pork and pork products, alcohol, blood, carrion, animals not slaughtered properly, animals dedicated to other than Allah." },
-  { keys:["hajj","pilgrimage","makkah","kaaba","umrah"],                  q:"What is Hajj?",                          a:"Hajj is the 5th pillar of Islam — a pilgrimage to Makkah. It is obligatory ONCE in a lifetime for every Muslim who is physically and financially able. It takes place in Dhul Hijjah (12th Islamic month). Hajj wipes away all past sins for those who perform it sincerely." },
-  { keys:["marriage","nikah","age of marriage","shaadi","wedding"],       q:"What is the Islamic ruling on marriage?", a:"Nikah (Islamic marriage) is highly recommended in Islam. The Prophet ﷺ said: 'Marriage is my Sunnah.' There is no fixed minimum age in classical fiqh, but most modern scholars and Islamic countries require legal age (18). Key conditions: consent of both parties, Mahr (gift to bride), witnesses, and Wali (guardian for bride)." },
-  { keys:["interest","riba","bank","loan","mortgage","sood"],             q:"What is Riba (interest)?",               a:"Riba (interest/usury) is strictly HARAM in Islam. Allah says in Quran 2:275 that Allah has permitted trade and forbidden Riba. This includes bank interest, credit card interest, and all forms of usury. Muslims should seek Islamic finance alternatives (halal mortgages, profit-sharing arrangements)." },
-  { keys:["hijab","purdah","covering","veil","niqab","scarf"],            q:"What is the ruling on Hijab?",           a:"Hijab (modest covering) is obligatory (Wajib/Fard) for adult Muslim women according to the majority of scholars. Quran 24:31 and 33:59 clearly instruct believing women to cover. This includes covering all except face and hands according to many scholars, while some require full covering (Niqab)." },
-  { keys:["ghusl","bath","janabah","major impurity","shower"],            q:"How to perform Ghusl?",                  a:"Ghusl (full bath) is required after: marital relations, wet dream, end of menstruation/postnatal bleeding. Steps: 1) Make Niyyah 2) Wash hands & private parts 3) Make full Wudu 4) Pour water over right shoulder 3x, left 3x 5) Pour water over entire body ensuring all hair and skin is wet. Bismillah at start." },
-  { keys:["shirk","sin","tawbah","repent","forgiveness","sins","forgive"], q:"How to repent from sins?",              a:"Tawbah (repentance) has 3 conditions: 1) Stop the sin immediately 2) Feel genuine regret 3) Firmly resolve never to return to it. For sins against others, also make amends. Allah says in Quran 39:53: 'Do not despair of Allah's mercy — Allah forgives all sins.' Sincere Tawbah wipes the slate clean." },
-  { keys:["tahajjud","night prayer","qiyam","witr","nawafil","voluntary prayer"], q:"What is Tahajjud prayer?",       a:"Tahajjud is a voluntary (Nafl) night prayer, highly recommended Sunnah. It is prayed after Isha and before Fajr — the last 1/3 of night is best. The Prophet ﷺ never abandoned it. It is prayed in 2 rakah sets (min 2, no max). End with Witr prayer. Tahajjud is a means of closeness to Allah and acceptance of Dua." },
-  { keys:["quran","koran","recite","memorize","hifz","tilawat"],          q:"What is the importance of reciting Quran?", a:"The Quran is the word of Allah revealed to Prophet Muhammad ﷺ. The Prophet said: 'The best of you is he who learns the Quran and teaches it.' Each letter brings 10 rewards. Reciting daily, understanding its meaning, and implementing it in life is obligatory on every Muslim. Quran will intercede for its reciter on Judgement Day." },
-  { keys:["sadaqah","donation","giving","khairat","lillah"],              q:"What is Sadaqah?",                       a:"Sadaqah is voluntary charity given for the sake of Allah. Unlike Zakat (obligatory), Sadaqah has no minimum amount. The Prophet ﷺ said even a smile is Sadaqah. Sadaqah Jariyah (ongoing charity) — like building a well, masjid, or sharing knowledge — continues to give rewards after death." },
-  { keys:["death","janazah","funeral","burial","ghusl mayyit"],           q:"What are the rights of the deceased?",   a:"Rights of a deceased Muslim: 1) Ghusl — wash the body 2) Kafan — wrap in white cloth (3 sheets for men, 5 for women) 3) Janazah Salah — funeral prayer (community obligation) 4) Burial — bury facing Qibla as soon as possible. Cremation is forbidden in Islam. Visiting graves and making Dua for the deceased is Sunnah." },
+  { q:"What are the 5 pillars of Islam?",        a:"The 5 pillars are: 1) Shahada (Declaration of faith) 2) Salah (5 daily prayers) 3) Zakat (Charity) 4) Sawm (Fasting in Ramadan) 5) Hajj (Pilgrimage to Makkah)" },
+  { q:"How many times should I pray daily?",     a:"Muslims pray 5 times daily: Fajr (dawn), Dhuhr (midday), Asr (afternoon), Maghrib (sunset), and Isha (night). These prayers are obligatory for every adult Muslim." },
+  { q:"What breaks the fast in Ramadan?",        a:"The fast is broken at Maghrib time by eating dates and drinking water (Sunnah). Things that break the fast include eating, drinking, and smoking intentionally from Fajr to Maghrib." },
+  { q:"Is music halal or haram?",                a:"Scholars have different opinions on music. Most classical scholars consider instruments haram, while vocal nasheeds without instruments are generally permissible. It's best to consult a scholar for detailed guidance." },
+  { q:"What is Zakat and who must pay?",         a:"Zakat is 2.5% of savings held for one lunar year above the nisab threshold (value of 87.48g gold). It is obligatory on every adult Muslim who possesses wealth above this minimum." },
+  { q:"How to perform Wudu (ablution)?",         a:"1) Intention 2) Wash both hands 3) Rinse mouth 3x 4) Clean nose 3x 5) Wash face 3x 6) Wash arms to elbows 3x 7) Wipe head 8) Clean ears 9) Wash feet to ankles 3x. Right side before left." },
+  { q:"What is the ruling on missed prayers?",   a:"Missed prayers (Qada) must be made up as soon as possible. You should pray them in order. There is no expiry for making up missed prayers — repent and make them up sincerely." },
+  { q:"Can women pray during menstruation?",     a:"Women are exempt from prayer, fasting, and Tawaf during menstruation. These prayers do not need to be made up later. Fasts of Ramadan missed must be made up after the period ends." },
+  { q:"What is the Sunnah of Friday (Jumu'ah)?", a:"Sunnah of Friday: 1) Ghusl (bath) 2) Wear clean clothes 3) Apply perfume 4) Go early to masjid 5) Recite Surah Al-Kahf 6) Send Durood on Prophet ﷺ 7) Make dua between Asr and Maghrib." },
+  { q:"How to make Dua properly?",               a:"1) Face Qibla 2) Be in state of Wudu 3) Start with Alhamdulillah & Durood 4) Ask with humility and certainty 5) Use beautiful names of Allah 6) End with Durood & Ameen. Best times: last third of night, between Adhan & Iqamah, on Friday." },
+  { q:"What is Halal food?",                     a:"Halal food must: 1) Not contain pork or pork products 2) Not contain alcohol 3) Be slaughtered in Allah's name by a Muslim 4) Be from permitted animals. Haram foods include pork, blood, carrion, and animals not slaughtered properly." },
+  { q:"What is the importance of Hajj?",         a:"Hajj is the 5th pillar of Islam, obligatory once in a lifetime for every Muslim who is physically and financially able. It takes place in Dhul Hijjah. It is a complete forgiveness of past sins for those who perform it sincerely." },
 ];
 
 function ChatPage() {
@@ -1999,16 +2110,10 @@ function ChatPage() {
     setInput("");
     setMessages(prev => [...prev, { from:"user", text:q }]);
     setTimeout(() => {
-      const qLower = q.toLowerCase();
-      // Smart matching: check keywords array first, then question text
-      let match = FAQ.find(f =>
-        (f.keys && f.keys.some(k => qLower.includes(k.toLowerCase()))) ||
-        f.q.toLowerCase().split(" ").some(word => word.length > 3 && qLower.includes(word)) ||
-        qLower.includes(f.q.toLowerCase().split(" ").slice(0,3).join(" "))
-      );
+      const match = FAQ.find(f => f.q.toLowerCase().includes(q.toLowerCase()) || q.toLowerCase().includes(f.q.toLowerCase().split(" ").slice(0,3).join(" ")));
       const answer = match
         ? match.a
-        : "JazakAllah Khair for your question! 🤲 I don't have a specific answer for that topic yet. Would you like to contact our Islamic Scholar for a detailed answer?";
+        : "JazakAllah Khair for your question! I don't have a specific answer for that. Would you like to contact one of our scholars for a detailed answer?";
       setMessages(prev => [...prev, { from:"bot", text:answer, showContact:!match }]);
     }, 600);
   };
@@ -2276,7 +2381,7 @@ export default function MinbarLiveApp() {
 
       {/* Page */}
       <div style={{ overflowY:"auto", height:"calc(100vh - 114px)" }}>
-        <CurrentPage setPage={setPage} masjids={masjids} onUpdateMasjid={handleUpdateMasjid} notifEnabled={notifEnabled} toggleNotifications={toggleNotifications} />
+        <CurrentPage setPage={setPage} masjids={masjids} />
       </div>
 
       {/* Bottom Nav */}
