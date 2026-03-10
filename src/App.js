@@ -79,128 +79,6 @@ async function sendLiveNotification(masjidName, bayanTitle) {
 }
 
 
-
-// ─── ONBOARDING SCREENS ────────────────────────────────────────────────────────
-const ONBOARDING_SLIDES = [
-  {
-    icon: "🕌",
-    title: "Welcome to Minbar Live",
-    subtitle: "Bismillah ir-Rahman ir-Raheem",
-    desc: "Your complete Islamic companion app. Stay connected with your Masjid, prayers, and the Holy Quran — all in one place!",
-    color: "#1A4D2E",
-  },
-  {
-    icon: "📡",
-    title: "Live Masjid Streaming",
-    subtitle: "Never miss a Khutbah again!",
-    desc: "Watch live Friday Khutbahs, Bayans, and special events from your Masjid directly in the app — anytime, anywhere!",
-    color: "#1A3D4D",
-  },
-  {
-    icon: "🕐",
-    title: "Prayer Times & Adhan",
-    subtitle: "Always know your prayer times",
-    desc: "Get accurate prayer times for your selected Masjid. Receive Adhan and Iqamah notifications so you never miss a Salah!",
-    color: "#2E1A4D",
-  },
-  {
-    icon: "📖",
-    title: "Holy Quran Reader",
-    subtitle: "Read & Listen to the Quran",
-    desc: "Read all 114 Surahs with Arabic text and English translation. Listen to beautiful recitation by Sheikh Mishary Alafasy!",
-    color: "#4D2E1A",
-  },
-  {
-    icon: "🤲",
-    title: "Duas & Tasbeeh",
-    subtitle: "Daily Islamic supplications",
-    desc: "48+ authentic Duas in 8 categories — Morning, Evening, Sleep, Travel and more. Plus a digital Tasbeeh counter for your dhikr!",
-    color: "#1A4D3D",
-  },
-  {
-    icon: "🧭",
-    title: "Qibla & More",
-    subtitle: "Find direction to Makkah",
-    desc: "Accurate Qibla compass using your GPS. Plus explore our Islamic Library with recorded Bayans and lectures!",
-    color: "#3D4D1A",
-  },
-  {
-    icon: "💬",
-    title: "Ask Islamic Questions",
-    subtitle: "Get answers instantly!",
-    desc: "Ask common Islamic questions and get instant answers. Need more help? Contact our qualified Islamic Scholar directly on WhatsApp!",
-    color: "#4D1A2E",
-  },
-];
-
-function OnboardingScreen({ onDone }) {
-  const [current, setCurrent] = useState(0);
-  const [animating, setAnimating] = useState(false);
-  const slide = ONBOARDING_SLIDES[current];
-  const isLast = current === ONBOARDING_SLIDES.length - 1;
-
-  const goNext = () => {
-    if (animating) return;
-    if (isLast) { onDone(); return; }
-    setAnimating(true);
-    setTimeout(() => { setCurrent(c => c + 1); setAnimating(false); }, 300);
-  };
-
-  const goTo = (i) => { if (!animating) { setAnimating(true); setTimeout(() => { setCurrent(i); setAnimating(false); }, 200); } };
-
-  return (
-    <div style={{ position:"fixed", inset:0, zIndex:9998, background:DARK_GREEN, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"space-between", padding:"40px 24px 50px", fontFamily:"'Lato',sans-serif" }}>
-
-      {/* Skip button */}
-      <div style={{ width:"100%", display:"flex", justifyContent:"flex-end" }}>
-        <button onClick={onDone} style={{ background:"rgba(255,255,255,0.1)", border:"none", borderRadius:20, padding:"8px 18px", color:"rgba(255,255,255,0.5)", fontSize:13, cursor:"pointer" }}>
-          Skip
-        </button>
-      </div>
-
-      {/* Slide Content */}
-      <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", textAlign:"center", opacity: animating ? 0 : 1, transition:"opacity 0.3s ease", padding:"0 10px" }}>
-
-        {/* Icon Circle */}
-        <div style={{ width:130, height:130, borderRadius:"50%", background:`linear-gradient(135deg,${slide.color},rgba(201,168,76,0.3))`, border:"2px solid rgba(201,168,76,0.4)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:60, marginBottom:32, boxShadow:"0 8px 32px rgba(0,0,0,0.4)" }}>
-          {slide.icon}
-        </div>
-
-        {/* Subtitle */}
-        <div style={{ color:GOLD, fontSize:12, fontWeight:700, letterSpacing:2, marginBottom:10, fontFamily:"'Cinzel',serif" }}>
-          {slide.subtitle}
-        </div>
-
-        {/* Title */}
-        <div style={{ color:OFF_WHITE, fontSize:24, fontWeight:700, fontFamily:"'Playfair Display',serif", marginBottom:16, lineHeight:1.3 }}>
-          {slide.title}
-        </div>
-
-        {/* Description */}
-        <div style={{ color:"rgba(255,255,255,0.55)", fontSize:14, lineHeight:1.7, maxWidth:300 }}>
-          {slide.desc}
-        </div>
-      </div>
-
-      {/* Bottom Controls */}
-      <div style={{ width:"100%", display:"flex", flexDirection:"column", alignItems:"center", gap:24 }}>
-
-        {/* Dots */}
-        <div style={{ display:"flex", gap:8 }}>
-          {ONBOARDING_SLIDES.map((_, i) => (
-            <div key={i} onClick={() => goTo(i)} style={{ width: i === current ? 24 : 8, height:8, borderRadius:4, background: i === current ? GOLD : "rgba(255,255,255,0.2)", cursor:"pointer", transition:"all 0.3s ease" }} />
-          ))}
-        </div>
-
-        {/* Next / Get Started Button */}
-        <button onClick={goNext} style={{ width:"100%", padding:"17px", background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, border:"none", borderRadius:16, color:DARK_GREEN, fontSize:16, fontWeight:700, cursor:"pointer", boxShadow:"0 6px 24px rgba(201,168,76,0.35)", fontFamily:"'Lato',sans-serif" }}>
-          {isLast ? "🕌 Get Started — Bismillah!" : "Next →"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
 // ─── SPLASH SCREEN ────────────────────────────────────────────────────────────
 function SplashScreen({ onDone }) {
   useEffect(() => { const t = setTimeout(onDone, 3200); return () => clearTimeout(t); }, [onDone]);
@@ -1955,95 +1833,221 @@ function TasbeehPage() {
 
 // ─── QIBLA PAGE ───────────────────────────────────────────────────────────────
 function QiblaPage() {
-  const [qibla, setQibla]     = useState(null);
-  const [compass, setCompass] = useState(0);
-  const [error, setError]     = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [qibla, setQibla]         = useState(null);
+  const [compass, setCompass]     = useState(0);
+  const [error, setError]         = useState(null);
+  const [loading, setLoading]     = useState(false);
+  const [permAsked, setPermAsked] = useState(false);
+  const [location, setLocation]   = useState(null);
+  const [aligned, setAligned]     = useState(false);
+  const compassRef = useRef(0);
 
+  // ── Get GPS location & calculate Qibla ──
   useEffect(() => {
     setLoading(true);
+    if (!navigator.geolocation) {
+      setError("Geolocation not supported on this device.");
+      setLoading(false);
+      return;
+    }
     navigator.geolocation.getCurrentPosition(
       pos => {
-        const { latitude: lat, longitude: lng } = pos.coords;
-        // Makkah coordinates
-        const makkahLat = 21.4225, makkahLng = 39.8262;
-        const dLng = (makkahLng - lng) * Math.PI / 180;
-        const lat1 = lat * Math.PI / 180;
-        const lat2 = makkahLat * Math.PI / 180;
-        const y = Math.sin(dLng) * Math.cos(lat2);
-        const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        setLocation({ lat, lng });
+        // Accurate Qibla calculation using spherical formula
+        const makkahLat = 21.4225 * Math.PI / 180;
+        const makkahLng = 39.8262 * Math.PI / 180;
+        const userLat   = lat * Math.PI / 180;
+        const dLng      = makkahLng - (lng * Math.PI / 180);
+        const y = Math.sin(dLng) * Math.cos(makkahLat);
+        const x = Math.cos(userLat) * Math.sin(makkahLat) - Math.sin(userLat) * Math.cos(makkahLat) * Math.cos(dLng);
         const bearing = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
         setQibla(Math.round(bearing));
         setLoading(false);
       },
-      err => { setError("Please allow location access to find Qibla direction."); setLoading(false); }
+      err => {
+        setError("📍 Please allow location access to find accurate Qibla direction.");
+        setLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   }, []);
 
-  useEffect(() => {
+  // ── Device compass ──
+  const startCompass = () => {
     const handler = e => {
-      const alpha = e.alpha || e.webkitCompassHeading || 0;
-      setCompass(Math.round(alpha));
-    };
-    if (window.DeviceOrientationEvent) {
-      if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-        DeviceOrientationEvent.requestPermission().then(p => {
-          if (p === 'granted') window.addEventListener('deviceorientation', handler);
-        }).catch(() => {});
-      } else {
-        window.addEventListener('deviceorientation', handler);
+      // iOS uses webkitCompassHeading (true north), Android uses alpha (magnetic)
+      let heading = 0;
+      if (e.webkitCompassHeading !== undefined && e.webkitCompassHeading !== null) {
+        heading = e.webkitCompassHeading; // iOS — already true north
+      } else if (e.alpha !== null) {
+        heading = 360 - e.alpha; // Android — convert to compass heading
       }
+      compassRef.current = heading;
+      setCompass(Math.round(heading));
+    };
+    window.addEventListener("deviceorientation", handler, true);
+    return () => window.removeEventListener("deviceorientation", handler, true);
+  };
+
+  useEffect(() => {
+    if (!window.DeviceOrientationEvent) return;
+    if (typeof DeviceOrientationEvent.requestPermission === "function") {
+      // iOS 13+ requires permission
+      return; // handled by button
+    } else {
+      // Android — start automatically
+      return startCompass();
     }
-    return () => window.removeEventListener('deviceorientation', handler);
   }, []);
 
+  const requestIOSPermission = () => {
+    if (typeof DeviceOrientationEvent.requestPermission === "function") {
+      DeviceOrientationEvent.requestPermission().then(p => {
+        if (p === "granted") { setPermAsked(true); startCompass(); }
+        else setError("Compass permission denied. Please allow in Settings.");
+      }).catch(() => setError("Could not request compass permission."));
+    }
+  };
+
+  // ── Needle angle = qibla direction relative to current compass heading ──
   const needle = qibla !== null ? (qibla - compass + 360) % 360 : 0;
+
+  // Check if aligned (within 5 degrees)
+  useEffect(() => {
+    const diff = Math.abs(needle % 360);
+    setAligned(diff < 5 || diff > 355);
+  }, [needle]);
+
+  const getDirection = (deg) => {
+    const dirs = ["N","NE","E","SE","S","SW","W","NW","N"];
+    return dirs[Math.round(deg / 45)];
+  };
 
   return (
     <div style={{ padding:"20px 20px 80px", display:"flex", flexDirection:"column", alignItems:"center" }}>
       <SectionTitle>🧭 Qibla Direction</SectionTitle>
-      <div style={{ color:"rgba(255,255,255,0.45)", fontSize:13, marginBottom:28, textAlign:"center" }}>Find the direction of the Holy Kaaba</div>
+      <div style={{ color:"rgba(255,255,255,0.45)", fontSize:13, marginBottom:20, textAlign:"center" }}>Point your phone and find the direction of the Holy Kaaba 🕋</div>
 
-      {loading && <div style={{ color:GOLD, fontSize:14, marginBottom:20 }}>📍 Getting your location...</div>}
+      {/* iOS Permission Button */}
+      {typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function" && !permAsked && (
+        <button onClick={requestIOSPermission} style={{ background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, border:"none", borderRadius:12, padding:"12px 24px", color:DARK_GREEN, fontWeight:700, fontSize:14, cursor:"pointer", marginBottom:20 }}>
+          📱 Enable Compass (iPhone)
+        </button>
+      )}
+
+      {loading && (
+        <div style={{ color:GOLD, fontSize:14, marginBottom:20, textAlign:"center" }}>
+          📍 Getting your location...
+        </div>
+      )}
+
       {error && (
-        <div style={{ background:"rgba(255,68,68,0.1)", border:"1px solid rgba(255,68,68,0.3)", borderRadius:14, padding:"14px 18px", marginBottom:20, color:"#FF9999", fontSize:13, textAlign:"center", lineHeight:1.7 }}>
+        <div style={{ background:"rgba(255,68,68,0.1)", border:"1px solid rgba(255,68,68,0.3)", borderRadius:14, padding:"14px 18px", marginBottom:20, color:"#FF9999", fontSize:13, textAlign:"center", lineHeight:1.7, width:"100%" }}>
           {error}
         </div>
       )}
 
-      {/* Compass */}
-      <div style={{ position:"relative", width:260, height:260, marginBottom:28 }}>
-        {/* Compass ring */}
-        <div style={{ position:"absolute", inset:0, borderRadius:"50%", background:"radial-gradient(circle at 40% 40%, #1A4D2E, #0A2E1A)", border:`3px solid ${GOLD}`, boxShadow:`0 0 40px rgba(201,168,76,0.3)` }}>
-          {/* Cardinal directions */}
-          {[{l:"N",d:0},{l:"E",d:90},{l:"S",d:180},{l:"W",d:270}].map(({l,d}) => {
-            const r = 110;
-            const rad = (d - 90) * Math.PI / 180;
+      {/* ── Compass Rose ── */}
+      <div style={{ position:"relative", width:280, height:280, marginBottom:24 }}>
+        {/* Outer glow ring */}
+        <div style={{ position:"absolute", inset:-4, borderRadius:"50%", background: aligned ? "rgba(0,255,100,0.1)" : "rgba(201,168,76,0.05)", border: aligned ? "2px solid rgba(0,255,100,0.5)" : `2px solid rgba(201,168,76,0.2)`, transition:"all 0.5s ease" }} />
+
+        {/* Main compass circle */}
+        <div style={{ position:"absolute", inset:0, borderRadius:"50%", background:"radial-gradient(circle at 35% 35%, #1E5535, #0A2010)", border:`3px solid ${aligned ? "#00FF64" : GOLD}`, boxShadow:`0 0 ${aligned ? "60px rgba(0,255,100,0.4)" : "40px rgba(201,168,76,0.25)"}`, transition:"all 0.5s ease" }}>
+
+          {/* Tick marks */}
+          {Array.from({length:72}).map((_,i) => {
+            const angle = i * 5;
+            const rad = (angle - 90) * Math.PI / 180;
+            const isMajor = angle % 45 === 0;
+            const r1 = isMajor ? 115 : 120;
+            const r2 = 128;
             return (
-              <div key={l} style={{ position:"absolute", top:"50%", left:"50%", transform:`translate(calc(-50% + ${Math.cos(rad)*r}px), calc(-50% + ${Math.sin(rad)*r}px))`, color: l==="N"?"#FF6666":GOLD, fontSize:14, fontWeight:700 }}>{l}</div>
+              <div key={i} style={{
+                position:"absolute", top:"50%", left:"50%",
+                width: isMajor ? 2 : 1,
+                height: isMajor ? 14 : 7,
+                background: isMajor ? GOLD : "rgba(201,168,76,0.3)",
+                transform:`translate(-50%,-50%) rotate(${angle}deg) translateY(-${r1}px)`,
+                transformOrigin:"50% 50%",
+              }} />
             );
           })}
-          {/* Needle pointing to Qibla */}
-          <div style={{ position:"absolute", top:"50%", left:"50%", transform:`translate(-50%, -50%) rotate(${needle}deg)`, transformOrigin:"50% 50%", width:4, height:200, display:"flex", flexDirection:"column", alignItems:"center", transition:"transform 0.3s ease" }}>
-            <div style={{ width:0, height:0, borderLeft:"8px solid transparent", borderRight:"8px solid transparent", borderBottom:`80px solid ${GOLD}`, marginBottom:-2 }} />
-            <div style={{ width:0, height:0, borderLeft:"8px solid transparent", borderRight:"8px solid transparent", borderTop:"80px solid rgba(255,255,255,0.15)" }} />
+
+          {/* Cardinal directions */}
+          {[{l:"N",d:0,c:"#FF5555"},{l:"NE",d:45,c:GOLD},{l:"E",d:90,c:GOLD},{l:"SE",d:135,c:GOLD},{l:"S",d:180,c:GOLD},{l:"SW",d:225,c:GOLD},{l:"W",d:270,c:GOLD},{l:"NW",d:315,c:GOLD}].map(({l,d,c}) => {
+            const r = l.length === 1 ? 98 : 95;
+            const rad = (d - 90) * Math.PI / 180;
+            return (
+              <div key={l} style={{ position:"absolute", top:"50%", left:"50%", transform:`translate(calc(-50% + ${Math.cos(rad)*r}px), calc(-50% + ${Math.sin(rad)*r}px))`, color:c, fontSize: l.length===1 ? 15 : 10, fontWeight:700, fontFamily:"'Cinzel',serif" }}>{l}</div>
+            );
+          })}
+
+          {/* Qibla Needle */}
+          <div style={{ position:"absolute", top:"50%", left:"50%", transform:`translate(-50%, -100%) rotate(${needle}deg)`, transformOrigin:"50% 100%", transition:"transform 0.4s ease", display:"flex", flexDirection:"column", alignItems:"center" }}>
+            {/* Kaaba emoji at tip */}
+            <div style={{ fontSize:22, marginBottom:2 }}>🕋</div>
+            {/* Gold needle top */}
+            <div style={{ width:0, height:0, borderLeft:"7px solid transparent", borderRight:"7px solid transparent", borderBottom:`70px solid ${aligned ? "#00FF64" : GOLD}`, transition:"border-bottom-color 0.5s" }} />
           </div>
-          {/* Kaaba icon center */}
-          <div style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)", fontSize:28 }}>🕋</div>
+
+          {/* Needle bottom (south) */}
+          <div style={{ position:"absolute", top:"50%", left:"50%", transform:`translate(-50%, 0%) rotate(${needle}deg)`, transformOrigin:"50% 0%", transition:"transform 0.4s ease" }}>
+            <div style={{ width:0, height:0, borderLeft:"7px solid transparent", borderRight:"7px solid transparent", borderTop:"70px solid rgba(255,255,255,0.12)" }} />
+          </div>
+
+          {/* Center dot */}
+          <div style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)", width:16, height:16, borderRadius:"50%", background:GOLD, border:"3px solid #0A2010", zIndex:2 }} />
         </div>
       </div>
 
-      {qibla !== null && (
-        <div style={{ background:"rgba(201,168,76,0.1)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:16, padding:"16px 32px", textAlign:"center", marginBottom:20 }}>
-          <div style={{ color:"rgba(255,255,255,0.4)", fontSize:12, marginBottom:4 }}>QIBLA DIRECTION</div>
-          <div style={{ color:GOLD, fontSize:36, fontWeight:700 }}>{qibla}°</div>
-          <div style={{ color:"rgba(255,255,255,0.4)", fontSize:12, marginTop:4 }}>from North</div>
+      {/* Aligned Banner */}
+      {aligned && qibla !== null && (
+        <div style={{ background:"rgba(0,255,100,0.12)", border:"1px solid rgba(0,255,100,0.4)", borderRadius:14, padding:"12px 24px", marginBottom:16, textAlign:"center" }}>
+          <div style={{ color:"#00FF64", fontWeight:700, fontSize:15 }}>✅ Facing Qibla!</div>
+          <div style={{ color:"rgba(255,255,255,0.5)", fontSize:12, marginTop:4 }}>You are facing the direction of Makkah</div>
         </div>
       )}
 
+      {/* Info Cards */}
+      {qibla !== null && (
+        <div style={{ display:"flex", gap:10, marginBottom:20, width:"100%" }}>
+          <div style={{ flex:1, background:"rgba(201,168,76,0.1)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:14, padding:"14px", textAlign:"center" }}>
+            <div style={{ color:"rgba(255,255,255,0.4)", fontSize:11, marginBottom:4 }}>QIBLA</div>
+            <div style={{ color:GOLD, fontSize:28, fontWeight:700 }}>{qibla}°</div>
+            <div style={{ color:"rgba(255,255,255,0.4)", fontSize:11 }}>{getDirection(qibla)} from North</div>
+          </div>
+          <div style={{ flex:1, background:"rgba(201,168,76,0.1)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:14, padding:"14px", textAlign:"center" }}>
+            <div style={{ color:"rgba(255,255,255,0.4)", fontSize:11, marginBottom:4 }}>COMPASS</div>
+            <div style={{ color:GOLD, fontSize:28, fontWeight:700 }}>{compass}°</div>
+            <div style={{ color:"rgba(255,255,255,0.4)", fontSize:11 }}>{getDirection(compass)} heading</div>
+          </div>
+        </div>
+      )}
+
+      {location && (
+        <div style={{ background:"rgba(255,255,255,0.04)", borderRadius:12, padding:"10px 16px", marginBottom:16, width:"100%", textAlign:"center" }}>
+          <div style={{ color:"rgba(255,255,255,0.3)", fontSize:11 }}>📍 Your Location: {location.lat.toFixed(4)}°N, {location.lng.toFixed(4)}°E</div>
+        </div>
+      )}
+
+      {/* Quran Ayah */}
       <div style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(201,168,76,0.1)", borderRadius:14, padding:"14px 16px", width:"100%", textAlign:"center" }}>
-        <div style={{ color:LIGHT_GOLD, fontSize:16, fontFamily:"serif", direction:"rtl", marginBottom:6 }}>وَمِنْ حَيْثُ خَرَجْتَ فَوَلِّ وَجْهَكَ شَطْرَ الْمَسْجِدِ الْحَرَامِ</div>
+        <div style={{ color:LIGHT_GOLD, fontSize:15, fontFamily:"serif", direction:"rtl", marginBottom:6, lineHeight:1.8 }}>وَمِنْ حَيْثُ خَرَجْتَ فَوَلِّ وَجْهَكَ شَطْرَ الْمَسْجِدِ الْحَرَامِ</div>
         <div style={{ color:"rgba(255,255,255,0.3)", fontSize:11, fontStyle:"italic" }}>"Turn your face toward the Sacred Mosque." — Quran 2:150</div>
+      </div>
+
+      {/* Tips */}
+      <div style={{ background:"rgba(201,168,76,0.06)", border:"1px solid rgba(201,168,76,0.15)", borderRadius:12, padding:"12px 16px", marginTop:16, width:"100%" }}>
+        <div style={{ color:GOLD, fontSize:12, fontWeight:700, marginBottom:8 }}>💡 Tips for accurate Qibla:</div>
+        <div style={{ color:"rgba(255,255,255,0.4)", fontSize:11, lineHeight:1.8 }}>
+          • Hold phone flat & horizontal<br/>
+          • Move away from metal objects<br/>
+          • Keep away from speakers & magnets<br/>
+          • Compass turns GREEN when facing Qibla ✅
+        </div>
       </div>
     </div>
   );
@@ -2189,7 +2193,6 @@ JazakAllah Khair`);
 
 // ─── ROOT APP ──────────────────────────────────────────────────────────────────
 export default function MinbarLiveApp() {
-  const [onboarding, setOnboarding] = useState(() => !localStorage.getItem("minbar_onboarding_done"));
   const [splash, setSplash]             = useState(true);
   const [page, setPage]               = useState("home");
   const [masjids, setMasjids] = useState(() => {
@@ -2318,11 +2321,8 @@ export default function MinbarLiveApp() {
         input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.5; }
       `}</style>
 
-      {/* Onboarding — shown only first time */}
-      {onboarding && <OnboardingScreen onDone={() => { localStorage.setItem("minbar_onboarding_done","1"); setOnboarding(false); }} />}
-
       {/* Splash Screen */}
-      {!onboarding && splash && <SplashScreen onDone={() => setSplash(false)} />}
+      {splash && <SplashScreen onDone={() => setSplash(false)} />}
 
       {/* In-app notification banner */}
       {currentNotif && <NotifBanner notif={currentNotif} onDismiss={() => setCurrentNotif(null)} />}
