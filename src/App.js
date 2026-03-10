@@ -31,7 +31,6 @@ function loadFirebaseScripts() {
   });
 }
 
-// eslint-disable-next-line no-unused-vars
 async function getFCMToken() {
   try {
     if (!("Notification" in window) || !("serviceWorker" in navigator)) return null;
@@ -249,8 +248,7 @@ function usePrayerAlerts(masjids, enabled, onInAppNotif) {
       const now   = new Date();
       const hhmm  = `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
       const today = now.toDateString();
-      const userMasjidId = localStorage.getItem("minbar_user_masjid") || "m1";
-      masjids.filter(m => m.id === userMasjidId).forEach(m => {
+      masjids.forEach(m => {
         Object.entries(m.prayerTimes).forEach(([prayer, times]) => {
           const label = ({"fajr":"Fajr","dhuhr":"Dhuhr","asr":"Asr","maghrib":"Maghrib","isha":"Isha","jumuah":"Jumu'ah"})[prayer] || prayer;
           // Jumu'ah only fires on Friday (day 5)
@@ -914,17 +912,8 @@ function LivePage({ masjids }) {
 }
 
 // ─── HOME PAGE ─────────────────────────────────────────────────────────────────
-function HomePage({ setPage, masjids, notifEnabled, toggleNotifications }) {
-  const [userMasjidId, setUserMasjidId] = useState(() => localStorage.getItem("minbar_user_masjid") || "m1");
-  const [showMasjidPicker, setShowMasjidPicker] = useState(false);
-  const jumma = masjids.find(m => m.id === userMasjidId) || masjids[0];
-
-  const selectMasjid = (id) => {
-    setUserMasjidId(id);
-    localStorage.setItem("minbar_user_masjid", id);
-    setShowMasjidPicker(false);
-  };
-
+function HomePage({ setPage, masjids }) {
+  const jumma = masjids[0]; // Jumma Masjid is first
   // Find next prayer based on current time
   const now = new Date();
   const isFriday = now.getDay() === 5; // 5 = Friday
@@ -971,7 +960,6 @@ function HomePage({ setPage, masjids, notifEnabled, toggleNotifications }) {
             <div style={{ display:"flex", alignItems:"center", gap:6 }}>
               <span style={{ fontSize:14 }}>{jumma.icon}</span>
               <span style={{ color: GOLD, fontSize: 12, fontWeight:700 }}>{jumma.name}</span>
-              <span onClick={() => setShowMasjidPicker(true)} style={{ color:"rgba(201,168,76,0.7)", fontSize:10, cursor:"pointer", background:"rgba(201,168,76,0.1)", borderRadius:6, padding:"2px 6px" }}>Change ▾</span>
             </div>
             <div style={{ color:"rgba(255,255,255,0.35)", fontSize:11 }}>
               Iqamah: <span style={{ color:GOLD }}>{jumma.prayerTimes[nextPrayer.key].iqamah}</span>
@@ -1000,42 +988,32 @@ function HomePage({ setPage, masjids, notifEnabled, toggleNotifications }) {
         </div>
       </div>
 
-      {/* Single Notification Toggle */}
-      <div style={{ margin:"14px 20px 0", background: notifEnabled ? "rgba(26,77,46,0.6)" : "rgba(255,255,255,0.05)", border: notifEnabled ? "1px solid rgba(201,168,76,0.35)" : "1px solid rgba(255,255,255,0.1)", borderRadius:12, padding:"12px 14px", display:"flex", alignItems:"center", gap:10 }}>
-        <span style={{ fontSize:20 }}>{notifEnabled ? "🔔" : "🔕"}</span>
-        <div style={{ flex:1 }}>
-          <div style={{ color: notifEnabled ? GOLD : "rgba(255,255,255,0.4)", fontSize:12, fontWeight:700 }}>
-            {notifEnabled ? "Notifications ON" : "Notifications OFF"}
+      {/* Push Notification Banner */}
+      {typeof Notification !== "undefined" && Notification.permission === "default" && (
+        <div style={{ margin:"14px 20px 0", background:"rgba(26,77,46,0.6)", border:"1px solid rgba(201,168,76,0.35)", borderRadius:12, padding:"10px 14px", display:"flex", alignItems:"center", gap:10 }}>
+          <span style={{ fontSize:18 }}>🔔</span>
+          <div style={{ flex:1 }}>
+            <div style={{ color:GOLD, fontSize:11, fontWeight:700 }}>Enable Live Notifications!</div>
+            <div style={{ color:"rgba(255,255,255,0.45)", fontSize:10 }}>Get notified when Masjid goes LIVE</div>
           </div>
-          <div style={{ color:"rgba(255,255,255,0.35)", fontSize:10, marginTop:2 }}>
-            {notifEnabled ? "Adhan, Iqamah & Live alerts active ✅" : "Tap to enable Adhan, Iqamah & Live alerts"}
-          </div>
-        </div>
-        <button onClick={toggleNotifications} style={{ background: notifEnabled ? "linear-gradient(135deg,#C9A84C,#E8C97A)" : "rgba(201,168,76,0.15)", border: notifEnabled ? "none" : "1px solid rgba(201,168,76,0.3)", borderRadius:20, padding:"8px 16px", color: notifEnabled ? DARK_GREEN : GOLD, fontSize:12, fontWeight:700, cursor:"pointer" }}>
-          {notifEnabled ? "ON ✓" : "OFF"}
-        </button>
-      </div>
-
-      {/* Masjid Picker Modal */}
-      {showMasjidPicker && (
-        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", zIndex:999, display:"flex", alignItems:"flex-end" }} onClick={() => setShowMasjidPicker(false)}>
-          <div style={{ background:"#0A2E1A", borderRadius:"20px 20px 0 0", width:"100%", padding:"20px", maxHeight:"80vh", overflowY:"auto" }} onClick={e => e.stopPropagation()}>
-            <div style={{ width:40, height:4, background:"rgba(201,168,76,0.3)", borderRadius:2, margin:"0 auto 16px" }} />
-            <div style={{ color:GOLD, fontWeight:700, fontSize:16, marginBottom:6, textAlign:"center" }}>🕌 Select Your Masjid</div>
-            <div style={{ color:"rgba(255,255,255,0.4)", fontSize:12, textAlign:"center", marginBottom:16 }}>Prayer times & notifications based on your selection</div>
-            {masjids.map(m => (
-              <div key={m.id} onClick={() => selectMasjid(m.id)} style={{ background: userMasjidId === m.id ? "linear-gradient(135deg,#1A4D2E,#2E6B3A)" : "rgba(255,255,255,0.05)", border: userMasjidId === m.id ? "1px solid rgba(201,168,76,0.5)" : "1px solid rgba(255,255,255,0.08)", borderRadius:14, padding:"14px 16px", marginBottom:10, cursor:"pointer", display:"flex", alignItems:"center", gap:12 }}>
-                <div style={{ fontSize:28 }}>{m.icon}</div>
-                <div style={{ flex:1 }}>
-                  <div style={{ color: userMasjidId === m.id ? GOLD : OFF_WHITE, fontWeight:700, fontSize:14 }}>{m.name}</div>
-                  <div style={{ color:"rgba(255,255,255,0.35)", fontSize:11, marginTop:3 }}>Fajr: {m.prayerTimes.fajr.adhan} • Dhuhr: {m.prayerTimes.dhuhr.adhan} • Isha: {m.prayerTimes.isha.adhan}</div>
-                </div>
-                {userMasjidId === m.id && <div style={{ color:GOLD, fontSize:18 }}>✅</div>}
-              </div>
-            ))}
-          </div>
+          <button onClick={() => getFCMToken().then(t => { if(t) alert("Notifications enabled! You will be notified when Masjid goes live!"); })} style={{ background:"linear-gradient(135deg,#C9A84C,#E8C97A)", border:"none", borderRadius:8, padding:"6px 10px", color:"#1A4D2E", fontSize:10, fontWeight:700, cursor:"pointer", whiteSpace:"nowrap" }}>
+            Enable 🔔
+          </button>
         </div>
       )}
+      {typeof Notification !== "undefined" && Notification.permission === "granted" && (
+        <div style={{ margin:"14px 20px 0", background:"rgba(26,201,76,0.08)", border:"1px solid rgba(26,201,76,0.2)", borderRadius:12, padding:"10px 14px", display:"flex", alignItems:"center", gap:8 }}>
+          <span style={{ fontSize:16 }}>🔔</span>
+          <div style={{ color:"#99FFB3", fontSize:11 }}>Live notifications enabled! ✅</div>
+        </div>
+      )}
+      {/* Tip Banner */}
+      <div style={{ margin:"10px 20px 0", background:"rgba(201,168,76,0.08)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:12, padding:"10px 14px", display:"flex", alignItems:"center", gap:10 }}>
+        <span style={{ fontSize:20 }}>💡</span>
+        <div style={{ color:"rgba(255,255,255,0.45)", fontSize:11, lineHeight:1.6 }}>
+          Keep this app <span style={{ color:GOLD, fontWeight:700 }}>open in background</span> to receive adhan sound &amp; notifications!
+        </div>
+      </div>
 
       {/* Live preview */}
       <div style={{ padding: "18px 20px 0" }}>
@@ -2000,95 +1978,162 @@ function TasbeehPage() {
 
 // ─── QIBLA PAGE ───────────────────────────────────────────────────────────────
 function QiblaPage() {
-  const [qibla, setQibla]     = useState(null);
-  const [compass, setCompass] = useState(0);
-  const [error, setError]     = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [qibla, setQibla]         = useState(null);
+  const [compass, setCompass]     = useState(0);
+  const [error, setError]         = useState(null);
+  const [loading, setLoading]     = useState(false);
+  const [permAsked, setPermAsked] = useState(false);
+  const [location, setLocation]   = useState(null);
+  const [aligned, setAligned]     = useState(false);
+  const compassRef = useRef(0);
 
   useEffect(() => {
     setLoading(true);
+    if (!navigator.geolocation) { setError("Geolocation not supported."); setLoading(false); return; }
     navigator.geolocation.getCurrentPosition(
       pos => {
-        const { latitude: lat, longitude: lng } = pos.coords;
-        // Makkah coordinates
-        const makkahLat = 21.4225, makkahLng = 39.8262;
-        const dLng = (makkahLng - lng) * Math.PI / 180;
-        const lat1 = lat * Math.PI / 180;
-        const lat2 = makkahLat * Math.PI / 180;
-        const y = Math.sin(dLng) * Math.cos(lat2);
-        const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        setLocation({ lat, lng });
+        const makkahLat = 21.4225 * Math.PI / 180;
+        const makkahLng = 39.8262 * Math.PI / 180;
+        const userLat   = lat * Math.PI / 180;
+        const dLng      = makkahLng - (lng * Math.PI / 180);
+        const y = Math.sin(dLng) * Math.cos(makkahLat);
+        const x = Math.cos(userLat) * Math.sin(makkahLat) - Math.sin(userLat) * Math.cos(makkahLat) * Math.cos(dLng);
         const bearing = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
         setQibla(Math.round(bearing));
         setLoading(false);
       },
-      err => { setError("Please allow location access to find Qibla direction."); setLoading(false); }
+      () => { setError("📍 Please allow location access to find Qibla direction."); setLoading(false); },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   }, []);
 
-  useEffect(() => {
+  const startCompass = () => {
     const handler = e => {
-      const alpha = e.alpha || e.webkitCompassHeading || 0;
-      setCompass(Math.round(alpha));
-    };
-    if (window.DeviceOrientationEvent) {
-      if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-        DeviceOrientationEvent.requestPermission().then(p => {
-          if (p === 'granted') window.addEventListener('deviceorientation', handler);
-        }).catch(() => {});
-      } else {
-        window.addEventListener('deviceorientation', handler);
+      let heading = 0;
+      if (e.webkitCompassHeading !== undefined && e.webkitCompassHeading !== null) {
+        heading = e.webkitCompassHeading;
+      } else if (e.alpha !== null) {
+        heading = 360 - e.alpha;
       }
-    }
-    return () => window.removeEventListener('deviceorientation', handler);
+      compassRef.current = heading;
+      setCompass(Math.round(heading));
+    };
+    window.addEventListener("deviceorientation", handler, true);
+    return () => window.removeEventListener("deviceorientation", handler, true);
+  };
+
+  useEffect(() => {
+    if (!window.DeviceOrientationEvent) return;
+    if (typeof DeviceOrientationEvent.requestPermission === "function") return;
+    return startCompass();
   }, []);
 
+  const requestIOSPermission = () => {
+    if (typeof DeviceOrientationEvent.requestPermission === "function") {
+      DeviceOrientationEvent.requestPermission().then(p => {
+        if (p === "granted") { setPermAsked(true); startCompass(); }
+        else setError("Compass permission denied. Please allow in Settings.");
+      }).catch(() => setError("Could not request compass permission."));
+    }
+  };
+
   const needle = qibla !== null ? (qibla - compass + 360) % 360 : 0;
+
+  useEffect(() => {
+    const diff = Math.abs(needle % 360);
+    setAligned(diff < 5 || diff > 355);
+  }, [needle]);
+
+  const getDirection = (deg) => {
+    const dirs = ["N","NE","E","SE","S","SW","W","NW","N"];
+    return dirs[Math.round(deg / 45)];
+  };
 
   return (
     <div style={{ padding:"20px 20px 80px", display:"flex", flexDirection:"column", alignItems:"center" }}>
       <SectionTitle>🧭 Qibla Direction</SectionTitle>
-      <div style={{ color:"rgba(255,255,255,0.45)", fontSize:13, marginBottom:28, textAlign:"center" }}>Find the direction of the Holy Kaaba</div>
+      <div style={{ color:"rgba(255,255,255,0.45)", fontSize:13, marginBottom:20, textAlign:"center" }}>Point your phone and find the direction of the Holy Kaaba 🕋</div>
 
-      {loading && <div style={{ color:GOLD, fontSize:14, marginBottom:20 }}>📍 Getting your location...</div>}
-      {error && (
-        <div style={{ background:"rgba(255,68,68,0.1)", border:"1px solid rgba(255,68,68,0.3)", borderRadius:14, padding:"14px 18px", marginBottom:20, color:"#FF9999", fontSize:13, textAlign:"center", lineHeight:1.7 }}>
-          {error}
-        </div>
+      {typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function" && !permAsked && (
+        <button onClick={requestIOSPermission} style={{ background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, border:"none", borderRadius:12, padding:"12px 24px", color:DARK_GREEN, fontWeight:700, fontSize:14, cursor:"pointer", marginBottom:20 }}>
+          📱 Enable Compass (iPhone)
+        </button>
       )}
 
-      {/* Compass */}
-      <div style={{ position:"relative", width:260, height:260, marginBottom:28 }}>
-        {/* Compass ring */}
-        <div style={{ position:"absolute", inset:0, borderRadius:"50%", background:"radial-gradient(circle at 40% 40%, #1A4D2E, #0A2E1A)", border:`3px solid ${GOLD}`, boxShadow:`0 0 40px rgba(201,168,76,0.3)` }}>
-          {/* Cardinal directions */}
-          {[{l:"N",d:0},{l:"E",d:90},{l:"S",d:180},{l:"W",d:270}].map(({l,d}) => {
-            const r = 110;
-            const rad = (d - 90) * Math.PI / 180;
+      {loading && <div style={{ color:GOLD, fontSize:14, marginBottom:20 }}>📍 Getting your location...</div>}
+      {error && <div style={{ background:"rgba(255,68,68,0.1)", border:"1px solid rgba(255,68,68,0.3)", borderRadius:14, padding:"14px 18px", marginBottom:20, color:"#FF9999", fontSize:13, textAlign:"center", lineHeight:1.7, width:"100%" }}>{error}</div>}
+
+      {/* Compass Rose */}
+      <div style={{ position:"relative", width:280, height:280, marginBottom:24 }}>
+        <div style={{ position:"absolute", inset:-4, borderRadius:"50%", background: aligned ? "rgba(0,255,100,0.1)" : "rgba(201,168,76,0.05)", border: aligned ? "2px solid rgba(0,255,100,0.5)" : "2px solid rgba(201,168,76,0.2)", transition:"all 0.5s ease" }} />
+        <div style={{ position:"absolute", inset:0, borderRadius:"50%", background:"radial-gradient(circle at 35% 35%, #1E5535, #0A2010)", border:`3px solid ${aligned ? "#00FF64" : GOLD}`, boxShadow:`0 0 ${aligned ? "60px rgba(0,255,100,0.4)" : "40px rgba(201,168,76,0.25)"}`, transition:"all 0.5s ease" }}>
+          {Array.from({length:72}).map((_,i) => {
+            const angle = i * 5;
+            const isMajor = angle % 45 === 0;
+            const r1 = isMajor ? 115 : 120;
             return (
-              <div key={l} style={{ position:"absolute", top:"50%", left:"50%", transform:`translate(calc(-50% + ${Math.cos(rad)*r}px), calc(-50% + ${Math.sin(rad)*r}px))`, color: l==="N"?"#FF6666":GOLD, fontSize:14, fontWeight:700 }}>{l}</div>
+              <div key={i} style={{ position:"absolute", top:"50%", left:"50%", width: isMajor ? 2 : 1, height: isMajor ? 14 : 7, background: isMajor ? GOLD : "rgba(201,168,76,0.3)", transform:`translate(-50%,-50%) rotate(${angle}deg) translateY(-${r1}px)`, transformOrigin:"50% 50%" }} />
             );
           })}
-          {/* Needle pointing to Qibla */}
-          <div style={{ position:"absolute", top:"50%", left:"50%", transform:`translate(-50%, -50%) rotate(${needle}deg)`, transformOrigin:"50% 50%", width:4, height:200, display:"flex", flexDirection:"column", alignItems:"center", transition:"transform 0.3s ease" }}>
-            <div style={{ width:0, height:0, borderLeft:"8px solid transparent", borderRight:"8px solid transparent", borderBottom:`80px solid ${GOLD}`, marginBottom:-2 }} />
-            <div style={{ width:0, height:0, borderLeft:"8px solid transparent", borderRight:"8px solid transparent", borderTop:"80px solid rgba(255,255,255,0.15)" }} />
+          {[{l:"N",d:0,c:"#FF5555"},{l:"NE",d:45,c:GOLD},{l:"E",d:90,c:GOLD},{l:"SE",d:135,c:GOLD},{l:"S",d:180,c:GOLD},{l:"SW",d:225,c:GOLD},{l:"W",d:270,c:GOLD},{l:"NW",d:315,c:GOLD}].map(({l,d,c}) => {
+            const r = l.length === 1 ? 98 : 95;
+            const rad = (d - 90) * Math.PI / 180;
+            return <div key={l} style={{ position:"absolute", top:"50%", left:"50%", transform:`translate(calc(-50% + ${Math.cos(rad)*r}px), calc(-50% + ${Math.sin(rad)*r}px))`, color:c, fontSize: l.length===1 ? 15 : 10, fontWeight:700 }}>{l}</div>;
+          })}
+          <div style={{ position:"absolute", top:"50%", left:"50%", transform:`translate(-50%, -100%) rotate(${needle}deg)`, transformOrigin:"50% 100%", transition:"transform 0.4s ease", display:"flex", flexDirection:"column", alignItems:"center" }}>
+            <div style={{ fontSize:22, marginBottom:2 }}>🕋</div>
+            <div style={{ width:0, height:0, borderLeft:"7px solid transparent", borderRight:"7px solid transparent", borderBottom:`70px solid ${aligned ? "#00FF64" : GOLD}`, transition:"border-bottom-color 0.5s" }} />
           </div>
-          {/* Kaaba icon center */}
-          <div style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)", fontSize:28 }}>🕋</div>
+          <div style={{ position:"absolute", top:"50%", left:"50%", transform:`translate(-50%, 0%) rotate(${needle}deg)`, transformOrigin:"50% 0%", transition:"transform 0.4s ease" }}>
+            <div style={{ width:0, height:0, borderLeft:"7px solid transparent", borderRight:"7px solid transparent", borderTop:"70px solid rgba(255,255,255,0.12)" }} />
+          </div>
+          <div style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)", width:16, height:16, borderRadius:"50%", background:GOLD, border:"3px solid #0A2010", zIndex:2 }} />
         </div>
       </div>
 
+      {aligned && qibla !== null && (
+        <div style={{ background:"rgba(0,255,100,0.12)", border:"1px solid rgba(0,255,100,0.4)", borderRadius:14, padding:"12px 24px", marginBottom:16, textAlign:"center" }}>
+          <div style={{ color:"#00FF64", fontWeight:700, fontSize:15 }}>✅ Facing Qibla!</div>
+          <div style={{ color:"rgba(255,255,255,0.5)", fontSize:12, marginTop:4 }}>You are facing the direction of Makkah</div>
+        </div>
+      )}
+
       {qibla !== null && (
-        <div style={{ background:"rgba(201,168,76,0.1)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:16, padding:"16px 32px", textAlign:"center", marginBottom:20 }}>
-          <div style={{ color:"rgba(255,255,255,0.4)", fontSize:12, marginBottom:4 }}>QIBLA DIRECTION</div>
-          <div style={{ color:GOLD, fontSize:36, fontWeight:700 }}>{qibla}°</div>
-          <div style={{ color:"rgba(255,255,255,0.4)", fontSize:12, marginTop:4 }}>from North</div>
+        <div style={{ display:"flex", gap:10, marginBottom:16, width:"100%" }}>
+          <div style={{ flex:1, background:"rgba(201,168,76,0.1)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:14, padding:"14px", textAlign:"center" }}>
+            <div style={{ color:"rgba(255,255,255,0.4)", fontSize:11, marginBottom:4 }}>QIBLA</div>
+            <div style={{ color:GOLD, fontSize:28, fontWeight:700 }}>{qibla}°</div>
+            <div style={{ color:"rgba(255,255,255,0.4)", fontSize:11 }}>{getDirection(qibla)} from North</div>
+          </div>
+          <div style={{ flex:1, background:"rgba(201,168,76,0.1)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:14, padding:"14px", textAlign:"center" }}>
+            <div style={{ color:"rgba(255,255,255,0.4)", fontSize:11, marginBottom:4 }}>COMPASS</div>
+            <div style={{ color:GOLD, fontSize:28, fontWeight:700 }}>{compass}°</div>
+            <div style={{ color:"rgba(255,255,255,0.4)", fontSize:11 }}>{getDirection(compass)} heading</div>
+          </div>
+        </div>
+      )}
+
+      {location && (
+        <div style={{ background:"rgba(255,255,255,0.04)", borderRadius:12, padding:"10px 16px", marginBottom:16, width:"100%", textAlign:"center" }}>
+          <div style={{ color:"rgba(255,255,255,0.3)", fontSize:11 }}>📍 {location.lat.toFixed(4)}°N, {location.lng.toFixed(4)}°E</div>
         </div>
       )}
 
       <div style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(201,168,76,0.1)", borderRadius:14, padding:"14px 16px", width:"100%", textAlign:"center" }}>
-        <div style={{ color:LIGHT_GOLD, fontSize:16, fontFamily:"serif", direction:"rtl", marginBottom:6 }}>وَمِنْ حَيْثُ خَرَجْتَ فَوَلِّ وَجْهَكَ شَطْرَ الْمَسْجِدِ الْحَرَامِ</div>
+        <div style={{ color:LIGHT_GOLD, fontSize:15, fontFamily:"serif", direction:"rtl", marginBottom:6, lineHeight:1.8 }}>وَمِنْ حَيْثُ خَرَجْتَ فَوَلِّ وَجْهَكَ شَطْرَ الْمَسْجِدِ الْحَرَامِ</div>
         <div style={{ color:"rgba(255,255,255,0.3)", fontSize:11, fontStyle:"italic" }}>"Turn your face toward the Sacred Mosque." — Quran 2:150</div>
+      </div>
+
+      <div style={{ background:"rgba(201,168,76,0.06)", border:"1px solid rgba(201,168,76,0.15)", borderRadius:12, padding:"12px 16px", marginTop:16, width:"100%" }}>
+        <div style={{ color:GOLD, fontSize:12, fontWeight:700, marginBottom:8 }}>💡 Tips for accurate Qibla:</div>
+        <div style={{ color:"rgba(255,255,255,0.4)", fontSize:11, lineHeight:1.8 }}>
+          • Hold phone flat &amp; horizontal<br/>
+          • Move away from metal objects &amp; magnets<br/>
+          • Compass turns GREEN when facing Qibla ✅
+        </div>
       </div>
     </div>
   );
@@ -2096,24 +2141,30 @@ function QiblaPage() {
 
 // ─── CHAT PAGE ─────────────────────────────────────────────────────────────────
 const SCHOLARS = [
-  { id:1, name:"Mufti Abdullah", role:"Head Imam — Jumma Masjid", speciality:"Fiqh & Daily Life", avatar:"👳", phone:"919000000001" },
-  { id:2, name:"Maulana Yusuf",  role:"Islamic Scholar",           speciality:"Quran & Tafseer",  avatar:"📚", phone:"919000000002" },
-  { id:3, name:"Sheikh Ibrahim", role:"Masjid Committee Head",     speciality:"General Guidance", avatar:"🕌", phone:"919000000003" },
+  { id:1, name:"Mufti Altaf Qasmi", role:"Islamic Scholar", speciality:"Research Scholar from Darul-Uloom Deoband", avatar:"👳", phone:"916359384140" },
 ];
 
 const FAQ = [
-  { q:"What are the 5 pillars of Islam?",        a:"The 5 pillars are: 1) Shahada (Declaration of faith) 2) Salah (5 daily prayers) 3) Zakat (Charity) 4) Sawm (Fasting in Ramadan) 5) Hajj (Pilgrimage to Makkah)" },
-  { q:"How many times should I pray daily?",     a:"Muslims pray 5 times daily: Fajr (dawn), Dhuhr (midday), Asr (afternoon), Maghrib (sunset), and Isha (night). These prayers are obligatory for every adult Muslim." },
-  { q:"What breaks the fast in Ramadan?",        a:"The fast is broken at Maghrib time by eating dates and drinking water (Sunnah). Things that break the fast include eating, drinking, and smoking intentionally from Fajr to Maghrib." },
-  { q:"Is music halal or haram?",                a:"Scholars have different opinions on music. Most classical scholars consider instruments haram, while vocal nasheeds without instruments are generally permissible. It's best to consult a scholar for detailed guidance." },
-  { q:"What is Zakat and who must pay?",         a:"Zakat is 2.5% of savings held for one lunar year above the nisab threshold (value of 87.48g gold). It is obligatory on every adult Muslim who possesses wealth above this minimum." },
-  { q:"How to perform Wudu (ablution)?",         a:"1) Intention 2) Wash both hands 3) Rinse mouth 3x 4) Clean nose 3x 5) Wash face 3x 6) Wash arms to elbows 3x 7) Wipe head 8) Clean ears 9) Wash feet to ankles 3x. Right side before left." },
-  { q:"What is the ruling on missed prayers?",   a:"Missed prayers (Qada) must be made up as soon as possible. You should pray them in order. There is no expiry for making up missed prayers — repent and make them up sincerely." },
-  { q:"Can women pray during menstruation?",     a:"Women are exempt from prayer, fasting, and Tawaf during menstruation. These prayers do not need to be made up later. Fasts of Ramadan missed must be made up after the period ends." },
-  { q:"What is the Sunnah of Friday (Jumu'ah)?", a:"Sunnah of Friday: 1) Ghusl (bath) 2) Wear clean clothes 3) Apply perfume 4) Go early to masjid 5) Recite Surah Al-Kahf 6) Send Durood on Prophet ﷺ 7) Make dua between Asr and Maghrib." },
-  { q:"How to make Dua properly?",               a:"1) Face Qibla 2) Be in state of Wudu 3) Start with Alhamdulillah & Durood 4) Ask with humility and certainty 5) Use beautiful names of Allah 6) End with Durood & Ameen. Best times: last third of night, between Adhan & Iqamah, on Friday." },
-  { q:"What is Halal food?",                     a:"Halal food must: 1) Not contain pork or pork products 2) Not contain alcohol 3) Be slaughtered in Allah's name by a Muslim 4) Be from permitted animals. Haram foods include pork, blood, carrion, and animals not slaughtered properly." },
-  { q:"What is the importance of Hajj?",         a:"Hajj is the 5th pillar of Islam, obligatory once in a lifetime for every Muslim who is physically and financially able. It takes place in Dhul Hijjah. It is a complete forgiveness of past sins for those who perform it sincerely." },
+  { keys:["5 pillars","five pillars","pillars of islam"], q:"What are the 5 pillars of Islam?", a:"The 5 pillars: 1) Shahada — Declaration of faith 2) Salah — 5 daily prayers 3) Zakat — 2.5% charity 4) Sawm — Fasting in Ramadan 5) Hajj — Pilgrimage to Makkah once in lifetime." },
+  { keys:["how many times","pray daily","5 times","salah"], q:"How many times should I pray daily?", a:"Muslims pray 5 times daily: 🌙 Fajr (before sunrise), ☀️ Dhuhr (midday), 🌤 Asr (afternoon), 🌅 Maghrib (after sunset), ⭐ Isha (night). Obligatory for every adult Muslim." },
+  { keys:["fast","roza","ramadan","iftar","sehri"], q:"What breaks the fast in Ramadan?", a:"Fast runs from Sehri (before Fajr) to Iftar (Maghrib). Things that break fast: eating, drinking, smoking intentionally. Sunnah is to break fast with dates and water. Unintentional eating does NOT break fast." },
+  { keys:["music","song","nasheed","instrument"], q:"Is music halal or haram?", a:"Most classical scholars consider musical instruments haram. Vocal nasheeds without instruments are generally permissible. Avoid music that distracts from Allah and consult a scholar for detailed guidance." },
+  { keys:["zakat","zakah","charity","nisab","2.5"], q:"What is Zakat?", a:"Zakat is 2.5% of total savings held for one lunar year above Nisab (87.48g gold value). Obligatory on every adult Muslim above Nisab. It purifies wealth and helps the poor." },
+  { keys:["wudu","ablution","wudhu","wash","purity"], q:"How to perform Wudu?", a:"Wudu steps: 1) Niyyah 2) Bismillah 3) Wash hands 3x 4) Rinse mouth 3x 5) Clean nose 3x 6) Wash face 3x 7) Wash arms to elbows 3x (right first) 8) Wipe head 9) Clean ears 10) Wash feet 3x (right first)." },
+  { keys:["missed prayer","qada","qaza","make up"], q:"What is the ruling on missed prayers?", a:"Missed prayers (Qada) must be made up as soon as possible in order. There is no expiry — repent sincerely and make them up. Deliberately missing prayers is a major sin." },
+  { keys:["women pray","menstruation","haid","period"], q:"Can women pray during menstruation?", a:"Women are EXEMPT from Salah, fasting, and Tawaf during menstruation. Missed Salah do NOT need to be made up. Missed Ramadan fasts MUST be made up after period ends." },
+  { keys:["friday","jumuah","jummah","jumma","khutbah"], q:"What is the Sunnah of Friday?", a:"Sunnah of Friday: 1) Ghusl 2) Clean clothes 3) Apply itr (perfume) 4) Go early to Masjid 5) Recite Surah Al-Kahf 6) Send Durood on Prophet ﷺ 7) Make Dua between Asr and Maghrib." },
+  { keys:["dua","supplication","how to ask allah"], q:"How to make Dua?", a:"How to make Dua: 1) Face Qibla 2) Wudu 3) Raise hands 4) Start with Alhamdulillah & Durood 5) Ask with full trust in Allah 6) End with Ameen. Best times: last 1/3 of night, between Adhan & Iqamah, Friday afternoon." },
+  { keys:["halal food","haram food","meat","slaughter","zabiha"], q:"What is Halal food?", a:"Halal: meat slaughtered in Allah's name, fish, vegetables, fruits. Haram: pork, alcohol, blood, carrion, animals not properly slaughtered or dedicated to other than Allah." },
+  { keys:["hajj","pilgrimage","makkah","kaaba","umrah"], q:"What is Hajj?", a:"Hajj is the 5th pillar — pilgrimage to Makkah. Obligatory ONCE in lifetime for those physically and financially able. Takes place in Dhul Hijjah. Wipes all past sins for sincere performers." },
+  { keys:["marriage","nikah","age of marriage","shaadi","wedding"], q:"What is the Islamic ruling on marriage?", a:"Nikah is highly recommended — the Prophet ﷺ said it is his Sunnah. Key conditions: consent of both parties, Mahr (gift to bride), witnesses, and Wali (guardian for bride). Most modern scholars require legal age (18)." },
+  { keys:["interest","riba","bank","loan","mortgage","sood"], q:"What is Riba (interest)?", a:"Riba (interest) is strictly HARAM. Allah says in Quran 2:275 that trade is permitted and Riba is forbidden. Includes bank interest, credit card interest, and all usury. Seek Islamic finance alternatives." },
+  { keys:["hijab","purdah","covering","veil","niqab","scarf"], q:"What is the ruling on Hijab?", a:"Hijab is obligatory for adult Muslim women per Quran 24:31 and 33:59. Covers all except face and hands according to majority scholars. Some require full covering (Niqab)." },
+  { keys:["ghusl","bath","janabah","major impurity"], q:"How to perform Ghusl?", a:"Ghusl required after: marital relations, wet dream, end of menstruation. Steps: 1) Niyyah 2) Wash hands & private parts 3) Full Wudu 4) Pour water over right shoulder 3x, left 3x 5) Wet entire body including all hair." },
+  { keys:["repent","tawbah","forgiveness","sins","forgive"], q:"How to repent from sins?", a:"Tawbah conditions: 1) Stop the sin immediately 2) Feel genuine regret 3) Firmly resolve never to return. Quran 39:53: Do not despair of Allah's mercy — Allah forgives all sins. Sincere Tawbah wipes the slate clean." },
+  { keys:["tahajjud","night prayer","qiyam","witr"], q:"What is Tahajjud prayer?", a:"Tahajjud is voluntary night prayer — highly recommended Sunnah. Prayed after Isha before Fajr (last 1/3 of night is best). Prayed in 2 rakah sets. End with Witr. Means of closeness to Allah and acceptance of Dua." },
+  { keys:["quran","recite","memorize","hifz","tilawat"], q:"Importance of reciting Quran?", a:"The Prophet ﷺ said: The best of you learns and teaches the Quran. Each letter brings 10 rewards. Reciting daily, understanding meaning, and implementing in life is obligatory. Quran will intercede for its reciter on Judgement Day." },
+  { keys:["sadaqah","donation","giving","khairat"], q:"What is Sadaqah?", a:"Sadaqah is voluntary charity for Allah's sake. No minimum amount. Even a smile is Sadaqah. Sadaqah Jariyah (ongoing charity like building a well or masjid) continues giving rewards after death." },
 ];
 
 function ChatPage() {
@@ -2403,7 +2454,7 @@ export default function MinbarLiveApp() {
 
       {/* Page */}
       <div style={{ overflowY:"auto", height:"calc(100vh - 114px)" }}>
-        <CurrentPage setPage={setPage} masjids={masjids} onUpdateMasjid={handleUpdateMasjid} notifEnabled={notifEnabled} toggleNotifications={toggleNotifications} />
+        <CurrentPage setPage={setPage} masjids={masjids} />
       </div>
 
       {/* Bottom Nav */}
