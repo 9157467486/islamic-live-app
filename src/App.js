@@ -31,6 +31,7 @@ function loadFirebaseScripts() {
   });
 }
 
+// eslint-disable-next-line no-unused-vars
 async function getFCMToken() {
   try {
     if (!("Notification" in window) || !("serviceWorker" in navigator)) return null;
@@ -78,6 +79,66 @@ async function sendLiveNotification(masjidName, bayanTitle) {
   } catch(e) { console.log("Send notif error:", e); }
 }
 
+
+
+// ─── ONBOARDING SCREENS ────────────────────────────────────────────────────────
+const ONBOARDING_SLIDES = [
+  { icon:"🕌", title:"Welcome to Minbar Live", subtitle:"Bismillah ir-Rahman ir-Raheem", desc:"Your complete Islamic companion app. Stay connected with your Masjid, prayers, and the Holy Quran — all in one place!", color:"#1A4D2E" },
+  { icon:"📡", title:"Live Masjid Streaming", subtitle:"Never miss a Khutbah again!", desc:"Watch live Friday Khutbahs, Bayans, and special events from your Masjid directly in the app — anytime, anywhere!", color:"#1A3D4D" },
+  { icon:"🕐", title:"Prayer Times & Adhan", subtitle:"Always know your prayer times", desc:"Get accurate prayer times for your selected Masjid. Receive Adhan and Iqamah notifications so you never miss a Salah!", color:"#2E1A4D" },
+  { icon:"📖", title:"Holy Quran Reader", subtitle:"Read & Listen to the Quran", desc:"Read all 114 Surahs with Arabic text and English translation. Listen to beautiful recitation by Sheikh Mishary Alafasy!", color:"#4D2E1A" },
+  { icon:"🤲", title:"Duas & Tasbeeh", subtitle:"Daily Islamic supplications", desc:"48+ authentic Duas in 8 categories — Morning, Evening, Sleep, Travel and more. Plus a digital Tasbeeh counter for your dhikr!", color:"#1A4D3D" },
+  { icon:"🧭", title:"Qibla & More", subtitle:"Find direction to Makkah", desc:"Accurate Qibla compass using your GPS. Compass turns GREEN when facing Makkah! Plus Islamic Library with recorded Bayans.", color:"#3D4D1A" },
+  { icon:"💬", title:"Ask Islamic Questions", subtitle:"Get answers instantly!", desc:"Ask common Islamic questions and get instant answers. Need more help? Contact our qualified Islamic Scholar directly on WhatsApp!", color:"#4D1A2E" },
+  { icon:"🕌", title:"Select Your Masjid", subtitle:"Personalise your experience!", desc:"Your app shows prayer times for YOUR Masjid only!
+
+How to change:
+🏠 Home page → prayer time card → tap "Change ▾" next to Masjid name → select your Masjid ✅
+
+Prayer times & Adhan notifications update instantly!", color:"#1A4D2E" },
+];
+
+function OnboardingScreen({ onDone }) {
+  const [current, setCurrent] = useState(0);
+  const [animating, setAnimating] = useState(false);
+  const slide = ONBOARDING_SLIDES[current];
+  const isLast = current === ONBOARDING_SLIDES.length - 1;
+
+  const goNext = () => {
+    if (animating) return;
+    if (isLast) { onDone(); return; }
+    setAnimating(true);
+    setTimeout(() => { setCurrent(c => c + 1); setAnimating(false); }, 300);
+  };
+
+  const goTo = (i) => { if (!animating) { setAnimating(true); setTimeout(() => { setCurrent(i); setAnimating(false); }, 200); } };
+
+  return (
+    <div style={{ position:"fixed", inset:0, zIndex:9998, background:DARK_GREEN, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"space-between", padding:"40px 24px 50px", fontFamily:"'Lato',sans-serif" }}>
+      <div style={{ width:"100%", display:"flex", justifyContent:"flex-end" }}>
+        <button onClick={onDone} style={{ background:"rgba(255,255,255,0.1)", border:"none", borderRadius:20, padding:"8px 18px", color:"rgba(255,255,255,0.5)", fontSize:13, cursor:"pointer" }}>Skip</button>
+      </div>
+      <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", textAlign:"center", opacity: animating ? 0 : 1, transition:"opacity 0.3s ease", padding:"0 10px" }}>
+        <div style={{ width:130, height:130, borderRadius:"50%", background:`linear-gradient(135deg,${slide.color},rgba(201,168,76,0.3))`, border:"2px solid rgba(201,168,76,0.4)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:60, marginBottom:32, boxShadow:"0 8px 32px rgba(0,0,0,0.4)" }}>
+          {slide.icon}
+        </div>
+        <div style={{ color:GOLD, fontSize:12, fontWeight:700, letterSpacing:2, marginBottom:10, fontFamily:"'Cinzel',serif" }}>{slide.subtitle}</div>
+        <div style={{ color:OFF_WHITE, fontSize:24, fontWeight:700, fontFamily:"'Playfair Display',serif", marginBottom:16, lineHeight:1.3 }}>{slide.title}</div>
+        <div style={{ color:"rgba(255,255,255,0.55)", fontSize:14, lineHeight:1.8, maxWidth:300, whiteSpace:"pre-line" }}>{slide.desc}</div>
+      </div>
+      <div style={{ width:"100%", display:"flex", flexDirection:"column", alignItems:"center", gap:24 }}>
+        <div style={{ display:"flex", gap:8 }}>
+          {ONBOARDING_SLIDES.map((_, i) => (
+            <div key={i} onClick={() => goTo(i)} style={{ width: i === current ? 24 : 8, height:8, borderRadius:4, background: i === current ? GOLD : "rgba(255,255,255,0.2)", cursor:"pointer", transition:"all 0.3s ease" }} />
+          ))}
+        </div>
+        <button onClick={goNext} style={{ width:"100%", padding:"17px", background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, border:"none", borderRadius:16, color:DARK_GREEN, fontSize:16, fontWeight:700, cursor:"pointer", boxShadow:"0 6px 24px rgba(201,168,76,0.35)" }}>
+          {isLast ? "🕌 Get Started — Bismillah!" : "Next →"}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 // ─── SPLASH SCREEN ────────────────────────────────────────────────────────────
 function SplashScreen({ onDone }) {
@@ -248,7 +309,8 @@ function usePrayerAlerts(masjids, enabled, onInAppNotif) {
       const now   = new Date();
       const hhmm  = `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
       const today = now.toDateString();
-      masjids.forEach(m => {
+      const userMasjidId = localStorage.getItem("minbar_user_masjid") || "m1";
+      masjids.filter(m => m.id === userMasjidId).forEach(m => {
         Object.entries(m.prayerTimes).forEach(([prayer, times]) => {
           const label = ({"fajr":"Fajr","dhuhr":"Dhuhr","asr":"Asr","maghrib":"Maghrib","isha":"Isha","jumuah":"Jumu'ah"})[prayer] || prayer;
           // Jumu'ah only fires on Friday (day 5)
@@ -912,11 +974,20 @@ function LivePage({ masjids }) {
 }
 
 // ─── HOME PAGE ─────────────────────────────────────────────────────────────────
-function HomePage({ setPage, masjids }) {
-  const jumma = masjids[0]; // Jumma Masjid is first
+function HomePage({ setPage, masjids, notifEnabled, toggleNotifications }) {
+  const [userMasjidId, setUserMasjidId] = useState(() => localStorage.getItem("minbar_user_masjid") || "m1");
+  const [showMasjidPicker, setShowMasjidPicker] = useState(false);
+  const jumma = masjids.find(m => m.id === userMasjidId) || masjids[0];
+
+  const selectMasjid = (id) => {
+    setUserMasjidId(id);
+    localStorage.setItem("minbar_user_masjid", id);
+    setShowMasjidPicker(false);
+  };
+
   // Find next prayer based on current time
   const now = new Date();
-  const isFriday = now.getDay() === 5; // 5 = Friday
+  const isFriday = now.getDay() === 5;
   const nowMins = now.getHours() * 60 + now.getMinutes();
   const toMins = t => { const [h,m] = t.split(":").map(Number); return h*60+m; };
 
@@ -960,6 +1031,7 @@ function HomePage({ setPage, masjids }) {
             <div style={{ display:"flex", alignItems:"center", gap:6 }}>
               <span style={{ fontSize:14 }}>{jumma.icon}</span>
               <span style={{ color: GOLD, fontSize: 12, fontWeight:700 }}>{jumma.name}</span>
+              <span onClick={() => setShowMasjidPicker(true)} style={{ color:"rgba(201,168,76,0.7)", fontSize:10, cursor:"pointer", background:"rgba(201,168,76,0.1)", borderRadius:6, padding:"2px 6px" }}>Change ▾</span>
             </div>
             <div style={{ color:"rgba(255,255,255,0.35)", fontSize:11 }}>
               Iqamah: <span style={{ color:GOLD }}>{jumma.prayerTimes[nextPrayer.key].iqamah}</span>
@@ -988,32 +1060,38 @@ function HomePage({ setPage, masjids }) {
         </div>
       </div>
 
-      {/* Push Notification Banner */}
-      {typeof Notification !== "undefined" && Notification.permission === "default" && (
-        <div style={{ margin:"14px 20px 0", background:"rgba(26,77,46,0.6)", border:"1px solid rgba(201,168,76,0.35)", borderRadius:12, padding:"10px 14px", display:"flex", alignItems:"center", gap:10 }}>
-          <span style={{ fontSize:18 }}>🔔</span>
-          <div style={{ flex:1 }}>
-            <div style={{ color:GOLD, fontSize:11, fontWeight:700 }}>Enable Live Notifications!</div>
-            <div style={{ color:"rgba(255,255,255,0.45)", fontSize:10 }}>Get notified when Masjid goes LIVE</div>
-          </div>
-          <button onClick={() => getFCMToken().then(t => { if(t) alert("Notifications enabled! You will be notified when Masjid goes live!"); })} style={{ background:"linear-gradient(135deg,#C9A84C,#E8C97A)", border:"none", borderRadius:8, padding:"6px 10px", color:"#1A4D2E", fontSize:10, fontWeight:700, cursor:"pointer", whiteSpace:"nowrap" }}>
-            Enable 🔔
-          </button>
+      {/* Single Notification Toggle */}
+      <div style={{ margin:"14px 20px 0", background: notifEnabled ? "rgba(26,77,46,0.6)" : "rgba(255,255,255,0.05)", border: notifEnabled ? "1px solid rgba(201,168,76,0.35)" : "1px solid rgba(255,255,255,0.1)", borderRadius:12, padding:"12px 14px", display:"flex", alignItems:"center", gap:10 }}>
+        <span style={{ fontSize:20 }}>{notifEnabled ? "🔔" : "🔕"}</span>
+        <div style={{ flex:1 }}>
+          <div style={{ color: notifEnabled ? GOLD : "rgba(255,255,255,0.4)", fontSize:12, fontWeight:700 }}>{notifEnabled ? "Notifications ON" : "Notifications OFF"}</div>
+          <div style={{ color:"rgba(255,255,255,0.35)", fontSize:10, marginTop:2 }}>{notifEnabled ? "Adhan, Iqamah & Live alerts active ✅" : "Tap to enable Adhan, Iqamah & Live alerts"}</div>
         </div>
-      )}
-      {typeof Notification !== "undefined" && Notification.permission === "granted" && (
-        <div style={{ margin:"14px 20px 0", background:"rgba(26,201,76,0.08)", border:"1px solid rgba(26,201,76,0.2)", borderRadius:12, padding:"10px 14px", display:"flex", alignItems:"center", gap:8 }}>
-          <span style={{ fontSize:16 }}>🔔</span>
-          <div style={{ color:"#99FFB3", fontSize:11 }}>Live notifications enabled! ✅</div>
-        </div>
-      )}
-      {/* Tip Banner */}
-      <div style={{ margin:"10px 20px 0", background:"rgba(201,168,76,0.08)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:12, padding:"10px 14px", display:"flex", alignItems:"center", gap:10 }}>
-        <span style={{ fontSize:20 }}>💡</span>
-        <div style={{ color:"rgba(255,255,255,0.45)", fontSize:11, lineHeight:1.6 }}>
-          Keep this app <span style={{ color:GOLD, fontWeight:700 }}>open in background</span> to receive adhan sound &amp; notifications!
-        </div>
+        <button onClick={toggleNotifications} style={{ background: notifEnabled ? "linear-gradient(135deg,#C9A84C,#E8C97A)" : "rgba(201,168,76,0.15)", border: notifEnabled ? "none" : "1px solid rgba(201,168,76,0.3)", borderRadius:20, padding:"8px 16px", color: notifEnabled ? DARK_GREEN : GOLD, fontSize:12, fontWeight:700, cursor:"pointer" }}>
+          {notifEnabled ? "ON ✓" : "OFF"}
+        </button>
       </div>
+
+      {/* Masjid Picker Modal */}
+      {showMasjidPicker && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.75)", zIndex:999, display:"flex", alignItems:"flex-end" }} onClick={() => setShowMasjidPicker(false)}>
+          <div style={{ background:"#0A2E1A", borderRadius:"20px 20px 0 0", width:"100%", padding:"20px", maxHeight:"80vh", overflowY:"auto" }} onClick={e => e.stopPropagation()}>
+            <div style={{ width:40, height:4, background:"rgba(201,168,76,0.3)", borderRadius:2, margin:"0 auto 16px" }} />
+            <div style={{ color:GOLD, fontWeight:700, fontSize:16, marginBottom:6, textAlign:"center" }}>🕌 Select Your Masjid</div>
+            <div style={{ color:"rgba(255,255,255,0.4)", fontSize:12, textAlign:"center", marginBottom:16 }}>Prayer times & notifications based on your selection</div>
+            {masjids.map(m => (
+              <div key={m.id} onClick={() => selectMasjid(m.id)} style={{ background: userMasjidId === m.id ? "linear-gradient(135deg,#1A4D2E,#2E6B3A)" : "rgba(255,255,255,0.05)", border: userMasjidId === m.id ? "1px solid rgba(201,168,76,0.5)" : "1px solid rgba(255,255,255,0.08)", borderRadius:14, padding:"14px 16px", marginBottom:10, cursor:"pointer", display:"flex", alignItems:"center", gap:12 }}>
+                <div style={{ fontSize:28 }}>{m.icon}</div>
+                <div style={{ flex:1 }}>
+                  <div style={{ color: userMasjidId === m.id ? GOLD : OFF_WHITE, fontWeight:700, fontSize:14 }}>{m.name}</div>
+                  <div style={{ color:"rgba(255,255,255,0.35)", fontSize:11, marginTop:3 }}>Fajr: {m.prayerTimes.fajr.adhan} • Dhuhr: {m.prayerTimes.dhuhr.adhan} • Isha: {m.prayerTimes.isha.adhan}</div>
+                </div>
+                {userMasjidId === m.id && <div style={{ color:GOLD, fontSize:18 }}>✅</div>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Live preview */}
       <div style={{ padding: "18px 20px 0" }}>
@@ -2285,6 +2363,7 @@ JazakAllah Khair`);
 
 // ─── ROOT APP ──────────────────────────────────────────────────────────────────
 export default function MinbarLiveApp() {
+  const [onboarding, setOnboarding] = useState(() => !localStorage.getItem("minbar_onboarding_done"));
   const [splash, setSplash]             = useState(true);
   const [page, setPage]               = useState("home");
   const [masjids, setMasjids] = useState(() => {
@@ -2413,8 +2492,11 @@ export default function MinbarLiveApp() {
         input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.5; }
       `}</style>
 
+      {/* Onboarding — first time only */}
+      {onboarding && <OnboardingScreen onDone={() => { localStorage.setItem("minbar_onboarding_done","1"); setOnboarding(false); }} />}
+
       {/* Splash Screen */}
-      {splash && <SplashScreen onDone={() => setSplash(false)} />}
+      {!onboarding && splash && <SplashScreen onDone={() => setSplash(false)} />}
 
       {/* In-app notification banner */}
       {currentNotif && <NotifBanner notif={currentNotif} onDismiss={() => setCurrentNotif(null)} />}
@@ -2454,7 +2536,7 @@ export default function MinbarLiveApp() {
 
       {/* Page */}
       <div style={{ overflowY:"auto", height:"calc(100vh - 114px)" }}>
-        <CurrentPage setPage={setPage} masjids={masjids} />
+        <CurrentPage setPage={setPage} masjids={masjids} onUpdateMasjid={handleUpdateMasjid} notifEnabled={notifEnabled} toggleNotifications={toggleNotifications} />
       </div>
 
       {/* Bottom Nav */}
