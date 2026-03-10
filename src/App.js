@@ -90,12 +90,7 @@ const ONBOARDING_SLIDES = [
   { icon:"🤲", title:"Duas & Tasbeeh", subtitle:"Daily Islamic supplications", desc:"48+ authentic Duas in 8 categories — Morning, Evening, Sleep, Travel and more. Plus a digital Tasbeeh counter for your dhikr!", color:"#1A4D3D" },
   { icon:"🧭", title:"Qibla & More", subtitle:"Find direction to Makkah", desc:"Accurate Qibla compass using your GPS. Compass turns GREEN when facing Makkah! Plus Islamic Library with recorded Bayans.", color:"#3D4D1A" },
   { icon:"💬", title:"Ask Islamic Questions", subtitle:"Get answers instantly!", desc:"Ask common Islamic questions and get instant answers. Need more help? Contact our qualified Islamic Scholar directly on WhatsApp!", color:"#4D1A2E" },
-  { icon:"🕌", title:"Select Your Masjid", subtitle:"Personalise your experience!", desc:"Your app shows prayer times for YOUR Masjid only!
-
-How to change:
-🏠 Home page → prayer time card → tap "Change ▾" next to Masjid name → select your Masjid ✅
-
-Prayer times & Adhan notifications update instantly!", color:"#1A4D2E" },
+  { icon:"🕌", title:"Select Your Masjid", subtitle:"Personalise your experience!", desc:"Your app shows prayer times for YOUR Masjid only!\n\nHow to change:\n🏠 Home → prayer card → tap \"Change\" next to Masjid name → select your Masjid ✅\n\nPrayer times & Adhan notifications update instantly!", color:"#1A4D2E" },
 ];
 
 function OnboardingScreen({ onDone }) {
