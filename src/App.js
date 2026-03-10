@@ -79,6 +79,128 @@ async function sendLiveNotification(masjidName, bayanTitle) {
 }
 
 
+
+// ─── ONBOARDING SCREENS ────────────────────────────────────────────────────────
+const ONBOARDING_SLIDES = [
+  {
+    icon: "🕌",
+    title: "Welcome to Minbar Live",
+    subtitle: "Bismillah ir-Rahman ir-Raheem",
+    desc: "Your complete Islamic companion app. Stay connected with your Masjid, prayers, and the Holy Quran — all in one place!",
+    color: "#1A4D2E",
+  },
+  {
+    icon: "📡",
+    title: "Live Masjid Streaming",
+    subtitle: "Never miss a Khutbah again!",
+    desc: "Watch live Friday Khutbahs, Bayans, and special events from your Masjid directly in the app — anytime, anywhere!",
+    color: "#1A3D4D",
+  },
+  {
+    icon: "🕐",
+    title: "Prayer Times & Adhan",
+    subtitle: "Always know your prayer times",
+    desc: "Get accurate prayer times for your selected Masjid. Receive Adhan and Iqamah notifications so you never miss a Salah!",
+    color: "#2E1A4D",
+  },
+  {
+    icon: "📖",
+    title: "Holy Quran Reader",
+    subtitle: "Read & Listen to the Quran",
+    desc: "Read all 114 Surahs with Arabic text and English translation. Listen to beautiful recitation by Sheikh Mishary Alafasy!",
+    color: "#4D2E1A",
+  },
+  {
+    icon: "🤲",
+    title: "Duas & Tasbeeh",
+    subtitle: "Daily Islamic supplications",
+    desc: "48+ authentic Duas in 8 categories — Morning, Evening, Sleep, Travel and more. Plus a digital Tasbeeh counter for your dhikr!",
+    color: "#1A4D3D",
+  },
+  {
+    icon: "🧭",
+    title: "Qibla & More",
+    subtitle: "Find direction to Makkah",
+    desc: "Accurate Qibla compass using your GPS. Plus explore our Islamic Library with recorded Bayans and lectures!",
+    color: "#3D4D1A",
+  },
+  {
+    icon: "💬",
+    title: "Ask Islamic Questions",
+    subtitle: "Get answers instantly!",
+    desc: "Ask common Islamic questions and get instant answers. Need more help? Contact our qualified Islamic Scholar directly on WhatsApp!",
+    color: "#4D1A2E",
+  },
+];
+
+function OnboardingScreen({ onDone }) {
+  const [current, setCurrent] = useState(0);
+  const [animating, setAnimating] = useState(false);
+  const slide = ONBOARDING_SLIDES[current];
+  const isLast = current === ONBOARDING_SLIDES.length - 1;
+
+  const goNext = () => {
+    if (animating) return;
+    if (isLast) { onDone(); return; }
+    setAnimating(true);
+    setTimeout(() => { setCurrent(c => c + 1); setAnimating(false); }, 300);
+  };
+
+  const goTo = (i) => { if (!animating) { setAnimating(true); setTimeout(() => { setCurrent(i); setAnimating(false); }, 200); } };
+
+  return (
+    <div style={{ position:"fixed", inset:0, zIndex:9998, background:DARK_GREEN, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"space-between", padding:"40px 24px 50px", fontFamily:"'Lato',sans-serif" }}>
+
+      {/* Skip button */}
+      <div style={{ width:"100%", display:"flex", justifyContent:"flex-end" }}>
+        <button onClick={onDone} style={{ background:"rgba(255,255,255,0.1)", border:"none", borderRadius:20, padding:"8px 18px", color:"rgba(255,255,255,0.5)", fontSize:13, cursor:"pointer" }}>
+          Skip
+        </button>
+      </div>
+
+      {/* Slide Content */}
+      <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", textAlign:"center", opacity: animating ? 0 : 1, transition:"opacity 0.3s ease", padding:"0 10px" }}>
+
+        {/* Icon Circle */}
+        <div style={{ width:130, height:130, borderRadius:"50%", background:`linear-gradient(135deg,${slide.color},rgba(201,168,76,0.3))`, border:"2px solid rgba(201,168,76,0.4)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:60, marginBottom:32, boxShadow:"0 8px 32px rgba(0,0,0,0.4)" }}>
+          {slide.icon}
+        </div>
+
+        {/* Subtitle */}
+        <div style={{ color:GOLD, fontSize:12, fontWeight:700, letterSpacing:2, marginBottom:10, fontFamily:"'Cinzel',serif" }}>
+          {slide.subtitle}
+        </div>
+
+        {/* Title */}
+        <div style={{ color:OFF_WHITE, fontSize:24, fontWeight:700, fontFamily:"'Playfair Display',serif", marginBottom:16, lineHeight:1.3 }}>
+          {slide.title}
+        </div>
+
+        {/* Description */}
+        <div style={{ color:"rgba(255,255,255,0.55)", fontSize:14, lineHeight:1.7, maxWidth:300 }}>
+          {slide.desc}
+        </div>
+      </div>
+
+      {/* Bottom Controls */}
+      <div style={{ width:"100%", display:"flex", flexDirection:"column", alignItems:"center", gap:24 }}>
+
+        {/* Dots */}
+        <div style={{ display:"flex", gap:8 }}>
+          {ONBOARDING_SLIDES.map((_, i) => (
+            <div key={i} onClick={() => goTo(i)} style={{ width: i === current ? 24 : 8, height:8, borderRadius:4, background: i === current ? GOLD : "rgba(255,255,255,0.2)", cursor:"pointer", transition:"all 0.3s ease" }} />
+          ))}
+        </div>
+
+        {/* Next / Get Started Button */}
+        <button onClick={goNext} style={{ width:"100%", padding:"17px", background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, border:"none", borderRadius:16, color:DARK_GREEN, fontSize:16, fontWeight:700, cursor:"pointer", boxShadow:"0 6px 24px rgba(201,168,76,0.35)", fontFamily:"'Lato',sans-serif" }}>
+          {isLast ? "🕌 Get Started — Bismillah!" : "Next →"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── SPLASH SCREEN ────────────────────────────────────────────────────────────
 function SplashScreen({ onDone }) {
   useEffect(() => { const t = setTimeout(onDone, 3200); return () => clearTimeout(t); }, [onDone]);
@@ -2067,6 +2189,7 @@ JazakAllah Khair`);
 
 // ─── ROOT APP ──────────────────────────────────────────────────────────────────
 export default function MinbarLiveApp() {
+  const [onboarding, setOnboarding] = useState(() => !localStorage.getItem("minbar_onboarding_done"));
   const [splash, setSplash]             = useState(true);
   const [page, setPage]               = useState("home");
   const [masjids, setMasjids] = useState(() => {
@@ -2195,8 +2318,11 @@ export default function MinbarLiveApp() {
         input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.5; }
       `}</style>
 
+      {/* Onboarding — shown only first time */}
+      {onboarding && <OnboardingScreen onDone={() => { localStorage.setItem("minbar_onboarding_done","1"); setOnboarding(false); }} />}
+
       {/* Splash Screen */}
-      {splash && <SplashScreen onDone={() => setSplash(false)} />}
+      {!onboarding && splash && <SplashScreen onDone={() => setSplash(false)} />}
 
       {/* In-app notification banner */}
       {currentNotif && <NotifBanner notif={currentNotif} onDismiss={() => setCurrentNotif(null)} />}
