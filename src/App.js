@@ -31,6 +31,7 @@ function loadFirebaseScripts() {
   });
 }
 
+// eslint-disable-next-line no-unused-vars
 async function getFCMToken() {
   try {
     if (!("Notification" in window) || !("serviceWorker" in navigator)) return null;
