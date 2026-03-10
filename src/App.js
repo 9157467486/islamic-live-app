@@ -1960,10 +1960,8 @@ function QiblaPage() {
           {/* Tick marks */}
           {Array.from({length:72}).map((_,i) => {
             const angle = i * 5;
-            const rad = (angle - 90) * Math.PI / 180;
             const isMajor = angle % 45 === 0;
             const r1 = isMajor ? 115 : 120;
-            const r2 = 128;
             return (
               <div key={i} style={{
                 position:"absolute", top:"50%", left:"50%",
