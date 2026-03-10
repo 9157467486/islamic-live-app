@@ -2275,7 +2275,7 @@ export default function MinbarLiveApp() {
 
       {/* Page */}
       <div style={{ overflowY:"auto", height:"calc(100vh - 114px)" }}>
-        <CurrentPage setPage={setPage} masjids={masjids} onUpdateMasjid={updateMasjid} notifEnabled={notifEnabled} toggleNotifications={toggleNotifications} />
+        <CurrentPage setPage={setPage} masjids={masjids} onUpdateMasjid={handleUpdateMasjid} notifEnabled={notifEnabled} toggleNotifications={toggleNotifications} />
       </div>
 
       {/* Bottom Nav */}
