@@ -166,7 +166,7 @@ function SplashScreen({ onDone }) {
 
         {/* Bismillah Arabic */}
         <div style={{
-          color:"#F0D080", fontSize:26, fontFamily:"serif", direction:"rtl",
+          color:"#F0D080", fontSize:26, fontFamily:"'Amiri', serif", direction:"rtl",
           lineHeight:1.8, marginBottom:8, letterSpacing:2,
           textShadow:"0 0 30px rgba(201,168,76,0.6)",
           animation:"splashIn 0.8s ease 0.5s both",
@@ -1551,7 +1551,7 @@ function QuranReader({ surah, onBack }) {
       {/* Bismillah */}
       {surah.n !== 9 && (
         <div style={{ background:"rgba(201,168,76,0.08)", padding:"12px 20px", textAlign:"center", borderBottom:"1px solid rgba(201,168,76,0.1)", flexShrink:0 }}>
-          <div style={{ color:LIGHT_GOLD, fontSize:18, fontFamily:"serif", direction:"rtl" }}>بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+          <div style={{ color:LIGHT_GOLD, fontSize:18, fontFamily:"'Amiri', serif", direction:"rtl" }}>بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
         </div>
       )}
 
@@ -1562,11 +1562,11 @@ function QuranReader({ surah, onBack }) {
         ) : viewMode === "full" ? (
           // ── FULL SURAH VIEW ──
           <div>
-            <div style={{ color:LIGHT_GOLD, fontSize:24, lineHeight:2.2, textAlign:"right", direction:"rtl", fontFamily:"serif", marginBottom:16 }}>
+            <div style={{ color:LIGHT_GOLD, fontSize:24, lineHeight:2.2, textAlign:"right", direction:"rtl", fontFamily:"'Amiri', serif", marginBottom:16 }}>
               {ayahs.map(ayah => (
                 <span key={ayah.number}>
                   {ayah.arabic}
-                  <span style={{ color:GOLD, fontSize:16, fontFamily:"serif" }}> ﴿{ayah.number}﴾ </span>
+                  <span style={{ color:GOLD, fontSize:16, fontFamily:"'Amiri', serif" }}> ﴿{ayah.number}﴾ </span>
                 </span>
               ))}
             </div>
@@ -1594,7 +1594,7 @@ function QuranReader({ surah, onBack }) {
                   {playingAyah===ayah.number ? "⏸ Stop" : "▶ Play"}
                 </div>
               </div>
-              <div style={{ color:LIGHT_GOLD, fontSize:22, lineHeight:1.9, textAlign:"right", direction:"rtl", fontFamily:"serif", marginBottom:showTranslation?10:0 }}>
+              <div style={{ color:LIGHT_GOLD, fontSize:22, lineHeight:1.9, textAlign:"right", direction:"rtl", fontFamily:"'Amiri', serif", marginBottom:showTranslation?10:0 }}>
                 {ayah.arabic}
               </div>
               {showTranslation && (
@@ -1659,7 +1659,7 @@ function QuranPage() {
       </div>
       <div style={{ display:"flex", alignItems:"center", gap:8 }}>
         {bookmarks.includes(s.n) && <span style={{ fontSize:14 }}>🔖</span>}
-        <div style={{ color:LIGHT_GOLD, fontSize:16, fontFamily:"serif" }}>{s.arabic}</div>
+        <div style={{ color:LIGHT_GOLD, fontSize:16, fontFamily:"'Amiri', serif" }}>{s.arabic}</div>
       </div>
     </div>
   );
@@ -1670,7 +1670,7 @@ function QuranPage() {
 
       {/* Bismillah */}
       <div style={{ background:"rgba(201,168,76,0.08)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:14, padding:"12px 16px", textAlign:"center", marginBottom:14 }}>
-        <div style={{ fontSize:15, direction:"rtl", fontFamily:"serif", color:LIGHT_GOLD, marginBottom:3 }}>بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+        <div style={{ fontSize:15, direction:"rtl", fontFamily:"'Amiri', serif", color:LIGHT_GOLD, marginBottom:3 }}>بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
         <div style={{ color:"rgba(255,255,255,0.3)", fontSize:11, fontStyle:"italic" }}>In the name of Allah, the Most Gracious, the Most Merciful</div>
       </div>
 
@@ -1731,7 +1731,7 @@ function QuranPage() {
                           <div style={{ color:"rgba(255,255,255,0.3)", fontSize:10 }}>{s.ayahs} Ayahs</div>
                         </div>
                         {bookmarks.includes(s.n) && <span style={{ fontSize:12 }}>🔖</span>}
-                        <div style={{ color:LIGHT_GOLD, fontSize:14, fontFamily:"serif" }}>{s.arabic}</div>
+                        <div style={{ color:LIGHT_GOLD, fontSize:14, fontFamily:"'Amiri', serif" }}>{s.arabic}</div>
                       </div>
                     );
                   })}
@@ -1937,7 +1937,7 @@ function DuaPage() {
         </div>
         <div style={{ flex:1, overflowY:"auto", padding:20 }}>
           <div style={{ background:"rgba(201,168,76,0.08)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:18, padding:20, marginBottom:16 }}>
-            <div style={{ color:LIGHT_GOLD, fontSize:24, lineHeight:2.0, textAlign:"right", direction:"rtl", fontFamily:"serif", marginBottom:16 }}>
+            <div style={{ color:LIGHT_GOLD, fontSize:24, lineHeight:2.0, textAlign:"right", direction:"rtl", fontFamily:"'Amiri', serif", marginBottom:16 }}>
               {selectedDua.arabic}
             </div>
             <div style={{ borderTop:"1px solid rgba(201,168,76,0.15)", paddingTop:14, color:"rgba(255,255,255,0.6)", fontSize:13, lineHeight:1.8, fontStyle:"italic" }}>
@@ -1975,7 +1975,7 @@ function DuaPage() {
                 <div style={{ color:GOLD, fontWeight:700, fontSize:13 }}>{dua.title}</div>
                 <div style={{ color:"rgba(255,255,255,0.25)", fontSize:10 }}>{dua.ref}</div>
               </div>
-              <div style={{ color:LIGHT_GOLD, fontSize:18, lineHeight:1.9, textAlign:"right", direction:"rtl", fontFamily:"serif", marginBottom:8 }}>
+              <div style={{ color:LIGHT_GOLD, fontSize:18, lineHeight:1.9, textAlign:"right", direction:"rtl", fontFamily:"'Amiri', serif", marginBottom:8 }}>
                 {dua.arabic}
               </div>
               <div style={{ color:"rgba(255,255,255,0.4)", fontSize:11, lineHeight:1.6, fontStyle:"italic" }}>
@@ -1997,7 +1997,7 @@ function DuaPage() {
       {/* Dua of the Day */}
       <div style={{ background:`linear-gradient(135deg,${MID_GREEN},#1A2E4A)`, border:"1px solid rgba(201,168,76,0.3)", borderRadius:18, padding:"18px", marginBottom:20, textAlign:"center" }}>
         <div style={{ color:GOLD, fontSize:10, letterSpacing:2, marginBottom:8 }}>✨ DUA OF THE DAY</div>
-        <div style={{ color:LIGHT_GOLD, fontSize:19, lineHeight:1.8, fontFamily:"serif", marginBottom:10, direction:"rtl" }}>رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً</div>
+        <div style={{ color:LIGHT_GOLD, fontSize:19, lineHeight:1.8, fontFamily:"'Amiri', serif", marginBottom:10, direction:"rtl" }}>رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً</div>
         <div style={{ color:"rgba(255,255,255,0.5)", fontSize:11, fontStyle:"italic" }}>"Our Lord, give us good in this world and good in the Hereafter..."</div>
       </div>
 
@@ -2196,7 +2196,7 @@ function QiblaPage() {
       )}
 
       <div style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(201,168,76,0.1)", borderRadius:14, padding:"14px 16px", width:"100%", textAlign:"center" }}>
-        <div style={{ color:LIGHT_GOLD, fontSize:15, fontFamily:"serif", direction:"rtl", marginBottom:6, lineHeight:1.8 }}>وَمِنْ حَيْثُ خَرَجْتَ فَوَلِّ وَجْهَكَ شَطْرَ الْمَسْجِدِ الْحَرَامِ</div>
+        <div style={{ color:LIGHT_GOLD, fontSize:15, fontFamily:"'Amiri', serif", direction:"rtl", marginBottom:6, lineHeight:1.8 }}>وَمِنْ حَيْثُ خَرَجْتَ فَوَلِّ وَجْهَكَ شَطْرَ الْمَسْجِدِ الْحَرَامِ</div>
         <div style={{ color:"rgba(255,255,255,0.3)", fontSize:11, fontStyle:"italic" }}>"Turn your face toward the Sacred Mosque." — Quran 2:150</div>
       </div>
 
@@ -2473,7 +2473,7 @@ export default function MinbarLiveApp() {
   return (
     <div style={{ maxWidth:390, margin:"0 auto", minHeight:"100vh", background:`linear-gradient(180deg,${DARK_GREEN} 0%,#050F08 100%)`, backgroundImage:arabicPattern, fontFamily:"'Lato',sans-serif", position:"relative" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Cinzel:wght@400;600&family=Lato:wght@300;400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Cinzel:wght@400;600&family=Lato:wght@300;400;600;700&family=Amiri:ital,wght@0,400;0,700;1,400&display=swap');
         @keyframes pulse  { 0%,100%{transform:scale(1)} 50%{transform:scale(1.3)} }
         @keyframes ripple { 0%{transform:scale(1);opacity:0.4} 100%{transform:scale(2.5);opacity:0} }
         @keyframes spin   { from{transform:translate(-50%,-50%) rotate(0deg)} to{transform:translate(-50%,-50%) rotate(360deg)} }
