@@ -1,96 +1,125 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import quranData from "./quran.json";
 
-// ─── FIREBASE CONFIG ──────────────────────────────────────────────────────────
-const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyAq_nm6YX_5d7DMOqmEmQ8MgKsXLoqKeKY",
-  authDomain: "minbar-live.firebaseapp.com",
-  projectId: "minbar-live",
-  storageBucket: "minbar-live.firebasestorage.app",
-  messagingSenderId: "645939734747",
-  appId: "1:645939734747:web:daf3aae436ce0f5c3884fe",
-  measurementId: "G-QEY8E2RP3M"
+// ─── THEME ────────────────────────────────────────────────────────────────────
+const GOLD       = "#C9A84C";
+const DARK_GREEN = "#0A2E1A";
+const MID_GREEN  = "#1A4D2E";
+const LIGHT_GOLD = "#F0D080";
+const OFF_WHITE  = "#F8F4E8";
+
+const arabicPattern = `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23C9A84C' fill-opacity='0.06'%3E%3Cpath d='M30 0 L60 30 L30 60 L0 30 Z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`;
+
+// ─── MASTER PASSWORD ──────────────────────────────────────────────────────────
+const MASTER_PASSWORD = "minbar-master-2026";
+
+// ─── MASJIDS DEFAULT DATA ──────────────────────────────────────────────────────
+const MASJIDS_DEFAULT = [
+  {
+    id: "m1", name: "Jumma Masjid", icon: "🕌",
+    color: "#1A4D2E",
+    password: "jumma123",
+    youtubeUrl: "",
+    youtubeChannel: "https://www.youtube.com/@JummaMasjid-z7o",
+    permanentLiveUrl: "https://www.youtube.com/@JummaMasjid-z7o/live",
+    isLive: false,
+    prayerTimes: {
+      fajr:    { adhan: "05:15", iqamah: "05:30" },
+      sunrise: { adhan: "06:35", iqamah: "" },
+      dhuhr:   { adhan: "13:15", iqamah: "13:30" },
+      asr:     { adhan: "16:30", iqamah: "16:45" },
+      maghrib: { adhan: "18:35", iqamah: "18:40" },
+      isha:    { adhan: "19:55", iqamah: "20:10" },
+      jumuah:  { adhan: "13:00", iqamah: "13:15" },
+    },
+    recordings: [],
+  },
+  {
+    id: "m2", name: "Masjid-e-Aqsa", icon: "🕍",
+    color: "#1A2E4D",
+    password: "aqsa456",
+    youtubeUrl: "",
+    youtubeChannel: "",
+    permanentLiveUrl: "",
+    isLive: false,
+    prayerTimes: {
+      fajr:    { adhan: "05:10", iqamah: "05:25" },
+      sunrise: { adhan: "06:30", iqamah: "" },
+      dhuhr:   { adhan: "13:10", iqamah: "13:25" },
+      asr:     { adhan: "16:25", iqamah: "16:40" },
+      maghrib: { adhan: "18:30", iqamah: "18:35" },
+      isha:    { adhan: "19:50", iqamah: "20:05" },
+      jumuah:  { adhan: "12:55", iqamah: "13:10" },
+    },
+    recordings: [],
+  },
+  {
+    id: "m3", name: "Masjid-e-Muhammadi (SAW)", icon: "☪️",
+    color: "#2E1A4D",
+    password: "muhammadi789",
+    youtubeUrl: "",
+    youtubeChannel: "https://www.youtube.com/@Masjid-e-Muhammadi-o4t",
+    permanentLiveUrl: "https://www.youtube.com/@Masjid-e-Muhammadi-o4t/live",
+    isLive: false,
+    prayerTimes: {
+      fajr:    { adhan: "05:20", iqamah: "05:35" },
+      sunrise: { adhan: "06:38", iqamah: "" },
+      dhuhr:   { adhan: "13:20", iqamah: "13:35" },
+      asr:     { adhan: "16:35", iqamah: "16:50" },
+      maghrib: { adhan: "18:40", iqamah: "18:45" },
+      isha:    { adhan: "20:00", iqamah: "20:15" },
+      jumuah:  { adhan: "13:05", iqamah: "13:20" },
+    },
+    recordings: [],
+  },
+  {
+    id: "m4", name: "Masjid-e-Fatima", icon: "🌙",
+    color: "#4D2E1A",
+    password: "fatima321",
+    youtubeUrl: "",
+    youtubeChannel: "",
+    permanentLiveUrl: "",
+    isLive: false,
+    prayerTimes: {
+      fajr:    { adhan: "05:18", iqamah: "05:33" },
+      sunrise: { adhan: "06:33", iqamah: "" },
+      dhuhr:   { adhan: "13:18", iqamah: "13:33" },
+      asr:     { adhan: "16:28", iqamah: "16:43" },
+      maghrib: { adhan: "18:33", iqamah: "18:38" },
+      isha:    { adhan: "19:53", iqamah: "20:08" },
+      jumuah:  { adhan: "13:02", iqamah: "13:17" },
+    },
+    recordings: [],
+  },
+];
+
+const PRAYER_LABELS = {
+  fajr:    { name: "Fajr",    icon: "🌙" },
+  sunrise: { name: "Sunrise", icon: "🌄" },
+  dhuhr:   { name: "Dhuhr",   icon: "☀️" },
+  asr:     { name: "Asr",     icon: "🌤" },
+  maghrib: { name: "Maghrib", icon: "🌅" },
+  isha:    { name: "Isha",    icon: "⭐" },
+  jumuah:  { name: "Jumu'ah", icon: "🕌" },
 };
-const VAPID_KEY = "BPB3XM_3GWOduj16rr4KtiDwZp3SWxilvT-TYTa4WVgX-b0r9oAC5TXn_ONURnSbqO5Fy9RBuyUm7RDB380hy7A";
 
-// ─── FCM HELPERS ──────────────────────────────────────────────────────────────
-function loadFirebaseScripts() {
-  return new Promise((resolve) => {
-    if (window.firebase && window.firebase.messaging) { resolve(); return; }
-    const s1 = document.createElement("script");
-    s1.src = "https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js";
-    s1.onload = () => {
-      const s2 = document.createElement("script");
-      s2.src = "https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js";
-      s2.onload = () => {
-        if (!window.firebase.apps.length) window.firebase.initializeApp(FIREBASE_CONFIG);
-        resolve();
-      };
-      document.head.appendChild(s2);
-    };
-    document.head.appendChild(s1);
-  });
-}
+const library = [
+  { title: "Importance of Sabr",    masjid: "Jumma Masjid",             duration: "42 min", date: "Mar 5"  },
+  { title: "Marriage in Islam",     masjid: "Masjid-e-Aqsa",            duration: "35 min", date: "Mar 3"  },
+  { title: "Tafsir Surah Yaseen",   masjid: "Masjid-e-Muhammadi (SAW)", duration: "58 min", date: "Mar 1"  },
+  { title: "Tawakkul & Trust",      masjid: "Masjid-e-Fatima",          duration: "29 min", date: "Feb 28" },
+];
 
-// eslint-disable-next-line no-unused-vars
-async function getFCMToken() {
-  try {
-    if (!("Notification" in window) || !("serviceWorker" in navigator)) return null;
-    await loadFirebaseScripts();
-    const permission = await Notification.requestPermission();
-    if (permission !== "granted") return null;
-    const messaging = window.firebase.messaging();
-    await navigator.serviceWorker.register("/firebase-messaging-sw.js");
-    const reg = await navigator.serviceWorker.ready;
-    const token = await messaging.getToken({ vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
-    const tokens = JSON.parse(localStorage.getItem("minbar_fcm_tokens") || "[]");
-    if (!tokens.includes(token)) { tokens.push(token); localStorage.setItem("minbar_fcm_tokens", JSON.stringify(tokens)); }
-    localStorage.setItem("minbar_fcm_token", token);
-    return token;
-  } catch(e) { console.log("FCM token error:", e); return null; }
-}
-
-async function sendLiveNotification(masjidName, bayanTitle) {
-  try {
-    // Get all subscriber tokens from localStorage
-    const tokens = JSON.parse(localStorage.getItem("minbar_fcm_tokens") || "[]");
-    if (tokens.length === 0) return;
-    // Send via Firebase Cloud Messaging HTTP v1 API
-    const response = await fetch("https://fcm.googleapis.com/fcm/send", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "key=645939734747"
-      },
-      body: JSON.stringify({
-        registration_ids: tokens,
-        notification: {
-          title: "🔴 " + masjidName + " is LIVE!",
-          body: bayanTitle || "Live stream has started. Tap to watch!",
-          icon: "/logo192.png",
-          click_action: "https://islamic-live-app.vercel.app"
-        },
-        data: {
-          masjid: masjidName,
-          url: "https://islamic-live-app.vercel.app"
-        }
-      })
-    });
-    console.log("Notification sent!", await response.json());
-  } catch(e) { console.log("Send notif error:", e); }
-}
-
-
-
-// ─── ONBOARDING SCREENS ────────────────────────────────────────────────────────
+// ─── ONBOARDING SLIDES ────────────────────────────────────────────────────────
 const ONBOARDING_SLIDES = [
   { icon:"🕌", title:"Welcome to Minbar Live", subtitle:"Bismillah ir-Rahman ir-Raheem", desc:"Your complete Islamic companion app. Stay connected with your Masjid, prayers, and the Holy Quran — all in one place!", color:"#1A4D2E" },
-  { icon:"📡", title:"Live Masjid Streaming", subtitle:"Never miss a Khutbah again!", desc:"Watch live Friday Khutbahs, Bayans, and special events from your Masjid directly in the app — anytime, anywhere!", color:"#1A3D4D" },
-  { icon:"🕐", title:"Prayer Times & Adhan", subtitle:"Always know your prayer times", desc:"Get accurate prayer times for your selected Masjid. Receive Adhan and Iqamah notifications so you never miss a Salah!", color:"#2E1A4D" },
-  { icon:"📖", title:"Holy Quran Reader", subtitle:"Read & Listen to the Quran", desc:"Read all 114 Surahs with Arabic text and English translation. Listen to beautiful recitation by Sheikh Mishary Alafasy!", color:"#4D2E1A" },
-  { icon:"🤲", title:"Duas & Tasbeeh", subtitle:"Daily Islamic supplications", desc:"48+ authentic Duas in 8 categories — Morning, Evening, Sleep, Travel and more. Plus a digital Tasbeeh counter for your dhikr!", color:"#1A4D3D" },
-  { icon:"🧭", title:"Qibla & More", subtitle:"Find direction to Makkah", desc:"Accurate Qibla compass using your GPS. Compass turns GREEN when facing Makkah! Plus Islamic Library with recorded Bayans.", color:"#3D4D1A" },
-  { icon:"💬", title:"Ask Islamic Questions", subtitle:"Get answers instantly!", desc:"Ask common Islamic questions and get instant answers. Need more help? Contact our qualified Islamic Scholar directly on WhatsApp!", color:"#4D1A2E" },
-  { icon:"🕌", title:"Select Your Masjid", subtitle:"Personalise your experience!", desc:"Your app shows prayer times for YOUR Masjid only!\n\nHow to change:\n🏠 Home → prayer card → tap \"Change\" next to Masjid name → select your Masjid ✅\n\nPrayer times & Adhan notifications update instantly!", color:"#1A4D2E" },
+  { icon:"📡", title:"Live Masjid Streaming",  subtitle:"Never miss a Khutbah again!",  desc:"Watch live Friday Khutbahs, Bayans, and special events from your Masjid directly in the app — anytime, anywhere!", color:"#1A3D4D" },
+  { icon:"🕐", title:"Prayer Times & Adhan",   subtitle:"Always know your prayer times", desc:"Get accurate prayer times for your selected Masjid. Receive Adhan and Iqamah notifications so you never miss a Salah!", color:"#2E1A4D" },
+  { icon:"📖", title:"Holy Quran Reader",       subtitle:"Read & Listen to the Quran",   desc:"Read all 114 Surahs with Arabic text. Listen to beautiful recitation by Sheikh Mishary Alafasy!", color:"#4D2E1A" },
+  { icon:"🤲", title:"Duas & Tasbeeh",         subtitle:"Daily Islamic supplications",   desc:"48+ authentic Duas in 8 categories — Morning, Evening, Sleep, Travel and more. Plus a digital Tasbeeh counter for your dhikr!", color:"#1A4D3D" },
+  { icon:"🧭", title:"Qibla & More",           subtitle:"Find direction to Makkah",      desc:"Accurate Qibla compass using your GPS. Compass turns GREEN when facing Makkah! Plus Islamic Library with recorded Bayans.", color:"#3D4D1A" },
+  { icon:"💬", title:"Ask Islamic Questions",  subtitle:"Get answers instantly!",        desc:"Ask common Islamic questions and get instant answers. Need more help? Contact our qualified Islamic Scholar directly on WhatsApp!", color:"#4D1A2E" },
+  { icon:"🕌", title:"Select Your Masjid",     subtitle:"Personalise your experience!",  desc:"Your app shows prayer times for YOUR Masjid only!\n\nHow to change:\n🏠 Home → prayer card → tap \"Change\" next to Masjid name → select your Masjid ✅\n\nPrayer times & Adhan notifications update instantly!", color:"#1A4D2E" },
 ];
 
 function OnboardingScreen({ onDone }) {
@@ -106,7 +135,9 @@ function OnboardingScreen({ onDone }) {
     setTimeout(() => { setCurrent(c => c + 1); setAnimating(false); }, 300);
   };
 
-  const goTo = (i) => { if (!animating) { setAnimating(true); setTimeout(() => { setCurrent(i); setAnimating(false); }, 200); } };
+  const goTo = (i) => {
+    if (!animating) { setAnimating(true); setTimeout(() => { setCurrent(i); setAnimating(false); }, 200); }
+  };
 
   return (
     <div style={{ position:"fixed", inset:0, zIndex:9998, background:DARK_GREEN, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"space-between", padding:"40px 24px 50px", fontFamily:"'Lato',sans-serif" }}>
@@ -145,7 +176,6 @@ function SplashScreen({ onDone }) {
       display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
       animation:"splashFade 0.5s ease 2.8s forwards",
     }}>
-      {/* Decorative rings */}
       {[160,220,280].map((sz,i) => (
         <div key={i} style={{
           position:"absolute", width:sz, height:sz,
@@ -154,45 +184,25 @@ function SplashScreen({ onDone }) {
           top:"50%", left:"50%",
         }} />
       ))}
-
-      {/* Logo */}
       <div style={{ position:"relative", zIndex:1, textAlign:"center", animation:"splashIn 0.8s ease 0.2s both" }}>
-        <img
-          src="/islamiclogo.png"
-          alt="Minbar Live"
-          onError={e => { e.target.style.display="none"; }}
-          style={{ width:90, height:90, borderRadius:"50%", border:"2px solid rgba(201,168,76,0.5)", marginBottom:20, objectFit:"cover" }}
-        />
-
-        {/* Bismillah Arabic */}
+        {/* Minbar Live logo text — no external image needed */}
         <div style={{
-          color:"#F0D080", fontSize:26, fontFamily:"'Amiri', serif", direction:"rtl",
-          lineHeight:1.8, marginBottom:8, letterSpacing:2,
-          textShadow:"0 0 30px rgba(201,168,76,0.6)",
-          animation:"splashIn 0.8s ease 0.5s both",
-        }}>
+          width:90, height:90, borderRadius:"50%",
+          background:`linear-gradient(135deg,${MID_GREEN},${DARK_GREEN})`,
+          border:"2px solid rgba(201,168,76,0.6)",
+          display:"flex", alignItems:"center", justifyContent:"center",
+          fontSize:44, marginBottom:20, margin:"0 auto 20px",
+          boxShadow:"0 0 40px rgba(201,168,76,0.3)",
+        }}>🕌</div>
+        <div style={{ color:"#F0D080", fontSize:26, fontFamily:"'Amiri', serif", direction:"rtl", lineHeight:1.8, marginBottom:8, letterSpacing:2, textShadow:"0 0 30px rgba(201,168,76,0.6)", animation:"splashIn 0.8s ease 0.5s both" }}>
           بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
         </div>
-
-        {/* Translation */}
-        <div style={{
-          color:"rgba(255,255,255,0.55)", fontSize:12, fontStyle:"italic",
-          marginBottom:28, letterSpacing:0.5,
-          animation:"splashIn 0.8s ease 0.8s both",
-        }}>
+        <div style={{ color:"rgba(255,255,255,0.55)", fontSize:12, fontStyle:"italic", marginBottom:28, letterSpacing:0.5, animation:"splashIn 0.8s ease 0.8s both" }}>
           In the name of Allah, the Most Gracious, the Most Merciful
         </div>
-
-        {/* App name */}
-        <div style={{
-          color:"#C9A84C", fontSize:13, fontFamily:"'Cinzel',serif",
-          letterSpacing:4, fontWeight:600,
-          animation:"splashIn 0.8s ease 1.1s both",
-        }}>
+        <div style={{ color:"#C9A84C", fontSize:13, fontFamily:"'Cinzel',serif", letterSpacing:4, fontWeight:600, animation:"splashIn 0.8s ease 1.1s both" }}>
           MINBAR LIVE
         </div>
-
-        {/* Loading dots */}
         <div style={{ display:"flex", gap:6, justifyContent:"center", marginTop:28, animation:"splashIn 0.8s ease 1.4s both" }}>
           {[0,1,2].map(i => (
             <div key={i} style={{ width:6, height:6, borderRadius:"50%", background:"rgba(201,168,76,0.5)", animation:`pulse 1.2s ease-in-out ${i*0.2}s infinite` }} />
@@ -206,15 +216,10 @@ function SplashScreen({ onDone }) {
 // ─── NOTIFICATION SYSTEM ──────────────────────────────────────────────────────
 function playAdhanSound() {
   try {
-    // Play real adhan from online source
     const audio = new Audio("https://cdn.islamic.network/quran/audio/128/ar.alafasy/1.mp3");
     audio.volume = 1.0;
     audio.crossOrigin = "anonymous";
-    audio.preload = "auto";
-    audio.play().catch(() => {
-      // Fallback to beep if audio fails
-      playAdhanBeep();
-    });
+    audio.play().catch(() => playAdhanBeep());
   } catch (_) { playAdhanBeep(); }
 }
 
@@ -237,7 +242,6 @@ function playAdhanBeep() {
 function playIqamahBeep() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    // Deep low beep — 3 times
     [0, 0.5, 1.0].forEach(t => {
       const osc = ctx.createOscillator(), gain = ctx.createGain();
       osc.connect(gain); gain.connect(ctx.destination);
@@ -264,31 +268,48 @@ function sendBrowserNotif(title, body) {
 }
 
 function NotifBanner({ notif, onDismiss }) {
-  useEffect(() => { const t = setTimeout(onDismiss, 7000); return () => clearTimeout(t); }, [onDismiss]);
+  useEffect(() => { const t = setTimeout(onDismiss, 8000); return () => clearTimeout(t); }, [onDismiss]);
   if (!notif) return null;
-  const isAdhan = notif.type === "adhan";
+  const isAdhan   = notif.type === "adhan";
+  const isIqamah  = notif.type === "iqamah";
+  const isSunrise = notif.type === "sunrise";
+
+  const bg     = isSunrise ? "linear-gradient(135deg,#2E1A00,#4A2E00)"
+               : isAdhan   ? "linear-gradient(135deg,#1A4D2E,#0A2E1A)"
+               :              "linear-gradient(135deg,#1A2E4D,#0A1A2E)";
+  const border = isSunrise ? "rgba(255,180,50,0.7)"
+               : isAdhan   ? "rgba(201,168,76,0.6)"
+               :              "rgba(100,180,255,0.5)";
+  const typeLabel = isSunrise ? "🌄 SUNRISE" : isAdhan ? "🔔 ADHAN" : "🟢 IQAMAH";
+  const nameColor = isSunrise ? "#FFB432" : isAdhan ? "#F0D080" : "#88CCFF";
+  const bodyText  = isSunrise
+    ? `Sunrise at ${notif.time} • Ishraq time begins 🌤`
+    : isAdhan
+    ? `Time for ${notif.prayer} prayer • ${notif.time} • Allahu Akbar!`
+    : `Prayer starting now • ${notif.time} • Please join!`;
+
   return (
     <div style={{
       position:"fixed", top:56, left:"50%", transform:"translateX(-50%)",
       width:"calc(100% - 32px)", maxWidth:358, zIndex:999,
-      background: isAdhan ? "linear-gradient(135deg,#1A4D2E,#0A2E1A)" : "linear-gradient(135deg,#1A2E4D,#0A1A2E)",
-      border:`2px solid ${isAdhan ? "rgba(201,168,76,0.6)" : "rgba(100,180,255,0.5)"}`,
+      background: bg,
+      border:`2px solid ${border}`,
       borderRadius:16, padding:"14px 16px",
       boxShadow:"0 8px 32px rgba(0,0,0,0.7)",
       animation:"slideDown 0.3s ease",
     }}>
       <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-        <div style={{ fontSize:36, flexShrink:0 }}>{notif.masjidIcon || (isAdhan ? "🕌" : "🟢")}</div>
+        <div style={{ fontSize:36, flexShrink:0 }}>
+          {isSunrise ? "🌄" : notif.masjidIcon || (isAdhan ? "🕌" : "🟢")}
+        </div>
         <div style={{ flex:1 }}>
           <div style={{ color:"rgba(255,255,255,0.5)", fontSize:10, fontWeight:700, letterSpacing:1, marginBottom:2 }}>
-            {isAdhan ? "🔔 ADHAN" : "🟢 IQAMAH"}
+            {typeLabel}
           </div>
-          <div style={{ color: isAdhan ? "#F0D080" : "#88CCFF", fontWeight:700, fontSize:15, marginBottom:2 }}>
-            {notif.prayer} — {notif.masjid}
+          <div style={{ color: nameColor, fontWeight:700, fontSize:15, marginBottom:2 }}>
+            {isSunrise ? `Sunrise — ${notif.masjid}` : `${notif.prayer} — ${notif.masjid}`}
           </div>
-          <div style={{ color:"rgba(255,255,255,0.5)", fontSize:11 }}>
-            {isAdhan ? `Time for ${notif.prayer} prayer • ${notif.time}` : `Prayer starting now • ${notif.time}`}
-          </div>
+          <div style={{ color:"rgba(255,255,255,0.5)", fontSize:11 }}>{bodyText}</div>
         </div>
         <div onClick={onDismiss} style={{ color:"rgba(255,255,255,0.3)", fontSize:20, cursor:"pointer", flexShrink:0 }}>✕</div>
       </div>
@@ -307,27 +328,35 @@ function usePrayerAlerts(masjids, enabled, onInAppNotif) {
       const userMasjidId = localStorage.getItem("minbar_user_masjid") || "m1";
       masjids.filter(m => m.id === userMasjidId).forEach(m => {
         Object.entries(m.prayerTimes).forEach(([prayer, times]) => {
+          // ── Sunrise: popup-only, no sound, no iqamah ──
+          if (prayer === "sunrise") {
+            const sk = `${today}-${m.id}-sunrise-popup`;
+            if (times.adhan === hhmm && !fired.current.has(sk)) {
+              fired.current.add(sk);
+              // browser notif only — no adhan sound
+              sendBrowserNotif(`🌄 Sunrise — ${m.name}`, `Sunrise at ${times.adhan} • Ishraq time begins 🌤`);
+              onInAppNotif({ type:"sunrise", masjid:m.name, masjidIcon:m.icon, time:times.adhan });
+            }
+            return; // skip adhan/iqamah processing for sunrise
+          }
+
           const label = ({"fajr":"Fajr","dhuhr":"Dhuhr","asr":"Asr","maghrib":"Maghrib","isha":"Isha","jumuah":"Jumu'ah"})[prayer] || prayer;
-          // Jumu'ah only fires on Friday (day 5)
           if (prayer === "jumuah" && new Date().getDay() !== 5) return;
+
+          // ── Adhan alert ──
           const ak = `${today}-${m.id}-${prayer}-adhan`;
           if (times.adhan === hhmm && !fired.current.has(ak)) {
             fired.current.add(ak);
             playAdhanSound();
-            sendBrowserNotif(
-              `🕌 ${m.name} — Adhan ${label}`,
-              `Adhan time for ${label} at ${m.name}\n🕐 ${times.adhan} • Allahu Akbar!`
-            );
+            sendBrowserNotif(`🕌 ${m.name} — Adhan ${label}`, `Adhan time for ${label} at ${m.name}\n🕐 ${times.adhan} • Allahu Akbar!`);
             onInAppNotif({ type:"adhan", prayer:label, masjid:m.name, masjidIcon:m.icon, time:times.adhan });
           }
+          // ── Iqamah alert ──
           const ik = `${today}-${m.id}-${prayer}-iqamah`;
-          if (times.iqamah === hhmm && !fired.current.has(ik)) {
+          if (times.iqamah && times.iqamah === hhmm && !fired.current.has(ik)) {
             fired.current.add(ik);
             playIqamahBeep();
-            sendBrowserNotif(
-              `🟢 ${m.name} — Iqamah ${label}`,
-              `Iqamah starting for ${label} at ${m.name}\n🕐 ${times.iqamah} • Please join!`
-            );
+            sendBrowserNotif(`🟢 ${m.name} — Iqamah ${label}`, `Iqamah starting for ${label} at ${m.name}\n🕐 ${times.iqamah} • Please join!`);
             onInAppNotif({ type:"iqamah", prayer:label, masjid:m.name, masjidIcon:m.icon, time:times.iqamah });
           }
         });
@@ -338,114 +367,6 @@ function usePrayerAlerts(masjids, enabled, onInAppNotif) {
     return () => clearInterval(id);
   }, [masjids, enabled, onInAppNotif]);
 }
-
-
-// ─── THEME ────────────────────────────────────────────────────────────────────
-const GOLD       = "#C9A84C";
-const DARK_GREEN = "#0A2E1A";
-const MID_GREEN  = "#1A4D2E";
-const LIGHT_GOLD = "#F0D080";
-const OFF_WHITE  = "#F8F4E8";
-
-const arabicPattern = `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23C9A84C' fill-opacity='0.06'%3E%3Cpath d='M30 0 L60 30 L30 60 L0 30 Z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`;
-
-// Change this to something only YOU know!
-const MASTER_PASSWORD = "minbar-master-2026";
-
-// ─── 4 MASJIDS — each has own YouTube channel + own admin password ───────────
-const MASJIDS_DEFAULT = [
-  {
-    id: "m1", name: "Jumma Masjid",             icon: "🕌",
-    color: "#1A4D2E",
-    password: "jumma123",
-    youtubeUrl: "",
-    youtubeChannel: "https://www.youtube.com/@JummaMasjid-z7o",
-    permanentLiveUrl: "https://www.youtube.com/@JummaMasjid-z7o/live",
-    isLive: false,
-    prayerTimes: {
-      fajr:    { adhan: "05:15", iqamah: "05:30" },
-      dhuhr:   { adhan: "13:15", iqamah: "13:30" },
-      asr:     { adhan: "16:30", iqamah: "16:45" },
-      maghrib: { adhan: "18:35", iqamah: "18:40" },
-      isha:    { adhan: "19:55", iqamah: "20:10" },
-      jumuah:  { adhan: "13:00", iqamah: "13:15" },
-    },
-    recordings: [],
-  },
-  {
-    id: "m2", name: "Masjid-e-Aqsa",            icon: "🕍",
-    color: "#1A2E4D",
-    password: "aqsa456",
-    youtubeUrl: "",
-    youtubeChannel: "",
-    isLive: false,
-    prayerTimes: {
-      fajr:    { adhan: "05:10", iqamah: "05:25" },
-      dhuhr:   { adhan: "13:10", iqamah: "13:25" },
-      asr:     { adhan: "16:25", iqamah: "16:40" },
-      maghrib: { adhan: "18:30", iqamah: "18:35" },
-      isha:    { adhan: "19:50", iqamah: "20:05" },
-      jumuah:  { adhan: "12:55", iqamah: "13:10" },
-    },
-    recordings: [],
-  },
-  {
-    id: "m3", name: "Masjid-e-Muhammadi (SAW)",  icon: "☪️",
-    color: "#2E1A4D",
-    password: "muhammadi789",
-    youtubeUrl: "",
-    youtubeChannel: "https://www.youtube.com/@Masjid-e-Muhammadi-o4t",
-    permanentLiveUrl: "https://www.youtube.com/@Masjid-e-Muhammadi-o4t/live",
-    isLive: false,
-    prayerTimes: {
-      fajr:    { adhan: "05:20", iqamah: "05:35" },
-      dhuhr:   { adhan: "13:20", iqamah: "13:35" },
-      asr:     { adhan: "16:35", iqamah: "16:50" },
-      maghrib: { adhan: "18:40", iqamah: "18:45" },
-      isha:    { adhan: "20:00", iqamah: "20:15" },
-      jumuah:  { adhan: "13:05", iqamah: "13:20" },
-    },
-    recordings: [],
-  },
-  {
-    id: "m4", name: "Masjid-e-Fatima",           icon: "🌙",
-    color: "#4D2E1A",
-    password: "fatima321",
-    youtubeUrl: "",
-    youtubeChannel: "",
-    isLive: false,
-    prayerTimes: {
-      fajr:    { adhan: "05:18", iqamah: "05:33" },
-      dhuhr:   { adhan: "13:18", iqamah: "13:33" },
-      asr:     { adhan: "16:28", iqamah: "16:43" },
-      maghrib: { adhan: "18:33", iqamah: "18:38" },
-      isha:    { adhan: "19:53", iqamah: "20:08" },
-      jumuah:  { adhan: "13:02", iqamah: "13:17" },
-    },
-    recordings: [],
-  },
-];
-
-const PRAYER_LABELS = {
-  fajr:    { name: "Fajr",    icon: "🌙" },
-  dhuhr:   { name: "Dhuhr",   icon: "☀️" },
-  asr:     { name: "Asr",     icon: "🌤" },
-  maghrib: { name: "Maghrib", icon: "🌅" },
-  isha:    { name: "Isha",    icon: "⭐" },
-  jumuah:  { name: "Jumu'ah", icon: "🕌" },
-};
-
-const library = [
-  { title: "Importance of Sabr",    masjid: "Jumma Masjid",             duration: "42 min", date: "Mar 5"  },
-  { title: "Marriage in Islam",     masjid: "Masjid-e-Aqsa",            duration: "35 min", date: "Mar 3"  },
-  { title: "Tafsir Surah Yaseen",   masjid: "Masjid-e-Muhammadi (SAW)", duration: "58 min", date: "Mar 1"  },
-  { title: "Tawakkul & Trust",      masjid: "Masjid-e-Fatima",          duration: "29 min", date: "Feb 28" },
-];
-
-
-
-
-
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 function PulsingDot({ color = "#FF4444" }) {
@@ -461,31 +382,60 @@ function SectionTitle({ children, style={} }) {
   return <div style={{ color: LIGHT_GOLD, fontSize: 20, fontWeight: 700, fontFamily: "'Playfair Display',serif", marginBottom: 4, ...style }}>{children}</div>;
 }
 
+// ─── LIVE CLOCK ───────────────────────────────────────────────────────────────
+function useClock() {
+  const [time, setTime] = useState(() => {
+    const n = new Date();
+    return `${String(n.getHours()).padStart(2,"0")}:${String(n.getMinutes()).padStart(2,"0")}`;
+  });
+  useEffect(() => {
+    const id = setInterval(() => {
+      const n = new Date();
+      setTime(`${String(n.getHours()).padStart(2,"0")}:${String(n.getMinutes()).padStart(2,"0")}`);
+    }, 30000);
+    return () => clearInterval(id);
+  }, []);
+  return time;
+}
+
 // ─── YOUTUBE HELPERS ──────────────────────────────────────────────────────────
-// Converts any YouTube URL to an embeddable iframe URL
 function getYouTubeEmbedUrl(url) {
   if (!url) return null;
   try {
-    // Handle youtu.be/XXXX
     const short = url.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
     if (short) return `https://www.youtube.com/embed/${short[1]}?autoplay=1`;
-    // Handle youtube.com/watch?v=XXXX
     const full = url.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
     if (full) return `https://www.youtube.com/embed/${full[1]}?autoplay=1`;
-    // Handle youtube.com/live/XXXX
     const live = url.match(/\/live\/([a-zA-Z0-9_-]{11})/);
     if (live) return `https://www.youtube.com/embed/${live[1]}?autoplay=1`;
-    // Already an embed URL
     if (url.includes("youtube.com/embed/")) return url;
   } catch (_) {}
   return null;
 }
 
+// ─── PWA INSTALL PROMPT ───────────────────────────────────────────────────────
+function useInstallPrompt() {
+  const [prompt, setPrompt] = useState(null);
+  useEffect(() => {
+    const handler = e => { e.preventDefault(); setPrompt(e); };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+  const install = async () => {
+    if (!prompt) return;
+    prompt.prompt();
+    await prompt.userChoice;
+    setPrompt(null);
+  };
+  const dismiss = () => setPrompt(null);
+  return { prompt, install, dismiss };
+}
+
 // ─── PASSWORD LOGIN ───────────────────────────────────────────────────────────
 function PasswordLogin({ masjid, onSuccess, onCancel }) {
-  const [pw, setPw]           = useState("");
-  const [error, setError]     = useState("");
-  const [show, setShow]       = useState(false);
+  const [pw, setPw]         = useState("");
+  const [error, setError]   = useState("");
+  const [show, setShow]     = useState(false);
   const [recovery, setRecovery] = useState(false);
 
   const attempt = () => {
@@ -500,7 +450,6 @@ function PasswordLogin({ masjid, onSuccess, onCancel }) {
   return (
     <div style={{ position:"fixed", inset:0, zIndex:300, background:"rgba(0,0,0,0.92)", display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
       <div style={{ background:`linear-gradient(180deg,#122B1C,${DARK_GREEN})`, border:"1px solid rgba(201,168,76,0.3)", borderRadius:20, padding:"28px 24px", width:"100%", maxWidth:340 }}>
-
         <div style={{ textAlign:"center", marginBottom:22 }}>
           <div style={{ fontSize:40, marginBottom:10 }}>{masjid.icon}</div>
           <div style={{ color:LIGHT_GOLD, fontSize:18, fontWeight:700, fontFamily:"'Playfair Display',serif" }}>{masjid.name}</div>
@@ -509,27 +458,14 @@ function PasswordLogin({ masjid, onSuccess, onCancel }) {
           </div>
         </div>
 
-        {/* Toggle between normal and recovery */}
         <div style={{ display:"flex", gap:8, marginBottom:16 }}>
-          <div onClick={() => { setRecovery(false); setPw(""); setError(""); }} style={{
-            flex:1, textAlign:"center", padding:"8px",
-            background: !recovery ? `linear-gradient(135deg,${GOLD},${LIGHT_GOLD})` : "rgba(26,77,46,0.3)",
-            border:`1px solid ${!recovery ? "transparent" : "rgba(201,168,76,0.2)"}`,
-            borderRadius:10, color: !recovery ? DARK_GREEN : "rgba(255,255,255,0.5)",
-            fontSize:12, fontWeight:700, cursor:"pointer",
-          }}>🔒 My Password</div>
-          <div onClick={() => { setRecovery(true); setPw(""); setError(""); }} style={{
-            flex:1, textAlign:"center", padding:"8px",
-            background: recovery ? `linear-gradient(135deg,#AA3300,#FF5522)` : "rgba(26,77,46,0.3)",
-            border:`1px solid ${recovery ? "transparent" : "rgba(201,168,76,0.2)"}`,
-            borderRadius:10, color: recovery ? "#fff" : "rgba(255,255,255,0.5)",
-            fontSize:12, fontWeight:700, cursor:"pointer",
-          }}>🆘 Forgot?</div>
+          <div onClick={() => { setRecovery(false); setPw(""); setError(""); }} style={{ flex:1, textAlign:"center", padding:"8px", background: !recovery ? `linear-gradient(135deg,${GOLD},${LIGHT_GOLD})` : "rgba(26,77,46,0.3)", border:`1px solid ${!recovery ? "transparent" : "rgba(201,168,76,0.2)"}`, borderRadius:10, color: !recovery ? DARK_GREEN : "rgba(255,255,255,0.5)", fontSize:12, fontWeight:700, cursor:"pointer" }}>🔒 My Password</div>
+          <div onClick={() => { setRecovery(true); setPw(""); setError(""); }} style={{ flex:1, textAlign:"center", padding:"8px", background: recovery ? "linear-gradient(135deg,#AA3300,#FF5522)" : "rgba(26,77,46,0.3)", border:`1px solid ${recovery ? "transparent" : "rgba(201,168,76,0.2)"}`, borderRadius:10, color: recovery ? "#fff" : "rgba(255,255,255,0.5)", fontSize:12, fontWeight:700, cursor:"pointer" }}>🆘 Forgot?</div>
         </div>
 
         {recovery && (
           <div style={{ background:"rgba(255,100,50,0.1)", border:"1px solid rgba(255,100,50,0.3)", borderRadius:10, padding:"10px 12px", marginBottom:14, color:"rgba(255,200,150,0.8)", fontSize:12, lineHeight:1.6 }}>
-            Enter the <span style={{ color:"#FFA070", fontWeight:700 }}>Master Recovery Password</span> to access any masjid admin. Only the app owner knows this.
+            Enter the <span style={{ color:"#FFA070", fontWeight:700 }}>Master Recovery Password</span> to access any masjid admin.
           </div>
         )}
 
@@ -562,28 +498,20 @@ function PasswordLogin({ masjid, onSuccess, onCancel }) {
   );
 }
 
-// ─── CHANGE PASSWORD COMPONENT ────────────────────────────────────────────────
+// ─── CHANGE PASSWORD ──────────────────────────────────────────────────────────
 function ChangePassword({ masjid, onUpdateMasjid }) {
   const [currentPw, setCurrentPw] = useState("");
   const [newPw,     setNewPw]     = useState("");
   const [confirmPw, setConfirmPw] = useState("");
   const [showAll,   setShowAll]   = useState(false);
-  const [msg,       setMsg]       = useState(null); // { type: "success"|"error", text }
+  const [msg,       setMsg]       = useState(null);
 
   const handleChange = () => {
     setMsg(null);
-    if (!currentPw || !newPw || !confirmPw) {
-      setMsg({ type:"error", text:"Please fill in all fields." }); return;
-    }
-    if (currentPw !== masjid.password && currentPw !== MASTER_PASSWORD) {
-      setMsg({ type:"error", text:"Current password is incorrect." }); return;
-    }
-    if (newPw.length < 6) {
-      setMsg({ type:"error", text:"New password must be at least 6 characters." }); return;
-    }
-    if (newPw !== confirmPw) {
-      setMsg({ type:"error", text:"New passwords do not match." }); return;
-    }
+    if (!currentPw || !newPw || !confirmPw) { setMsg({ type:"error", text:"Please fill in all fields." }); return; }
+    if (currentPw !== masjid.password && currentPw !== MASTER_PASSWORD) { setMsg({ type:"error", text:"Current password is incorrect." }); return; }
+    if (newPw.length < 6) { setMsg({ type:"error", text:"New password must be at least 6 characters." }); return; }
+    if (newPw !== confirmPw) { setMsg({ type:"error", text:"New passwords do not match." }); return; }
     onUpdateMasjid(masjid.id, { password: newPw });
     setMsg({ type:"success", text:"✅ Password changed successfully!" });
     setCurrentPw(""); setNewPw(""); setConfirmPw("");
@@ -593,11 +521,8 @@ function ChangePassword({ masjid, onUpdateMasjid }) {
     <div style={{ marginTop:20, background:"rgba(201,168,76,0.06)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:14, padding:"16px" }}>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
         <div style={{ color:GOLD, fontWeight:700, fontSize:14 }}>🔐 Change Password</div>
-        <div onClick={() => setShowAll(s => !s)} style={{ color:"rgba(255,255,255,0.35)", fontSize:12, cursor:"pointer" }}>
-          {showAll ? "🙈 Hide" : "👁️ Show"}
-        </div>
+        <div onClick={() => setShowAll(s => !s)} style={{ color:"rgba(255,255,255,0.35)", fontSize:12, cursor:"pointer" }}>{showAll ? "🙈 Hide" : "👁️ Show"}</div>
       </div>
-
       {[
         { label:"CURRENT PASSWORD", val:currentPw, set:setCurrentPw, ph:"Enter current password" },
         { label:"NEW PASSWORD",     val:newPw,     set:setNewPw,     ph:"Min 6 characters"       },
@@ -605,26 +530,18 @@ function ChangePassword({ masjid, onUpdateMasjid }) {
       ].map(f => (
         <div key={f.label} style={{ marginBottom:12 }}>
           <div style={{ color:"rgba(255,255,255,0.4)", fontSize:10, fontWeight:700, letterSpacing:1, marginBottom:5 }}>{f.label}</div>
-          <input
-            type={showAll ? "text" : "password"}
-            value={f.val}
-            onChange={e => { f.set(e.target.value); setMsg(null); }}
-            placeholder={f.ph}
-            style={{ width:"100%", background:"rgba(10,46,26,0.6)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:9, padding:"11px 13px", color:OFF_WHITE, fontSize:13, outline:"none" }}
-          />
+          <input type={showAll ? "text" : "password"} value={f.val} onChange={e => { f.set(e.target.value); setMsg(null); }} placeholder={f.ph}
+            style={{ width:"100%", background:"rgba(10,46,26,0.6)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:9, padding:"11px 13px", color:OFF_WHITE, fontSize:13, outline:"none" }} />
         </div>
       ))}
-
       {msg && (
         <div style={{ background: msg.type === "success" ? "rgba(50,180,80,0.15)" : "rgba(255,68,68,0.12)", border:`1px solid ${msg.type === "success" ? "rgba(50,180,80,0.4)" : "rgba(255,68,68,0.3)"}`, borderRadius:9, padding:"9px 12px", marginBottom:12, color: msg.type === "success" ? "#88EE88" : "#FF9999", fontSize:13 }}>
           {msg.text}
         </div>
       )}
-
       <button onClick={handleChange} style={{ width:"100%", padding:"12px", background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, border:"none", borderRadius:11, color:DARK_GREEN, fontSize:14, fontWeight:700, cursor:"pointer" }}>
         🔑 Update Password
       </button>
-
       <div style={{ color:"rgba(255,255,255,0.25)", fontSize:11, marginTop:10, lineHeight:1.6 }}>
         💡 Tip: If you forget your password, use the <span style={{ color:GOLD }}>Master Recovery Password</span> on the login screen.
       </div>
@@ -634,13 +551,13 @@ function ChangePassword({ masjid, onUpdateMasjid }) {
 
 // ─── ADMIN PANEL ──────────────────────────────────────────────────────────────
 function AdminPanel({ masjid, onClose, onUpdateMasjid }) {
-  const [tab, setTab]         = useState("live");
+  const [tab, setTab]       = useState("live");
   const [topic,   setTopic]   = useState("");
   const [speaker, setSpeaker] = useState("");
   const [ytUrl,   setYtUrl]   = useState(masjid.youtubeUrl || "");
-  const [times, setTimes]     = useState(masjid.prayerTimes);
-  const [recordings]          = useState(masjid.recordings || []);
-  const [saved, setSaved]     = useState(false);
+  const [times, setTimes]   = useState(masjid.prayerTimes);
+  const [recordings]        = useState(masjid.recordings || []);
+  const [saved, setSaved]   = useState(false);
   const [urlSaved, setUrlSaved] = useState(false);
 
   const isLive = masjid.isLive;
@@ -651,8 +568,6 @@ function AdminPanel({ masjid, onClose, onUpdateMasjid }) {
     if (overrideUrl) setYtUrl(overrideUrl);
     onUpdateMasjid(masjid.id, { youtubeUrl: finalUrl, isLive: true, topic, speaker });
     setUrlSaved(true); setTimeout(() => setUrlSaved(false), 2000);
-    // Send push notification to all subscribers
-    sendLiveNotification(masjid.name, topic || "Live stream has started!");
   };
 
   const endLive = () => {
@@ -703,7 +618,6 @@ function AdminPanel({ masjid, onClose, onUpdateMasjid }) {
           {/* ── LIVE TAB ── */}
           {tab === "live" && (
             <div>
-              {/* Currently Live Banner */}
               {isLive && (
                 <div style={{ background:"rgba(255,68,68,0.12)", border:"1px solid rgba(255,68,68,0.4)", borderRadius:14, padding:"14px 16px", marginBottom:16, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                   <div style={{ display:"flex", alignItems:"center", gap:10 }}>
@@ -720,7 +634,6 @@ function AdminPanel({ masjid, onClose, onUpdateMasjid }) {
                 </div>
               )}
 
-              {/* How it works info */}
               <div style={{ background:"rgba(255,50,50,0.08)", border:"1px solid rgba(255,100,100,0.2)", borderRadius:12, padding:"12px 14px", marginBottom:18 }}>
                 <div style={{ color:"#FF9999", fontWeight:700, fontSize:13, marginBottom:6 }}>📺 How YouTube Live Works</div>
                 <div style={{ color:"rgba(255,255,255,0.5)", fontSize:12, lineHeight:1.8 }}>
@@ -731,7 +644,6 @@ function AdminPanel({ masjid, onClose, onUpdateMasjid }) {
                 </div>
               </div>
 
-              {/* Topic & Speaker */}
               {[
                 { label:"TOPIC / TITLE", val:topic,   set:setTopic,   ph:"e.g. Friday Khutbah" },
                 { label:"SPEAKER NAME",  val:speaker, set:setSpeaker, ph:"e.g. Maulana Rashid"  },
@@ -743,7 +655,6 @@ function AdminPanel({ masjid, onClose, onUpdateMasjid }) {
                 </div>
               ))}
 
-              {/* Auto Live URL Info */}
               {masjid.permanentLiveUrl ? (
                 <div style={{ background:"rgba(26,201,76,0.08)", border:"1px solid rgba(26,201,76,0.25)", borderRadius:12, padding:"12px 14px", marginBottom:16 }}>
                   <div style={{ color:"#99FFB3", fontWeight:700, fontSize:12, marginBottom:4 }}>✅ AUTO LIVE URL SAVED</div>
@@ -767,12 +678,8 @@ function AdminPanel({ masjid, onClose, onUpdateMasjid }) {
 
               {!isLive ? (
                 <button onClick={() => {
-                  if (masjid.permanentLiveUrl) {
-                    setYtUrl(masjid.permanentLiveUrl);
-                    goLive(masjid.permanentLiveUrl);
-                  } else {
-                    goLive();
-                  }
+                  if (masjid.permanentLiveUrl) { setYtUrl(masjid.permanentLiveUrl); goLive(masjid.permanentLiveUrl); }
+                  else { goLive(); }
                 }} disabled={!masjid.permanentLiveUrl && !ytUrl.trim()} style={{
                   width:"100%", padding:"15px",
                   background: (masjid.permanentLiveUrl || ytUrl.trim()) ? "linear-gradient(135deg,#AA1111,#EE3333)" : "rgba(255,68,68,0.2)",
@@ -814,10 +721,7 @@ function AdminPanel({ masjid, onClose, onUpdateMasjid }) {
                       <div style={{ color:GOLD, fontSize:12, marginTop:2 }}>{r.speaker}</div>
                       <div style={{ color:"rgba(255,255,255,0.35)", fontSize:11, marginTop:4 }}>{r.date} • {r.duration}</div>
                     </div>
-                    <div style={{ display:"flex", gap:8 }}>
-                      <div onClick={() => window.open(r.url,"_blank")} style={{ background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, color:DARK_GREEN, borderRadius:20, padding:"6px 12px", fontSize:12, fontWeight:700, cursor:"pointer" }}>▶ Play</div>
-                      <div style={{ background:"rgba(255,68,68,0.15)", border:"1px solid rgba(255,68,68,0.3)", borderRadius:20, padding:"6px 12px", color:"#FF9999", fontSize:12, cursor:"pointer" }}>🗑</div>
-                    </div>
+                    <div onClick={() => window.open(r.url,"_blank")} style={{ background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, color:DARK_GREEN, borderRadius:20, padding:"6px 12px", fontSize:12, fontWeight:700, cursor:"pointer" }}>▶ Play</div>
                   </div>
                 </div>
               ))}
@@ -836,15 +740,21 @@ function AdminPanel({ masjid, onClose, onUpdateMasjid }) {
                     <span style={{ fontSize:18 }}>{icon}</span>
                     <span style={{ color:LIGHT_GOLD, fontWeight:700, fontSize:15 }}>{name}</span>
                     {key === "jumuah" && <span style={{ background:"rgba(201,168,76,0.2)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:20, padding:"2px 10px", color:GOLD, fontSize:10, fontWeight:700 }}>FRIDAY</span>}
+                    {key === "sunrise" && <span style={{ background:"rgba(255,180,50,0.15)", border:"1px solid rgba(255,180,50,0.3)", borderRadius:20, padding:"2px 10px", color:"#FFB432", fontSize:10, fontWeight:700 }}>NO IQAMAH</span>}
                   </div>
-                  <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
-                    {["adhan","iqamah"].map(field => (
-                      <div key={field}>
-                        <div style={{ color:"rgba(255,255,255,0.4)", fontSize:10, fontWeight:700, letterSpacing:1, marginBottom:5 }}>{field.toUpperCase()}</div>
-                        <input type="time" value={times[key][field]} onChange={e => updateTime(key, field, e.target.value)}
+                  <div style={{ display:"grid", gridTemplateColumns: key === "sunrise" ? "1fr" : "1fr 1fr", gap:10 }}>
+                    <div>
+                      <div style={{ color:"rgba(255,255,255,0.4)", fontSize:10, fontWeight:700, letterSpacing:1, marginBottom:5 }}>{key === "sunrise" ? "SUNRISE TIME" : "ADHAN"}</div>
+                      <input type="time" value={times[key]?.adhan || ""} onChange={e => updateTime(key, "adhan", e.target.value)}
+                        style={{ width:"100%", background:"rgba(10,46,26,0.6)", border:"1px solid rgba(201,168,76,0.25)", borderRadius:8, padding:"9px 10px", color:OFF_WHITE, fontSize:14, outline:"none", colorScheme:"dark" }} />
+                    </div>
+                    {key !== "sunrise" && (
+                      <div>
+                        <div style={{ color:"rgba(255,255,255,0.4)", fontSize:10, fontWeight:700, letterSpacing:1, marginBottom:5 }}>IQAMAH</div>
+                        <input type="time" value={times[key]?.iqamah || ""} onChange={e => updateTime(key, "iqamah", e.target.value)}
                           style={{ width:"100%", background:"rgba(10,46,26,0.6)", border:"1px solid rgba(201,168,76,0.25)", borderRadius:8, padding:"9px 10px", color:OFF_WHITE, fontSize:14, outline:"none", colorScheme:"dark" }} />
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
               ))}
@@ -854,20 +764,17 @@ function AdminPanel({ masjid, onClose, onUpdateMasjid }) {
               <ChangePassword masjid={masjid} onUpdateMasjid={onUpdateMasjid} />
             </div>
           )}
-
         </div>
       </div>
     </div>
   );
 }
 
-// ─── MASJID LIVE PLAYER (user view) ──────────────────────────────────────────
+// ─── MASJID LIVE PLAYER ───────────────────────────────────────────────────────
 function MasjidLivePlayer({ masjid, onBack }) {
   const embedUrl = getYouTubeEmbedUrl(masjid.youtubeUrl);
-
   return (
     <div style={{ display:"flex", flexDirection:"column", height:"calc(100vh - 114px)" }}>
-      {/* Header */}
       <div style={{ background:`linear-gradient(135deg,${DARK_GREEN},${masjid.color})`, padding:"12px 16px", display:"flex", alignItems:"center", gap:12, flexShrink:0 }}>
         <button onClick={onBack} style={{ background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:10, padding:"7px 14px", color:GOLD, fontSize:13, fontWeight:700, cursor:"pointer" }}>← Back</button>
         <div style={{ flex:1 }}>
@@ -880,13 +787,12 @@ function MasjidLivePlayer({ masjid, onBack }) {
           <div style={{ color:LIGHT_GOLD, fontWeight:700, fontSize:14, fontFamily:"'Playfair Display',serif" }}>{masjid.icon} {masjid.name}</div>
         </div>
         {masjid.youtubeUrl && (
-          <div onClick={() => window.open(masjid.youtubeUrl,"_blank")} style={{ background:`linear-gradient(135deg,#CC0000,#FF0000)`, color:"#fff", borderRadius:20, padding:"6px 12px", fontSize:12, fontWeight:700, cursor:"pointer" }}>
+          <div onClick={() => window.open(masjid.youtubeUrl,"_blank")} style={{ background:"linear-gradient(135deg,#CC0000,#FF0000)", color:"#fff", borderRadius:20, padding:"6px 12px", fontSize:12, fontWeight:700, cursor:"pointer" }}>
             YT ↗
           </div>
         )}
       </div>
 
-      {/* YouTube Player or Offline */}
       {embedUrl ? (
         <iframe
           src={embedUrl}
@@ -917,14 +823,13 @@ function MasjidLivePlayer({ masjid, onBack }) {
   );
 }
 
-// ─── LIVE PAGE ─────────────────────────────────────────────────────────────────
+// ─── LIVE PAGE ────────────────────────────────────────────────────────────────
 function LivePage({ masjids }) {
   const [activeMasjid, setActiveMasjid] = useState(null);
   if (activeMasjid) {
     const latest = masjids.find(m => m.id === activeMasjid.id) || activeMasjid;
     return <MasjidLivePlayer masjid={latest} onBack={() => setActiveMasjid(null)} />;
   }
-
   return (
     <div style={{ padding:"20px 20px 80px" }}>
       <SectionTitle>📡 Live Bayans</SectionTitle>
@@ -956,8 +861,6 @@ function LivePage({ masjids }) {
           </div>
         ))}
       </div>
-
-      {/* YouTube info */}
       <div style={{ marginTop:20, background:"rgba(255,0,0,0.06)", border:"1px solid rgba(255,0,0,0.15)", borderRadius:14, padding:"14px 16px" }}>
         <div style={{ color:"#FF9999", fontWeight:700, fontSize:13, marginBottom:6 }}>📺 About Live Streams</div>
         <div style={{ color:"rgba(255,255,255,0.4)", fontSize:12, lineHeight:1.8 }}>
@@ -968,7 +871,7 @@ function LivePage({ masjids }) {
   );
 }
 
-// ─── HOME PAGE ─────────────────────────────────────────────────────────────────
+// ─── HOME PAGE ────────────────────────────────────────────────────────────────
 function HomePage({ setPage, masjids, notifEnabled, toggleNotifications }) {
   const [userMasjidId, setUserMasjidId] = useState(() => localStorage.getItem("minbar_user_masjid") || "m1");
   const [showMasjidPicker, setShowMasjidPicker] = useState(false);
@@ -980,24 +883,22 @@ function HomePage({ setPage, masjids, notifEnabled, toggleNotifications }) {
     setShowMasjidPicker(false);
   };
 
-  // Find next prayer based on current time
   const now = new Date();
   const isFriday = now.getDay() === 5;
   const nowMins = now.getHours() * 60 + now.getMinutes();
   const toMins = t => { const [h,m] = t.split(":").map(Number); return h*60+m; };
 
-  // On Friday: replace Dhuhr with Jumu'ah
   const prayers = [
     { key:"fajr",    name:"Fajr",    icon:"🌙" },
-    isFriday
-      ? { key:"jumuah", name:"Jumu'ah", icon:"🕌" }
-      : { key:"dhuhr",  name:"Dhuhr",   icon:"☀️" },
+    { key:"sunrise", name:"Sunrise", icon:"🌄", noIqamah:true, noNextPrayer:true },
+    isFriday ? { key:"jumuah", name:"Jumu'ah", icon:"🕌" } : { key:"dhuhr", name:"Dhuhr", icon:"☀️" },
     { key:"asr",     name:"Asr",     icon:"🌤"  },
     { key:"maghrib", name:"Maghrib", icon:"🌅" },
     { key:"isha",    name:"Isha",    icon:"⭐" },
   ];
 
-  const nextPrayer = prayers.find(p => toMins(jumma.prayerTimes[p.key].adhan) > nowMins) || prayers[0];
+  const nextPrayer = prayers.filter(p => !p.noNextPrayer).find(p => toMins(jumma.prayerTimes[p.key].adhan) > nowMins) || prayers.filter(p => !p.noNextPrayer)[0];
+
   return (
     <div style={{ padding: "0 0 80px" }}>
       <div style={{ background: `linear-gradient(135deg,${DARK_GREEN} 0%,${MID_GREEN} 100%)`, padding: "20px 20px 28px", borderRadius: "0 0 30px 30px", boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}>
@@ -1006,10 +907,9 @@ function HomePage({ setPage, masjids, notifEnabled, toggleNotifications }) {
             <div style={{ color: GOLD, fontSize: 11, fontFamily: "'Cinzel',serif", letterSpacing: 2 }}>MINBAR LIVE</div>
             <div style={{ color: OFF_WHITE, fontSize: 17, fontWeight: 700, fontFamily: "'Playfair Display',serif" }}>Assalamu Alaikum 🌿</div>
           </div>
-          <div style={{ width: 42, height: 42, borderRadius: "50%", border: `2px solid ${GOLD}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, cursor: "pointer", background: "rgba(201,168,76,0.1)" }}>🔔</div>
+          <div style={{ width: 42, height: 42, borderRadius: "50%", border: `2px solid ${GOLD}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, cursor: "pointer", background: "rgba(201,168,76,0.1)" }} onClick={toggleNotifications}>🔔</div>
         </div>
 
-        {/* Next Prayer — from Jumma Masjid live data */}
         <div style={{ background: "rgba(201,168,76,0.12)", border: "1px solid rgba(201,168,76,0.3)", borderRadius: 14, padding: "12px 16px" }}>
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:8 }}>
             <div>
@@ -1021,7 +921,6 @@ function HomePage({ setPage, masjids, notifEnabled, toggleNotifications }) {
               <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 10 }}>Adhan</div>
             </div>
           </div>
-          {/* Jumma Masjid label */}
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
             <div style={{ display:"flex", alignItems:"center", gap:6 }}>
               <span style={{ fontSize:14 }}>{jumma.icon}</span>
@@ -1035,32 +934,32 @@ function HomePage({ setPage, masjids, notifEnabled, toggleNotifications }) {
         </div>
       </div>
 
-      {/* Prayer strip — Jumma Masjid adhan times */}
+      {/* Prayer strip */}
       <div style={{ padding: "14px 20px 0" }}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
-          <div style={{ color:"rgba(255,255,255,0.45)", fontSize:11, fontWeight:700 }}>{jumma.icon} {jumma.name} — Today's Timings</div>
-        </div>
+        <div style={{ color:"rgba(255,255,255,0.45)", fontSize:11, fontWeight:700, marginBottom:8 }}>{jumma.icon} {jumma.name} — Today's Timings</div>
         <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none" }}>
           {prayers.map((p) => {
             const isNext = p.key === nextPrayer.key;
+            const isSunrise = p.key === "sunrise";
             return (
-              <div key={p.name} style={{ flex: "0 0 auto", background: isNext ? `linear-gradient(135deg,${GOLD},${LIGHT_GOLD})` : "rgba(26,77,46,0.3)", border: `1px solid ${isNext ? GOLD : "rgba(201,168,76,0.2)"}`, borderRadius: 12, padding: "10px 12px", textAlign: "center", minWidth: 70 }}>
+              <div key={p.name} style={{ flex: "0 0 auto", background: isNext ? `linear-gradient(135deg,${GOLD},${LIGHT_GOLD})` : isSunrise ? "rgba(255,180,50,0.12)" : "rgba(26,77,46,0.3)", border: `1px solid ${isNext ? GOLD : isSunrise ? "rgba(255,180,50,0.35)" : "rgba(201,168,76,0.2)"}`, borderRadius: 12, padding: "10px 12px", textAlign: "center", minWidth: 70 }}>
                 <div style={{ fontSize: 15 }}>{p.icon}</div>
-                <div style={{ color: isNext ? DARK_GREEN : GOLD, fontSize: 10, fontWeight: 700 }}>{p.name}</div>
+                <div style={{ color: isNext ? DARK_GREEN : isSunrise ? "#FFB432" : GOLD, fontSize: 10, fontWeight: 700 }}>{p.name}</div>
                 <div style={{ color: isNext ? DARK_GREEN : OFF_WHITE, fontSize: 11, fontWeight: 600 }}>{jumma.prayerTimes[p.key].adhan}</div>
-                <div style={{ color: isNext ? `${DARK_GREEN}99` : "rgba(255,255,255,0.35)", fontSize: 9 }}>{jumma.prayerTimes[p.key].iqamah}</div>
+                {!isSunrise && <div style={{ color: isNext ? `${DARK_GREEN}99` : "rgba(255,255,255,0.35)", fontSize: 9 }}>{jumma.prayerTimes[p.key].iqamah}</div>}
+                {isSunrise && <div style={{ color: "rgba(255,180,50,0.5)", fontSize: 9 }}>Ishraq</div>}
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* Single Notification Toggle */}
+      {/* Notification Toggle */}
       <div style={{ margin:"14px 20px 0", background: notifEnabled ? "rgba(26,77,46,0.6)" : "rgba(255,255,255,0.05)", border: notifEnabled ? "1px solid rgba(201,168,76,0.35)" : "1px solid rgba(255,255,255,0.1)", borderRadius:12, padding:"12px 14px", display:"flex", alignItems:"center", gap:10 }}>
         <span style={{ fontSize:20 }}>{notifEnabled ? "🔔" : "🔕"}</span>
         <div style={{ flex:1 }}>
           <div style={{ color: notifEnabled ? GOLD : "rgba(255,255,255,0.4)", fontSize:12, fontWeight:700 }}>{notifEnabled ? "Notifications ON" : "Notifications OFF"}</div>
-          <div style={{ color:"rgba(255,255,255,0.35)", fontSize:10, marginTop:2 }}>{notifEnabled ? "Adhan, Iqamah & Live alerts active ✅" : "Tap to enable Adhan, Iqamah & Live alerts"}</div>
+          <div style={{ color:"rgba(255,255,255,0.35)", fontSize:10, marginTop:2 }}>{notifEnabled ? "Adhan, Iqamah, Sunrise & Live alerts active ✅" : "Tap to enable Adhan, Iqamah & Sunrise alerts"}</div>
         </div>
         <button onClick={toggleNotifications} style={{ background: notifEnabled ? "linear-gradient(135deg,#C9A84C,#E8C97A)" : "rgba(201,168,76,0.15)", border: notifEnabled ? "none" : "1px solid rgba(201,168,76,0.3)", borderRadius:20, padding:"8px 16px", color: notifEnabled ? DARK_GREEN : GOLD, fontSize:12, fontWeight:700, cursor:"pointer" }}>
           {notifEnabled ? "ON ✓" : "OFF"}
@@ -1136,7 +1035,7 @@ function HomePage({ setPage, masjids, notifEnabled, toggleNotifications }) {
   );
 }
 
-// ─── LIBRARY PAGE ──────────────────────────────────────────────────────────────
+// ─── LIBRARY PAGE ─────────────────────────────────────────────────────────────
 function LibraryPage() {
   return (
     <div style={{ padding: "20px 20px 80px" }}>
@@ -1167,293 +1066,172 @@ function LibraryPage() {
   );
 }
 
-// ─── DUA PAGE ──────────────────────────────────────────────────────────────────
-// ─── PWA INSTALL PROMPT ────────────────────────────────────────────────────────
-function useInstallPrompt() {
-  const [prompt, setPrompt] = useState(null);
-  useEffect(() => {
-    const handler = e => { e.preventDefault(); setPrompt(e); };
-    window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
-  }, []);
-  const install = async () => {
-    if (!prompt) return;
-    prompt.prompt();
-    await prompt.userChoice;
-    setPrompt(null);
-  };
-  return { prompt, install };
-}
+// ─── QURAN PAGE (uses local quran.json) ───────────────────────────────────────
+const SURAHS = quranData.map(s => ({
+  n: s.id,
+  name: s.transliteration,
+  arabic: s.name,
+  ayahs: s.total_verses,
+  type: s.type,
+  verses: s.verses,  // { id, text }[]
+}));
 
-
-function AddMasjidModal({ onAdd, onClose }) {
-  const [step, setStep]         = useState("password"); // password | form
-  const [pw, setPw]             = useState("");
-  const [pwErr, setPwErr]       = useState("");
-  const [name, setName]         = useState("");
-  const [icon, setIcon]         = useState("🕌");
-  const [color, setColor]       = useState("#1A4D2E");
-  const [password, setPassword] = useState("");
-  const [ytChannel, setYtChannel] = useState("");
-  const ICONS = ["🕌","🕍","☪️","🌙","⭐","🤲","🕋","📿"];
-  const COLORS = ["#1A4D2E","#1A2E4D","#2E1A4D","#4D2E1A","#2E4D1A","#4D1A2E","#1A4D4D","#4D3D1A"];
-
-  const checkPw = () => {
-    if (pw.trim() === "minbarlive") { setStep("form"); setPwErr(""); }
-    else setPwErr("❌ Wrong master password!");
-  };
-
-  const handleAdd = () => {
-    if (!name.trim()) return alert("Please enter masjid name!");
-    if (!password.trim()) return alert("Please enter admin password!");
-    const newMasjid = {
-      id: "m" + Date.now(),
-      name: name.trim(),
-      icon, color,
-      password: password.trim(),
-      youtubeUrl: "",
-      youtubeChannel: ytChannel.trim(),
-      isLive: false,
-      prayerTimes: {
-        fajr:    { adhan:"05:15", iqamah:"05:30" },
-        dhuhr:   { adhan:"13:15", iqamah:"13:30" },
-        asr:     { adhan:"16:30", iqamah:"16:45" },
-        maghrib: { adhan:"18:35", iqamah:"18:40" },
-        isha:    { adhan:"19:55", iqamah:"20:10" },
-        jumuah:  { adhan:"13:00", iqamah:"13:15" },
-      },
-      recordings: [],
-    };
-    onAdd(newMasjid);
-    onClose();
-  };
-
-  return (
-    <div style={{ position:"fixed", inset:0, zIndex:300, background:"rgba(0,0,0,0.92)", display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
-      <div style={{ background:`linear-gradient(180deg,#0E2418,${DARK_GREEN})`, border:"1px solid rgba(201,168,76,0.3)", borderRadius:"24px 24px 0 0", width:"100%", maxWidth:390, padding:"24px 20px 44px", maxHeight:"90vh", overflowY:"auto" }}>
-        <div style={{ width:40, height:4, background:"rgba(201,168,76,0.3)", borderRadius:2, margin:"0 auto 18px" }} />
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
-          <div style={{ color:LIGHT_GOLD, fontSize:18, fontWeight:700, fontFamily:"'Playfair Display',serif" }}>➕ Add New Masjid</div>
-          <div onClick={onClose} style={{ color:"rgba(255,255,255,0.4)", fontSize:22, cursor:"pointer" }}>✕</div>
-        </div>
-
-        {step === "password" ? (
-          <>
-            <div style={{ color:"rgba(255,255,255,0.5)", fontSize:13, marginBottom:16 }}>Enter master password to add a new masjid</div>
-            <input
-              type="password"
-              placeholder="Master password"
-              value={pw}
-              onChange={e => setPw(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && checkPw()}
-              style={{ width:"100%", background:"rgba(255,255,255,0.07)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:12, padding:"14px 16px", color:"#fff", fontSize:15, marginBottom:8, outline:"none" }}
-            />
-            {pwErr && <div style={{ color:"#FF7777", fontSize:13, marginBottom:12 }}>{pwErr}</div>}
-            <button onClick={checkPw} style={{ width:"100%", background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, color:DARK_GREEN, border:"none", borderRadius:14, padding:"14px", fontSize:15, fontWeight:700, cursor:"pointer" }}>
-              Continue →
-            </button>
-          </>
-        ) : (
-          <>
-            {/* Icon picker */}
-            <div style={{ color:GOLD, fontSize:11, letterSpacing:1, marginBottom:8 }}>SELECT ICON</div>
-            <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
-              {ICONS.map(ic => (
-                <div key={ic} onClick={() => setIcon(ic)} style={{ fontSize:24, padding:8, borderRadius:10, background:icon===ic?"rgba(201,168,76,0.25)":"rgba(255,255,255,0.05)", border:`1px solid ${icon===ic?"rgba(201,168,76,0.5)":"transparent"}`, cursor:"pointer" }}>{ic}</div>
-              ))}
-            </div>
-
-            {/* Color picker */}
-            <div style={{ color:GOLD, fontSize:11, letterSpacing:1, marginBottom:8 }}>SELECT COLOR</div>
-            <div style={{ display:"flex", gap:8, marginBottom:16, flexWrap:"wrap" }}>
-              {COLORS.map(c => (
-                <div key={c} onClick={() => setColor(c)} style={{ width:32, height:32, borderRadius:8, background:c, border:`2px solid ${color===c?"#F0D080":"transparent"}`, cursor:"pointer" }} />
-              ))}
-            </div>
-
-            {/* Fields */}
-            {[
-              { label:"MASJID NAME", val:name, set:setName, ph:"e.g. Masjid-e-Noor", type:"text" },
-              { label:"ADMIN PASSWORD", val:password, set:setPassword, ph:"e.g. noor123", type:"text" },
-              { label:"YOUTUBE CHANNEL (optional)", val:ytChannel, set:setYtChannel, ph:"https://www.youtube.com/@YourChannel", type:"text" },
-            ].map(f => (
-              <div key={f.label} style={{ marginBottom:14 }}>
-                <div style={{ color:GOLD, fontSize:11, letterSpacing:1, marginBottom:6 }}>{f.label}</div>
-                <input
-                  type={f.type}
-                  placeholder={f.ph}
-                  value={f.val}
-                  onChange={e => f.set(e.target.value)}
-                  style={{ width:"100%", background:"rgba(255,255,255,0.07)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:12, padding:"13px 16px", color:"#fff", fontSize:14, outline:"none" }}
-                />
-              </div>
-            ))}
-
-            <div style={{ color:"rgba(255,255,255,0.35)", fontSize:12, marginBottom:16 }}>
-              💡 Prayer times will be set to default — admin can change them in Settings after adding.
-            </div>
-
-            <button onClick={handleAdd} style={{ width:"100%", background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, color:DARK_GREEN, border:"none", borderRadius:14, padding:"14px", fontSize:15, fontWeight:700, cursor:"pointer" }}>
-              ✅ Add Masjid
-            </button>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
-
-
-
-// ─── QURAN PAGE ────────────────────────────────────────────────────────────────
-const SURAHS = [
-  {n:1,name:"Al-Fatiha",arabic:"الفاتحة",ayahs:7},{n:2,name:"Al-Baqarah",arabic:"البقرة",ayahs:286},
-  {n:3,name:"Al-Imran",arabic:"آل عمران",ayahs:200},{n:4,name:"An-Nisa",arabic:"النساء",ayahs:176},
-  {n:5,name:"Al-Maidah",arabic:"المائدة",ayahs:120},{n:6,name:"Al-An'am",arabic:"الأنعام",ayahs:165},
-  {n:7,name:"Al-A'raf",arabic:"الأعراف",ayahs:206},{n:8,name:"Al-Anfal",arabic:"الأنفال",ayahs:75},
-  {n:9,name:"At-Tawbah",arabic:"التوبة",ayahs:129},{n:10,name:"Yunus",arabic:"يونس",ayahs:109},
-  {n:11,name:"Hud",arabic:"هود",ayahs:123},{n:12,name:"Yusuf",arabic:"يوسف",ayahs:111},
-  {n:13,name:"Ar-Ra'd",arabic:"الرعد",ayahs:43},{n:14,name:"Ibrahim",arabic:"إبراهيم",ayahs:52},
-  {n:15,name:"Al-Hijr",arabic:"الحجر",ayahs:99},{n:16,name:"An-Nahl",arabic:"النحل",ayahs:128},
-  {n:17,name:"Al-Isra",arabic:"الإسراء",ayahs:111},{n:18,name:"Al-Kahf",arabic:"الكهف",ayahs:110},
-  {n:19,name:"Maryam",arabic:"مريم",ayahs:98},{n:20,name:"Ta-Ha",arabic:"طه",ayahs:135},
-  {n:21,name:"Al-Anbiya",arabic:"الأنبياء",ayahs:112},{n:22,name:"Al-Hajj",arabic:"الحج",ayahs:78},
-  {n:23,name:"Al-Mu'minun",arabic:"المؤمنون",ayahs:118},{n:24,name:"An-Nur",arabic:"النور",ayahs:64},
-  {n:25,name:"Al-Furqan",arabic:"الفرقان",ayahs:77},{n:26,name:"Ash-Shu'ara",arabic:"الشعراء",ayahs:227},
-  {n:27,name:"An-Naml",arabic:"النمل",ayahs:93},{n:28,name:"Al-Qasas",arabic:"القصص",ayahs:88},
-  {n:29,name:"Al-Ankabut",arabic:"العنكبوت",ayahs:69},{n:30,name:"Ar-Rum",arabic:"الروم",ayahs:60},
-  {n:31,name:"Luqman",arabic:"لقمان",ayahs:34},{n:32,name:"As-Sajdah",arabic:"السجدة",ayahs:30},
-  {n:33,name:"Al-Ahzab",arabic:"الأحزاب",ayahs:73},{n:34,name:"Saba",arabic:"سبأ",ayahs:54},
-  {n:35,name:"Fatir",arabic:"فاطر",ayahs:45},{n:36,name:"Ya-Sin",arabic:"يس",ayahs:83},
-  {n:37,name:"As-Saffat",arabic:"الصافات",ayahs:182},{n:38,name:"Sad",arabic:"ص",ayahs:88},
-  {n:39,name:"Az-Zumar",arabic:"الزمر",ayahs:75},{n:40,name:"Ghafir",arabic:"غافر",ayahs:85},
-  {n:41,name:"Fussilat",arabic:"فصلت",ayahs:54},{n:42,name:"Ash-Shura",arabic:"الشورى",ayahs:53},
-  {n:43,name:"Az-Zukhruf",arabic:"الزخرف",ayahs:89},{n:44,name:"Ad-Dukhan",arabic:"الدخان",ayahs:59},
-  {n:45,name:"Al-Jathiyah",arabic:"الجاثية",ayahs:37},{n:46,name:"Al-Ahqaf",arabic:"الأحقاف",ayahs:35},
-  {n:47,name:"Muhammad",arabic:"محمد",ayahs:38},{n:48,name:"Al-Fath",arabic:"الفتح",ayahs:29},
-  {n:49,name:"Al-Hujurat",arabic:"الحجرات",ayahs:18},{n:50,name:"Qaf",arabic:"ق",ayahs:45},
-  {n:51,name:"Adh-Dhariyat",arabic:"الذاريات",ayahs:60},{n:52,name:"At-Tur",arabic:"الطور",ayahs:49},
-  {n:53,name:"An-Najm",arabic:"النجم",ayahs:62},{n:54,name:"Al-Qamar",arabic:"القمر",ayahs:55},
-  {n:55,name:"Ar-Rahman",arabic:"الرحمن",ayahs:78},{n:56,name:"Al-Waqi'ah",arabic:"الواقعة",ayahs:96},
-  {n:57,name:"Al-Hadid",arabic:"الحديد",ayahs:29},{n:58,name:"Al-Mujadila",arabic:"المجادلة",ayahs:22},
-  {n:59,name:"Al-Hashr",arabic:"الحشر",ayahs:24},{n:60,name:"Al-Mumtahanah",arabic:"الممتحنة",ayahs:13},
-  {n:61,name:"As-Saf",arabic:"الصف",ayahs:14},{n:62,name:"Al-Jumu'ah",arabic:"الجمعة",ayahs:11},
-  {n:63,name:"Al-Munafiqun",arabic:"المنافقون",ayahs:11},{n:64,name:"At-Taghabun",arabic:"التغابن",ayahs:18},
-  {n:65,name:"At-Talaq",arabic:"الطلاق",ayahs:12},{n:66,name:"At-Tahrim",arabic:"التحريم",ayahs:12},
-  {n:67,name:"Al-Mulk",arabic:"الملك",ayahs:30},{n:68,name:"Al-Qalam",arabic:"القلم",ayahs:52},
-  {n:69,name:"Al-Haqqah",arabic:"الحاقة",ayahs:52},{n:70,name:"Al-Ma'arij",arabic:"المعارج",ayahs:44},
-  {n:71,name:"Nuh",arabic:"نوح",ayahs:28},{n:72,name:"Al-Jinn",arabic:"الجن",ayahs:28},
-  {n:73,name:"Al-Muzzammil",arabic:"المزمل",ayahs:20},{n:74,name:"Al-Muddaththir",arabic:"المدثر",ayahs:56},
-  {n:75,name:"Al-Qiyamah",arabic:"القيامة",ayahs:40},{n:76,name:"Al-Insan",arabic:"الإنسان",ayahs:31},
-  {n:77,name:"Al-Mursalat",arabic:"المرسلات",ayahs:50},{n:78,name:"An-Naba",arabic:"النبأ",ayahs:40},
-  {n:79,name:"An-Nazi'at",arabic:"النازعات",ayahs:46},{n:80,name:"Abasa",arabic:"عبس",ayahs:42},
-  {n:81,name:"At-Takwir",arabic:"التكوير",ayahs:29},{n:82,name:"Al-Infitar",arabic:"الانفطار",ayahs:19},
-  {n:83,name:"Al-Mutaffifin",arabic:"المطففين",ayahs:36},{n:84,name:"Al-Inshiqaq",arabic:"الانشقاق",ayahs:25},
-  {n:85,name:"Al-Buruj",arabic:"البروج",ayahs:22},{n:86,name:"At-Tariq",arabic:"الطارق",ayahs:17},
-  {n:87,name:"Al-A'la",arabic:"الأعلى",ayahs:19},{n:88,name:"Al-Ghashiyah",arabic:"الغاشية",ayahs:26},
-  {n:89,name:"Al-Fajr",arabic:"الفجر",ayahs:30},{n:90,name:"Al-Balad",arabic:"البلد",ayahs:20},
-  {n:91,name:"Ash-Shams",arabic:"الشمس",ayahs:15},{n:92,name:"Al-Layl",arabic:"الليل",ayahs:21},
-  {n:93,name:"Ad-Duha",arabic:"الضحى",ayahs:11},{n:94,name:"Ash-Sharh",arabic:"الشرح",ayahs:8},
-  {n:95,name:"At-Tin",arabic:"التين",ayahs:8},{n:96,name:"Al-Alaq",arabic:"العلق",ayahs:19},
-  {n:97,name:"Al-Qadr",arabic:"القدر",ayahs:5},{n:98,name:"Al-Bayyinah",arabic:"البينة",ayahs:8},
-  {n:99,name:"Az-Zalzalah",arabic:"الزلزلة",ayahs:8},{n:100,name:"Al-Adiyat",arabic:"العاديات",ayahs:11},
-  {n:101,name:"Al-Qari'ah",arabic:"القارعة",ayahs:11},{n:102,name:"At-Takathur",arabic:"التكاثر",ayahs:8},
-  {n:103,name:"Al-Asr",arabic:"العصر",ayahs:3},{n:104,name:"Al-Humazah",arabic:"الهمزة",ayahs:9},
-  {n:105,name:"Al-Fil",arabic:"الفيل",ayahs:5},{n:106,name:"Quraysh",arabic:"قريش",ayahs:4},
-  {n:107,name:"Al-Ma'un",arabic:"الماعون",ayahs:7},{n:108,name:"Al-Kawthar",arabic:"الكوثر",ayahs:3},
-  {n:109,name:"Al-Kafirun",arabic:"الكافرون",ayahs:6},{n:110,name:"An-Nasr",arabic:"النصر",ayahs:3},
-  {n:111,name:"Al-Masad",arabic:"المسد",ayahs:5},{n:112,name:"Al-Ikhlas",arabic:"الإخلاص",ayahs:4},
-  {n:113,name:"Al-Falaq",arabic:"الفلق",ayahs:5},{n:114,name:"An-Nas",arabic:"الناس",ayahs:6},
+const JUZ_DATA = [
+  { juz:1,  name:"Alif Lam Meem",       start:{surah:1,ayah:1},   end:{surah:2,ayah:141},  surahs:[1,2] },
+  { juz:2,  name:"Sayaqool",            start:{surah:2,ayah:142}, end:{surah:2,ayah:252},  surahs:[2] },
+  { juz:3,  name:"Tilkar Rusul",        start:{surah:2,ayah:253}, end:{surah:3,ayah:92},   surahs:[2,3] },
+  { juz:4,  name:"Lan Tanaloo",         start:{surah:3,ayah:93},  end:{surah:4,ayah:23},   surahs:[3,4] },
+  { juz:5,  name:"Wal Mohsanat",        start:{surah:4,ayah:24},  end:{surah:4,ayah:147},  surahs:[4] },
+  { juz:6,  name:"La Yuhibbullah",      start:{surah:4,ayah:148}, end:{surah:5,ayah:81},   surahs:[4,5] },
+  { juz:7,  name:"Wa Iza Samiu",        start:{surah:5,ayah:82},  end:{surah:6,ayah:110},  surahs:[5,6] },
+  { juz:8,  name:"Wa Lau Annana",       start:{surah:6,ayah:111}, end:{surah:7,ayah:87},   surahs:[6,7] },
+  { juz:9,  name:"Qalal Malao",         start:{surah:7,ayah:88},  end:{surah:8,ayah:40},   surahs:[7,8] },
+  { juz:10, name:"Wa Alamu",            start:{surah:8,ayah:41},  end:{surah:9,ayah:92},   surahs:[8,9] },
+  { juz:11, name:"Yatazeroon",          start:{surah:9,ayah:93},  end:{surah:11,ayah:5},   surahs:[9,10,11] },
+  { juz:12, name:"Wa Ma Min Daabbah",   start:{surah:11,ayah:6},  end:{surah:12,ayah:52},  surahs:[11,12] },
+  { juz:13, name:"Wa Ma Obarrio",       start:{surah:12,ayah:53}, end:{surah:14,ayah:52},  surahs:[12,13,14] },
+  { juz:14, name:"Rubama",              start:{surah:15,ayah:1},  end:{surah:16,ayah:128}, surahs:[15,16] },
+  { juz:15, name:"Subhanallazi",        start:{surah:17,ayah:1},  end:{surah:18,ayah:74},  surahs:[17,18] },
+  { juz:16, name:"Qal Alam",            start:{surah:18,ayah:75}, end:{surah:20,ayah:135}, surahs:[18,19,20] },
+  { juz:17, name:"Iqtarabo",            start:{surah:21,ayah:1},  end:{surah:22,ayah:78},  surahs:[21,22] },
+  { juz:18, name:"Qad Aflaha",          start:{surah:23,ayah:1},  end:{surah:25,ayah:20},  surahs:[23,24,25] },
+  { juz:19, name:"Wa Qalallazina",      start:{surah:25,ayah:21}, end:{surah:27,ayah:55},  surahs:[25,26,27] },
+  { juz:20, name:"Amman Khalaq",        start:{surah:27,ayah:56}, end:{surah:29,ayah:45},  surahs:[27,28,29] },
+  { juz:21, name:"Utlu Ma Oohiya",      start:{surah:29,ayah:46}, end:{surah:33,ayah:30},  surahs:[29,30,31,32,33] },
+  { juz:22, name:"Wa Man Yaqnut",       start:{surah:33,ayah:31}, end:{surah:36,ayah:27},  surahs:[33,34,35,36] },
+  { juz:23, name:"Wa Mali",             start:{surah:36,ayah:28}, end:{surah:39,ayah:31},  surahs:[36,37,38,39] },
+  { juz:24, name:"Faman Azlam",         start:{surah:39,ayah:32}, end:{surah:41,ayah:46},  surahs:[39,40,41] },
+  { juz:25, name:"Elahe Yoraddo",       start:{surah:41,ayah:47}, end:{surah:45,ayah:37},  surahs:[41,42,43,44,45] },
+  { juz:26, name:"Ha Meem",             start:{surah:46,ayah:1},  end:{surah:51,ayah:30},  surahs:[46,47,48,49,50,51] },
+  { juz:27, name:"Qala Fama Khatbokum", start:{surah:51,ayah:31}, end:{surah:57,ayah:29},  surahs:[51,52,53,54,55,56,57] },
+  { juz:28, name:"Qad Sami Allah",      start:{surah:58,ayah:1},  end:{surah:66,ayah:12},  surahs:[58,59,60,61,62,63,64,65,66] },
+  { juz:29, name:"Tabarakallazi",       start:{surah:67,ayah:1},  end:{surah:77,ayah:50},  surahs:[67,68,69,70,71,72,73,74,75,76,77] },
+  { juz:30, name:"Amma Yatasa'aloon",   start:{surah:78,ayah:1},  end:{surah:114,ayah:6},  surahs:[78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114] },
 ];
 
-
-// ─── JUZ (PARA) DATA ───────────────────────────────────────────────────────────
-const JUZ_DATA = [
-  { juz:1,  name:"Alif Lam Meem",      start:{surah:1,ayah:1},   end:{surah:2,ayah:141},  surahs:[1,2] },
-  { juz:2,  name:"Sayaqool",           start:{surah:2,ayah:142},  end:{surah:2,ayah:252},  surahs:[2] },
-  { juz:3,  name:"Tilkar Rusul",       start:{surah:2,ayah:253},  end:{surah:3,ayah:92},   surahs:[2,3] },
-  { juz:4,  name:"Lan Tanaloo",        start:{surah:3,ayah:93},   end:{surah:4,ayah:23},   surahs:[3,4] },
-  { juz:5,  name:"Wal Mohsanat",       start:{surah:4,ayah:24},   end:{surah:4,ayah:147},  surahs:[4] },
-  { juz:6,  name:"La Yuhibbullah",     start:{surah:4,ayah:148},  end:{surah:5,ayah:81},   surahs:[4,5] },
-  { juz:7,  name:"Wa Iza Samiu",       start:{surah:5,ayah:82},   end:{surah:6,ayah:110},  surahs:[5,6] },
-  { juz:8,  name:"Wa Lau Annana",      start:{surah:6,ayah:111},  end:{surah:7,ayah:87},   surahs:[6,7] },
-  { juz:9,  name:"Qalal Malao",        start:{surah:7,ayah:88},   end:{surah:8,ayah:40},   surahs:[7,8] },
-  { juz:10, name:"Wa Alamu",           start:{surah:8,ayah:41},   end:{surah:9,ayah:92},   surahs:[8,9] },
-  { juz:11, name:"Yatazeroon",         start:{surah:9,ayah:93},   end:{surah:11,ayah:5},   surahs:[9,10,11] },
-  { juz:12, name:"Wa Ma Min Daabbah",  start:{surah:11,ayah:6},   end:{surah:12,ayah:52},  surahs:[11,12] },
-  { juz:13, name:"Wa Ma Obarrio",      start:{surah:12,ayah:53},  end:{surah:14,ayah:52},  surahs:[12,13,14] },
-  { juz:14, name:"Rubama",             start:{surah:15,ayah:1},   end:{surah:16,ayah:128}, surahs:[15,16] },
-  { juz:15, name:"Subhanallazi",       start:{surah:17,ayah:1},   end:{surah:18,ayah:74},  surahs:[17,18] },
-  { juz:16, name:"Qal Alam",           start:{surah:18,ayah:75},  end:{surah:20,ayah:135}, surahs:[18,19,20] },
-  { juz:17, name:"Iqtarabo",           start:{surah:21,ayah:1},   end:{surah:22,ayah:78},  surahs:[21,22] },
-  { juz:18, name:"Qad Aflaha",         start:{surah:23,ayah:1},   end:{surah:25,ayah:20},  surahs:[23,24,25] },
-  { juz:19, name:"Wa Qalallazina",     start:{surah:25,ayah:21},  end:{surah:27,ayah:55},  surahs:[25,26,27] },
-  { juz:20, name:"Amman Khalaq",       start:{surah:27,ayah:56},  end:{surah:29,ayah:45},  surahs:[27,28,29] },
-  { juz:21, name:"Utlu Ma Oohiya",     start:{surah:29,ayah:46},  end:{surah:33,ayah:30},  surahs:[29,30,31,32,33] },
-  { juz:22, name:"Wa Man Yaqnut",      start:{surah:33,ayah:31},  end:{surah:36,ayah:27},  surahs:[33,34,35,36] },
-  { juz:23, name:"Wa Mali",            start:{surah:36,ayah:28},  end:{surah:39,ayah:31},  surahs:[36,37,38,39] },
-  { juz:24, name:"Faman Azlam",        start:{surah:39,ayah:32},  end:{surah:41,ayah:46},  surahs:[39,40,41] },
-  { juz:25, name:"Elahe Yoraddo",      start:{surah:41,ayah:47},  end:{surah:45,ayah:37},  surahs:[41,42,43,44,45] },
-  { juz:26, name:"Ha Meem",            start:{surah:46,ayah:1},   end:{surah:51,ayah:30},  surahs:[46,47,48,49,50,51] },
-  { juz:27, name:"Qala Fama Khatbokum",start:{surah:51,ayah:31},  end:{surah:57,ayah:29},  surahs:[51,52,53,54,55,56,57] },
-  { juz:28, name:"Qad Sami Allah",     start:{surah:58,ayah:1},   end:{surah:66,ayah:12},  surahs:[58,59,60,61,62,63,64,65,66] },
-  { juz:29, name:"Tabarakallazi",      start:{surah:67,ayah:1},   end:{surah:77,ayah:50},  surahs:[67,68,69,70,71,72,73,74,75,76,77] },
-  { juz:30, name:"Amma Yatasa'aloon",  start:{surah:78,ayah:1},   end:{surah:114,ayah:6},  surahs:[78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,93,94,95,96,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114] },
+// ─── QURAN QUARTER MARKERS ────────────────────────────────────────────────────
+// Each entry: { surah, ayah, label, arabic, fraction }
+// These mark the traditional Rub'/Nisf/Thuluth division points within a surah.
+// Only surahs long enough to contain a division point are listed.
+const QUARTER_MARKERS = [
+  { surah:2,  ayah:75,  label:"Ar-Rub'",    arabic:"الرُّبُع",    fraction:"¼" },
+  { surah:2,  ayah:142, label:"An-Nisf",    arabic:"النِّصْف",   fraction:"½" },
+  { surah:2,  ayah:204, label:"Ath-Thuluth",arabic:"الثُّلُث",   fraction:"¾" },
+  { surah:3,  ayah:93,  label:"Ar-Rub'",    arabic:"الرُّبُع",    fraction:"¼" },
+  { surah:4,  ayah:24,  label:"An-Nisf",    arabic:"النِّصْف",   fraction:"½" },
+  { surah:4,  ayah:148, label:"Ath-Thuluth",arabic:"الثُّلُث",   fraction:"¾" },
+  { surah:6,  ayah:111, label:"Ar-Rub'",    arabic:"الرُّبُع",    fraction:"¼" },
+  { surah:7,  ayah:88,  label:"An-Nisf",    arabic:"النِّصْف",   fraction:"½" },
+  { surah:8,  ayah:41,  label:"Ath-Thuluth",arabic:"الثُّلُث",   fraction:"¾" },
+  { surah:10, ayah:1,   label:"Ar-Rub'",    arabic:"الرُّبُع",    fraction:"¼" },
+  { surah:12, ayah:53,  label:"An-Nisf",    arabic:"النِّصْف",   fraction:"½" },
+  { surah:16, ayah:51,  label:"Ath-Thuluth",arabic:"الثُّلُث",   fraction:"¾" },
+  { surah:18, ayah:75,  label:"Ar-Rub'",    arabic:"الرُّبُع",    fraction:"¼" },
+  { surah:22, ayah:1,   label:"An-Nisf",    arabic:"النِّصْف",   fraction:"½" },
+  { surah:26, ayah:52,  label:"Ath-Thuluth",arabic:"الثُّلُث",   fraction:"¾" },
 ];
 
 function QuranReader({ surah, onBack }) {
-  const [ayahs, setAyahs]                     = useState([]);
-  const [loading, setLoading]                 = useState(true);
-  const [playingAyah, setPlayingAyah]         = useState(null);
-  const [playingAll, setPlayingAll]           = useState(false);
-  const [audio, setAudio]                     = useState(null);
-  const [showTranslation, setShowTranslation] = useState(true);
-  const [viewMode, setViewMode]               = useState("ayah"); // "ayah" or "full"
-  const [isBookmarked, setIsBookmarked]       = useState(false);
-  const [currentAyahIdx, setCurrentAyahIdx]   = useState(0);
+  const [playingAyah,    setPlayingAyah]    = useState(null);
+  const [playingAll,     setPlayingAll]     = useState(false);
+  const [audioRef,       setAudioRef]       = useState(null);
+  const [showTranslation,setShowTranslation]= useState(false);
+  const [viewMode,       setViewMode]       = useState("ayah");
+  const [isBookmarked,   setIsBookmarked]   = useState(false);
+  const [ayahBookmarks,  setAyahBookmarks]  = useState([]);
+  const [currentAyahIdx, setCurrentAyahIdx] = useState(0);
+  const [savedQuarterKeys, setSavedQuarterKeys] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("minbar_quarter_saves") || "[]").map(s => s.key); } catch(_) { return []; }
+  });
 
-  const [ayahBookmarks, setAyahBookmarks] = useState([]);
+  // Language selection: null = not chosen yet, "en" or "hi"
+  const [langChoice,     setLangChoice]     = useState(null); // "en" | "hi"
+  const [showLangModal,  setShowLangModal]  = useState(false);
+  const [translations,   setTranslations]   = useState({}); // { ayahId: string }
+  const [transLoading,   setTransLoading]   = useState(false);
+  const [transError,     setTransError]     = useState(null);
 
-  // Load bookmark state
+  const ayahs = surah.verses; // { id, text }[]
+
+  // Quarter markers for this surah
+  const surahQuarters = QUARTER_MARKERS.filter(q => q.surah === surah.n);
+
+  // Load bookmarks + saved language preference
   useEffect(() => {
     try {
-      const bookmarks = JSON.parse(localStorage.getItem("minbar_bookmarks") || "[]");
-      setIsBookmarked(bookmarks.includes(surah.n));
-      const ayahBMs = JSON.parse(localStorage.getItem("minbar_ayah_bookmarks") || "[]");
-      setAyahBookmarks(ayahBMs.filter(b => b.surahN === surah.n));
-      // Save last read
-      const lr = { surahN: surah.n, surahName: surah.name, time: new Date().toLocaleDateString() };
-      localStorage.setItem("minbar_last_read", JSON.stringify(lr));
+      const bm = JSON.parse(localStorage.getItem("minbar_bookmarks") || "[]");
+      setIsBookmarked(bm.includes(surah.n));
+      const abm = JSON.parse(localStorage.getItem("minbar_ayah_bookmarks") || "[]");
+      setAyahBookmarks(abm.filter(b => b.surahN === surah.n));
+      localStorage.setItem("minbar_last_read", JSON.stringify({ surahN: surah.n, surahName: surah.name, time: new Date().toLocaleDateString() }));
+      // Restore saved language
+      const saved = localStorage.getItem("minbar_quran_lang");
+      if (saved) setLangChoice(saved);
     } catch(_) {}
   }, [surah.n, surah.name]);
 
-  // Toggle surah bookmark
+  // Load cached translations when language is chosen
+  useEffect(() => {
+    if (!langChoice) return;
+    const cacheKey = `minbar_trans_${surah.n}_${langChoice}`;
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) { setTranslations(JSON.parse(cached)); return; }
+    } catch(_) {}
+    // Fetch from API
+    const edition = langChoice === "hi" ? "hi.hindi" : "en.sahih";
+    setTransLoading(true);
+    setTransError(null);
+    fetch(`https://api.alquran.cloud/v1/surah/${surah.n}/${edition}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.code === 200 && data.data && data.data.ayahs) {
+          const map = {};
+          data.data.ayahs.forEach(a => { map[a.numberInSurah] = a.text; });
+          setTranslations(map);
+          try { localStorage.setItem(cacheKey, JSON.stringify(map)); } catch(_) {}
+        } else {
+          setTransError("Could not load translation. Check internet.");
+        }
+        setTransLoading(false);
+      })
+      .catch(() => {
+        setTransError("Network error. Check your internet connection.");
+        setTransLoading(false);
+      });
+  }, [langChoice, surah.n]);
+
+  const handleLangSelect = (lang) => {
+    setLangChoice(lang);
+    try { localStorage.setItem("minbar_quran_lang", lang); } catch(_) {}
+    setShowLangModal(false);
+    setShowTranslation(true);
+  };
+
+  const handleTranslationToggle = () => {
+    if (!showTranslation && !langChoice) {
+      setShowLangModal(true);
+    } else {
+      setShowTranslation(v => !v);
+    }
+  };
+
   const toggleBookmark = () => {
     try {
-      const bookmarks = JSON.parse(localStorage.getItem("minbar_bookmarks") || "[]");
-      let updated;
-      if (isBookmarked) {
-        updated = bookmarks.filter(n => n !== surah.n);
-      } else {
-        updated = [...bookmarks, surah.n];
-      }
+      const bm = JSON.parse(localStorage.getItem("minbar_bookmarks") || "[]");
+      const updated = isBookmarked ? bm.filter(n => n !== surah.n) : [...bm, surah.n];
       localStorage.setItem("minbar_bookmarks", JSON.stringify(updated));
       setIsBookmarked(!isBookmarked);
     } catch(_) {}
   };
 
-  // Toggle ayah bookmark
   const toggleAyahBookmark = (ayahNum) => {
     try {
       const all = JSON.parse(localStorage.getItem("minbar_ayah_bookmarks") || "[]");
       const exists = all.find(b => b.surahN === surah.n && b.ayah === ayahNum);
-      let updated;
-      if (exists) {
-        updated = all.filter(b => !(b.surahN === surah.n && b.ayah === ayahNum));
-      } else {
-        updated = [...all, { surahN: surah.n, surahName: surah.name, ayah: ayahNum, time: new Date().toLocaleDateString() }];
-      }
+      const updated = exists
+        ? all.filter(b => !(b.surahN === surah.n && b.ayah === ayahNum))
+        : [...all, { surahN: surah.n, surahName: surah.name, ayah: ayahNum, time: new Date().toLocaleDateString() }];
       localStorage.setItem("minbar_ayah_bookmarks", JSON.stringify(updated));
       setAyahBookmarks(updated.filter(b => b.surahN === surah.n));
     } catch(_) {}
@@ -1461,149 +1239,219 @@ function QuranReader({ surah, onBack }) {
 
   const isAyahBookmarked = (ayahNum) => ayahBookmarks.some(b => b.ayah === ayahNum);
 
-  useEffect(() => {
-    setLoading(true);
-    fetch(`https://api.alquran.cloud/v1/surah/${surah.n}/editions/quran-uthmani,en.asad`)
-      .then(r => r.json())
-      .then(data => {
-        const arabic = data.data[0].ayahs;
-        const english = data.data[1].ayahs;
-        setAyahs(arabic.map((a, i) => ({
-          number: a.numberInSurah,
-          arabic: a.text,
-          translation: english[i].text,
-        })));
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, [surah.n]);
-
   const stopAudio = () => {
-    if (audio) { audio.pause(); audio.src = ""; setAudio(null); }
+    if (audioRef) { audioRef.pause(); audioRef.src = ""; setAudioRef(null); }
     setPlayingAyah(null);
     setPlayingAll(false);
+  };
+
+  const getAudioUrl = (ayahNum) => {
+    const offset = SURAHS.slice(0, surah.n - 1).reduce((a, s) => a + s.ayahs, 0);
+    return `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${offset + ayahNum}.mp3`;
   };
 
   const playAudio = (ayahNum) => {
     stopAudio();
     if (playingAyah === ayahNum) return;
-    const offset = SURAHS.slice(0, surah.n-1).reduce((a,s) => a+s.ayahs, 0);
-    const url = `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${offset + ayahNum}.mp3`;
-    const a = new Audio(url);
-    a.play();
+    const a = new Audio(getAudioUrl(ayahNum));
+    a.play().catch(() => {});
     a.onended = () => setPlayingAyah(null);
-    setAudio(a);
+    setAudioRef(a);
     setPlayingAyah(ayahNum);
   };
 
-  // Play full surah ayah by ayah automatically
   const playFullSurah = (idx = 0) => {
     if (idx >= ayahs.length) { setPlayingAll(false); setPlayingAyah(null); return; }
     setPlayingAll(true);
     setCurrentAyahIdx(idx);
-    const ayahNum = ayahs[idx].number;
-    if (audio) { audio.pause(); audio.src = ""; }
-    const offset = SURAHS.slice(0, surah.n-1).reduce((a,s) => a+s.ayahs, 0);
-    const url = `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${offset + ayahNum}.mp3`;
-    const a = new Audio(url);
-    a.play();
+    const ayahNum = ayahs[idx].id;
+    if (audioRef) { audioRef.pause(); audioRef.src = ""; }
+    const a = new Audio(getAudioUrl(ayahNum));
+    a.play().catch(() => {});
     a.onended = () => playFullSurah(idx + 1);
-    setAudio(a);
+    setAudioRef(a);
     setPlayingAyah(ayahNum);
   };
 
+  // Lang display label
+  const langLabel = langChoice === "hi" ? "हिंदी" : langChoice === "en" ? "English" : "🌍";
+
   return (
     <div style={{ display:"flex", flexDirection:"column", position:"fixed", inset:0, zIndex:500, background:DARK_GREEN }}>
+
+      {/* ── Language Selection Modal ── */}
+      {showLangModal && (
+        <div style={{ position:"fixed", inset:0, zIndex:900, background:"rgba(0,0,0,0.7)", display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
+          <div style={{ background:`linear-gradient(135deg,${MID_GREEN},#0d3d22)`, border:`1px solid rgba(201,168,76,0.4)`, borderRadius:20, padding:"28px 24px", maxWidth:320, width:"100%", textAlign:"center" }}>
+            <div style={{ fontSize:32, marginBottom:8 }}>🌍</div>
+            <div style={{ color:LIGHT_GOLD, fontSize:18, fontWeight:700, fontFamily:"'Playfair Display',serif", marginBottom:6 }}>Choose Translation Language</div>
+            <div style={{ color:"rgba(255,255,255,0.5)", fontSize:12, marginBottom:24 }}>अनुवाद की भाषा चुनें / Select language</div>
+            <div style={{ display:"flex", gap:12, marginBottom:16 }}>
+              <div onClick={() => handleLangSelect("en")} style={{ flex:1, background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.4)", borderRadius:14, padding:"16px 8px", cursor:"pointer", color:LIGHT_GOLD }}>
+                <div style={{ fontSize:24, marginBottom:6 }}>🇬🇧</div>
+                <div style={{ fontWeight:700, fontSize:14 }}>English</div>
+                <div style={{ fontSize:10, color:"rgba(255,255,255,0.4)", marginTop:3 }}>Sahih International</div>
+              </div>
+              <div onClick={() => handleLangSelect("hi")} style={{ flex:1, background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.4)", borderRadius:14, padding:"16px 8px", cursor:"pointer", color:LIGHT_GOLD }}>
+                <div style={{ fontSize:24, marginBottom:6 }}>🇮🇳</div>
+                <div style={{ fontWeight:700, fontSize:14 }}>हिंदी</div>
+                <div style={{ fontSize:10, color:"rgba(255,255,255,0.4)", marginTop:3 }}>Hindi Translation</div>
+              </div>
+            </div>
+            {langChoice && (
+              <div onClick={() => setShowLangModal(false)} style={{ color:"rgba(255,255,255,0.4)", fontSize:12, cursor:"pointer", marginTop:4 }}>Cancel</div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div style={{ background:`linear-gradient(135deg,${DARK_GREEN},${MID_GREEN})`, padding:"12px 16px", display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
         <button onClick={() => { stopAudio(); onBack(); }} style={{ background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:10, padding:"7px 12px", color:GOLD, fontSize:12, fontWeight:700, cursor:"pointer" }}>← Back</button>
         <div style={{ flex:1 }}>
           <div style={{ color:LIGHT_GOLD, fontWeight:700, fontSize:14, fontFamily:"'Playfair Display',serif" }}>{surah.name}</div>
-          <div style={{ color:"rgba(255,255,255,0.35)", fontSize:10 }}>{surah.arabic} • {surah.ayahs} Ayahs</div>
+          <div style={{ color:"rgba(255,255,255,0.35)", fontSize:10 }}>{surah.arabic} • {surah.ayahs} Ayahs • {surah.type}</div>
         </div>
-        {/* Bookmark */}
-        <div onClick={toggleBookmark} style={{ fontSize:20, cursor:"pointer", padding:"4px 6px" }}>
-          {isBookmarked ? "🔖" : "📄"}
+        <div onClick={toggleBookmark} style={{ fontSize:20, cursor:"pointer", padding:"4px 6px" }}>{isBookmarked ? "🔖" : "📄"}</div>
+        {/* Translation toggle — shows current language if selected */}
+        <div onClick={handleTranslationToggle} style={{ background:showTranslation?"rgba(201,168,76,0.25)":"rgba(255,255,255,0.05)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:10, padding:"6px 8px", color:GOLD, fontSize:11, fontWeight:700, cursor:"pointer", minWidth:36, textAlign:"center" }}>
+          {langChoice ? (langChoice === "hi" ? "हि" : "EN") : "🌍"}
         </div>
-        {/* Translation toggle */}
-        <div onClick={() => setShowTranslation(!showTranslation)} style={{ background:showTranslation?"rgba(201,168,76,0.2)":"rgba(255,255,255,0.05)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:10, padding:"6px 8px", color:GOLD, fontSize:11, fontWeight:700, cursor:"pointer" }}>
-          🌍
-        </div>
+        {/* Change language button (only when a lang is set) */}
+        {langChoice && (
+          <div onClick={() => setShowLangModal(true)} style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:10, padding:"6px 8px", color:"rgba(255,255,255,0.4)", fontSize:10, cursor:"pointer" }}>⇄</div>
+        )}
       </div>
 
       {/* View Mode + Audio Controls */}
       <div style={{ background:"rgba(0,0,0,0.3)", padding:"8px 16px", display:"flex", gap:8, alignItems:"center", flexShrink:0 }}>
-        {/* View mode tabs */}
         <div style={{ display:"flex", background:"rgba(255,255,255,0.05)", borderRadius:10, padding:3, flex:1 }}>
-          <div onClick={() => setViewMode("ayah")} style={{ flex:1, textAlign:"center", padding:"6px", borderRadius:8, background:viewMode==="ayah"?`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`:"transparent", color:viewMode==="ayah"?DARK_GREEN:GOLD, fontSize:11, fontWeight:700, cursor:"pointer" }}>
-            📖 Ayah by Ayah
-          </div>
-          <div onClick={() => setViewMode("full")} style={{ flex:1, textAlign:"center", padding:"6px", borderRadius:8, background:viewMode==="full"?`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`:"transparent", color:viewMode==="full"?DARK_GREEN:GOLD, fontSize:11, fontWeight:700, cursor:"pointer" }}>
-            📜 Full Surah
-          </div>
+          <div onClick={() => setViewMode("ayah")} style={{ flex:1, textAlign:"center", padding:"6px", borderRadius:8, background:viewMode==="ayah"?`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`:"transparent", color:viewMode==="ayah"?DARK_GREEN:GOLD, fontSize:11, fontWeight:700, cursor:"pointer" }}>📖 Ayah by Ayah</div>
+          <div onClick={() => setViewMode("full")} style={{ flex:1, textAlign:"center", padding:"6px", borderRadius:8, background:viewMode==="full"?`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`:"transparent", color:viewMode==="full"?DARK_GREEN:GOLD, fontSize:11, fontWeight:700, cursor:"pointer" }}>📜 Full Surah</div>
         </div>
-        {/* Play full surah button */}
         <div onClick={() => playingAll ? stopAudio() : playFullSurah(0)} style={{ background:playingAll?"rgba(255,68,68,0.2)":"rgba(201,168,76,0.15)", border:`1px solid ${playingAll?"rgba(255,68,68,0.5)":"rgba(201,168,76,0.3)"}`, borderRadius:10, padding:"6px 10px", color:playingAll?"#FF9999":GOLD, fontSize:11, fontWeight:700, cursor:"pointer", whiteSpace:"nowrap" }}>
           {playingAll ? "⏹ Stop" : "▶ Play All"}
         </div>
       </div>
 
-      {/* Bismillah */}
+      {/* Bismillah — except Surah 9 (At-Tawbah) */}
       {surah.n !== 9 && (
         <div style={{ background:"rgba(201,168,76,0.08)", padding:"12px 20px", textAlign:"center", borderBottom:"1px solid rgba(201,168,76,0.1)", flexShrink:0 }}>
           <div style={{ color:LIGHT_GOLD, fontSize:18, fontFamily:"'Amiri', serif", direction:"rtl" }}>بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
         </div>
       )}
 
+      {/* Translation loading / error banner */}
+      {showTranslation && transLoading && (
+        <div style={{ background:"rgba(201,168,76,0.08)", padding:"8px 16px", textAlign:"center", color:GOLD, fontSize:11, flexShrink:0 }}>
+          ⏳ Loading {langChoice === "hi" ? "Hindi" : "English"} translation…
+        </div>
+      )}
+      {showTranslation && transError && (
+        <div style={{ background:"rgba(255,80,80,0.08)", padding:"8px 16px", textAlign:"center", color:"#FF9999", fontSize:11, flexShrink:0 }}>
+          ⚠️ {transError}
+        </div>
+      )}
+
       {/* Content */}
       <div style={{ flex:1, overflowY:"auto", padding:"16px 16px 80px", WebkitOverflowScrolling:"touch" }}>
-        {loading ? (
-          <div style={{ textAlign:"center", color:GOLD, padding:40, fontSize:14 }}>Loading Surah {surah.name}...</div>
-        ) : viewMode === "full" ? (
-          // ── FULL SURAH VIEW ──
+        {viewMode === "full" ? (
           <div>
-            <div style={{ color:LIGHT_GOLD, fontSize:24, lineHeight:2.2, textAlign:"right", direction:"rtl", fontFamily:"'Amiri', serif", marginBottom:16 }}>
-              {ayahs.map(ayah => (
-                <span key={ayah.number}>
-                  {ayah.arabic}
-                  <span style={{ color:GOLD, fontSize:16, fontFamily:"'Amiri', serif" }}> ﴿{ayah.number}﴾ </span>
-                </span>
-              ))}
+            {/* Arabic text with inline quarter markers + save buttons */}
+            <div style={{ color:LIGHT_GOLD, fontSize:24, lineHeight:2.4, textAlign:"right", direction:"rtl", fontFamily:"'Amiri', serif", marginBottom:16 }}>
+              {ayahs.map(ayah => {
+                const marker = surahQuarters.find(q => q.ayah === ayah.id);
+                const markerKey = marker ? `qm_${surah.n}_${ayah.id}` : null;
+                const isSaved = marker ? savedQuarterKeys.includes(markerKey) : false;
+                const saveMarker = () => {
+                  if (isSaved) return;
+                  try {
+                    const all = JSON.parse(localStorage.getItem("minbar_quarter_saves") || "[]");
+                    all.push({ key: markerKey, surahN: surah.n, surahName: surah.name, ayah: ayah.id, label: marker.label, arabic: marker.arabic, fraction: marker.fraction, time: new Date().toLocaleDateString() });
+                    localStorage.setItem("minbar_quarter_saves", JSON.stringify(all));
+                    setSavedQuarterKeys(prev => [...prev, markerKey]);
+                  } catch(_) {}
+                };
+                return (
+                  <span key={ayah.id}>
+                    {marker && (
+                      <span style={{ display:"block", direction:"ltr", margin:"14px 0 10px", textAlign:"center" }}>
+                        <span style={{ display:"inline-flex", alignItems:"center", gap:8, background:`linear-gradient(135deg,rgba(201,168,76,0.18),rgba(201,168,76,0.06))`, border:`1px solid rgba(201,168,76,0.5)`, borderRadius:24, padding:"5px 14px 5px 10px" }}>
+                          <span style={{ fontSize:16 }}>{marker.fraction === "¼" ? "🔷" : marker.fraction === "½" ? "🔶" : "🟡"}</span>
+                          <span style={{ color:LIGHT_GOLD, fontSize:12, fontFamily:"'Playfair Display',serif", fontWeight:700 }}>{marker.fraction} {marker.label}</span>
+                          <span style={{ color:GOLD, fontSize:14, fontFamily:"'Amiri',serif" }}>{marker.arabic}</span>
+                          <span onClick={saveMarker} style={{ marginLeft:4, background: isSaved ? "rgba(0,200,100,0.2)" : "rgba(201,168,76,0.12)", border:`1px solid ${isSaved ? "rgba(0,200,100,0.5)" : "rgba(201,168,76,0.3)"}`, borderRadius:14, padding:"3px 10px", fontSize:10, color: isSaved ? "#88FFBB" : GOLD, fontWeight:700, cursor: isSaved ? "default" : "pointer", whiteSpace:"nowrap", fontFamily:"sans-serif", transition:"all 0.3s" }}>
+                            {isSaved ? "✅ Saved" : "🔖 Save"}
+                          </span>
+                        </span>
+                      </span>
+                    )}
+                    {ayah.text}
+                    <span style={{ color:GOLD, fontSize:16, fontFamily:"'Amiri', serif" }}> ﴿{ayah.id}﴾ </span>
+                  </span>
+                );
+              })}
             </div>
-            {showTranslation && (
-              <div style={{ borderTop:"1px solid rgba(201,168,76,0.15)", paddingTop:16 }}>
+            {/* Translation in full-surah mode */}
+            {showTranslation && !transLoading && !transError && Object.keys(translations).length > 0 && (
+              <div style={{ marginTop:16, borderTop:"1px solid rgba(201,168,76,0.15)", paddingTop:16 }}>
+                <div style={{ color:GOLD, fontSize:11, fontWeight:700, marginBottom:12, textAlign:"center", letterSpacing:1 }}>
+                  — {langChoice === "hi" ? "हिंदी अनुवाद" : "English Translation"} —
+                </div>
                 {ayahs.map(ayah => (
-                  <div key={ayah.number} style={{ marginBottom:12, paddingBottom:12, borderBottom:"1px solid rgba(255,255,255,0.05)" }}>
-                    <span style={{ color:GOLD, fontSize:11, fontWeight:700 }}>[{ayah.number}] </span>
-                    <span style={{ color:"rgba(255,255,255,0.5)", fontSize:12, lineHeight:1.7, fontStyle:"italic" }}>{ayah.translation}</span>
+                  <div key={ayah.id} style={{ marginBottom:10, padding:"10px 12px", background:"rgba(255,255,255,0.03)", borderRadius:10, borderLeft:`2px solid rgba(201,168,76,0.3)` }}>
+                    <span style={{ color:"rgba(201,168,76,0.6)", fontSize:10, fontWeight:700, marginRight:8 }}>{ayah.id}.</span>
+                    <span style={{ color:"rgba(255,255,255,0.75)", fontSize:13, lineHeight:1.7 }}>{translations[ayah.id] || "…"}</span>
                   </div>
                 ))}
               </div>
             )}
           </div>
         ) : (
-          // ── AYAH BY AYAH VIEW ──
-          ayahs.map(ayah => (
-            <div key={ayah.number} style={{ background:playingAyah===ayah.number?"rgba(201,168,76,0.08)":"rgba(255,255,255,0.03)", border:`1px solid ${playingAyah===ayah.number?"rgba(201,168,76,0.4)":"rgba(201,168,76,0.1)"}`, borderRadius:14, padding:"16px", marginBottom:10, transition:"all 0.3s" }}>
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
-                <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                  <div style={{ width:28, height:28, borderRadius:"50%", background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.3)", display:"flex", alignItems:"center", justifyContent:"center", color:GOLD, fontSize:10, fontWeight:700 }}>{ayah.number}</div>
-                  <div onClick={() => toggleAyahBookmark(ayah.number)} style={{ fontSize:16, cursor:"pointer", opacity: isAyahBookmarked(ayah.number) ? 1 : 0.3 }}>🔖</div>
-                </div>
-                <div onClick={() => playAudio(ayah.number)} style={{ background:playingAyah===ayah.number?"rgba(201,168,76,0.3)":"rgba(201,168,76,0.1)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:20, padding:"5px 12px", color:GOLD, fontSize:12, cursor:"pointer", display:"flex", alignItems:"center", gap:5 }}>
-                  {playingAyah===ayah.number ? "⏸ Stop" : "▶ Play"}
+          ayahs.map(ayah => {
+            const marker = surahQuarters.find(q => q.ayah === ayah.id);
+            return (
+              <div key={ayah.id}>
+                {/* Quarter marker divider in Ayah-by-Ayah mode */}
+                {marker && (
+                  <div style={{ display:"flex", alignItems:"center", gap:10, margin:"12px 0 8px" }}>
+                    <div style={{ flex:1, height:1, background:"rgba(201,168,76,0.2)" }} />
+                    <div style={{ background:`linear-gradient(135deg,rgba(201,168,76,0.2),rgba(201,168,76,0.08))`, border:`1px solid rgba(201,168,76,0.4)`, borderRadius:20, padding:"4px 14px", fontSize:11, color:GOLD, fontWeight:700, display:"flex", alignItems:"center", gap:6 }}>
+                      <span>{marker.fraction}</span>
+                      <span>{marker.label}</span>
+                      <span style={{ fontFamily:"'Amiri',serif", fontSize:13 }}>{marker.arabic}</span>
+                    </div>
+                    <div style={{ flex:1, height:1, background:"rgba(201,168,76,0.2)" }} />
+                  </div>
+                )}
+                <div style={{ background:playingAyah===ayah.id?"rgba(201,168,76,0.08)":"rgba(255,255,255,0.03)", border:`1px solid ${playingAyah===ayah.id?"rgba(201,168,76,0.4)":"rgba(201,168,76,0.1)"}`, borderRadius:14, padding:"16px", marginBottom:10, transition:"all 0.3s" }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                      <div style={{ width:28, height:28, borderRadius:"50%", background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.3)", display:"flex", alignItems:"center", justifyContent:"center", color:GOLD, fontSize:10, fontWeight:700 }}>{ayah.id}</div>
+                      <div onClick={() => toggleAyahBookmark(ayah.id)} style={{ fontSize:16, cursor:"pointer", opacity: isAyahBookmarked(ayah.id) ? 1 : 0.3 }}>🔖</div>
+                    </div>
+                    <div onClick={() => playAudio(ayah.id)} style={{ background:playingAyah===ayah.id?"rgba(201,168,76,0.3)":"rgba(201,168,76,0.1)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:20, padding:"5px 12px", color:GOLD, fontSize:12, cursor:"pointer", display:"flex", alignItems:"center", gap:5 }}>
+                      {playingAyah===ayah.id ? "⏸ Stop" : "▶ Play"}
+                    </div>
+                  </div>
+                  <div style={{ color:LIGHT_GOLD, fontSize:22, lineHeight:1.9, textAlign:"right", direction:"rtl", fontFamily:"'Amiri', serif" }}>
+                    {ayah.text}
+                  </div>
+                  {/* Per-ayah translation */}
+                  {showTranslation && !transLoading && translations[ayah.id] && (
+                    <div style={{ marginTop:10, paddingTop:10, borderTop:"1px solid rgba(201,168,76,0.1)" }}>
+                      <div style={{ color:"rgba(255,255,255,0.65)", fontSize:13, lineHeight:1.7 }}>
+                        {translations[ayah.id]}
+                      </div>
+                    </div>
+                  )}
+                  {showTranslation && transLoading && (
+                    <div style={{ marginTop:8, color:"rgba(201,168,76,0.4)", fontSize:11, fontStyle:"italic" }}>Loading…</div>
+                  )}
                 </div>
               </div>
-              <div style={{ color:LIGHT_GOLD, fontSize:22, lineHeight:1.9, textAlign:"right", direction:"rtl", fontFamily:"'Amiri', serif", marginBottom:showTranslation?10:0 }}>
-                {ayah.arabic}
-              </div>
-              {showTranslation && (
-                <div style={{ color:"rgba(255,255,255,0.45)", fontSize:12, lineHeight:1.7, fontStyle:"italic", borderTop:"1px solid rgba(201,168,76,0.1)", paddingTop:8 }}>
-                  {ayah.translation}
-                </div>
-              )}
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
@@ -1621,22 +1469,19 @@ function QuranReader({ surah, onBack }) {
 }
 
 function QuranPage() {
-  const [selectedSurah, setSelectedSurah]   = useState(null);
-  const [search, setSearch]                 = useState("");
-  const [tab, setTab]                       = useState("surah");
-  const [bookmarks, setBookmarks]           = useState([]);
-  const [ayahBookmarks, setAyahBookmarks]   = useState([]);
-  const [lastRead, setLastRead]             = useState(null);
-  const [expandedJuz, setExpandedJuz]       = useState(null);
+  const [selectedSurah, setSelectedSurah] = useState(null);
+  const [search,        setSearch]        = useState("");
+  const [tab,           setTab]           = useState("surah");
+  const [bookmarks,     setBookmarks]     = useState([]);
+  const [ayahBookmarks, setAyahBookmarks] = useState([]);
+  const [lastRead,      setLastRead]      = useState(null);
+  const [expandedJuz,   setExpandedJuz]   = useState(null);
 
   useEffect(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem("minbar_bookmarks") || "[]");
-      setBookmarks(saved);
-      const ayahBMs = JSON.parse(localStorage.getItem("minbar_ayah_bookmarks") || "[]");
-      setAyahBookmarks(ayahBMs);
-      const lr = JSON.parse(localStorage.getItem("minbar_last_read") || "null");
-      setLastRead(lr);
+      setBookmarks(JSON.parse(localStorage.getItem("minbar_bookmarks") || "[]"));
+      setAyahBookmarks(JSON.parse(localStorage.getItem("minbar_ayah_bookmarks") || "[]"));
+      setLastRead(JSON.parse(localStorage.getItem("minbar_last_read") || "null"));
     } catch(_) {}
   }, [selectedSurah]);
 
@@ -1655,7 +1500,7 @@ function QuranPage() {
       <div style={{ width:36, height:36, borderRadius:10, background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.3)", display:"flex", alignItems:"center", justifyContent:"center", color:GOLD, fontSize:11, fontWeight:700, flexShrink:0 }}>{s.n}</div>
       <div style={{ flex:1 }}>
         <div style={{ color:OFF_WHITE, fontWeight:700, fontSize:14 }}>{s.name}</div>
-        <div style={{ color:"rgba(255,255,255,0.3)", fontSize:11 }}>{s.ayahs} Ayahs</div>
+        <div style={{ color:"rgba(255,255,255,0.3)", fontSize:11 }}>{s.ayahs} Ayahs • {s.type}</div>
       </div>
       <div style={{ display:"flex", alignItems:"center", gap:8 }}>
         {bookmarks.includes(s.n) && <span style={{ fontSize:14 }}>🔖</span>}
@@ -1668,13 +1513,11 @@ function QuranPage() {
     <div style={{ padding:"20px 20px 80px" }}>
       <SectionTitle>📖 Holy Quran</SectionTitle>
 
-      {/* Bismillah */}
       <div style={{ background:"rgba(201,168,76,0.08)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:14, padding:"12px 16px", textAlign:"center", marginBottom:14 }}>
         <div style={{ fontSize:15, direction:"rtl", fontFamily:"'Amiri', serif", color:LIGHT_GOLD, marginBottom:3 }}>بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
         <div style={{ color:"rgba(255,255,255,0.3)", fontSize:11, fontStyle:"italic" }}>In the name of Allah, the Most Gracious, the Most Merciful</div>
       </div>
 
-      {/* Last Read */}
       {lastRead && (
         <div onClick={() => { const s = SURAHS.find(s => s.n === lastRead.surahN); if(s) setSelectedSurah(s); }} style={{ background:"rgba(26,77,46,0.4)", border:"1px solid rgba(201,168,76,0.25)", borderRadius:12, padding:"10px 14px", marginBottom:14, display:"flex", alignItems:"center", gap:10, cursor:"pointer" }}>
           <span style={{ fontSize:18 }}>📌</span>
@@ -1686,7 +1529,6 @@ function QuranPage() {
         </div>
       )}
 
-      {/* 3 Tabs */}
       <div style={{ display:"flex", background:"rgba(255,255,255,0.05)", borderRadius:12, padding:3, marginBottom:14, gap:3 }}>
         {[{id:"surah",label:"📖 Surah"},{id:"juz",label:"📚 Juz/Para"},{id:"saved",label:`🔖 Saved`}].map(t => (
           <div key={t.id} onClick={() => setTab(t.id)} style={{ flex:1, textAlign:"center", padding:"8px 4px", borderRadius:10, background:tab===t.id?`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`:"transparent", color:tab===t.id?DARK_GREEN:GOLD, fontSize:11, fontWeight:700, cursor:"pointer" }}>
@@ -1695,7 +1537,6 @@ function QuranPage() {
         ))}
       </div>
 
-      {/* SURAH TAB */}
       {tab === "surah" && (
         <>
           <input placeholder="🔍 Search surah name or number..." value={search} onChange={e => setSearch(e.target.value)}
@@ -1704,7 +1545,6 @@ function QuranPage() {
         </>
       )}
 
-      {/* JUZ/PARA TAB */}
       {tab === "juz" && (
         <div>
           <div style={{ color:"rgba(255,255,255,0.4)", fontSize:12, marginBottom:12, textAlign:"center" }}>30 Juz (Para) — tap to see Surahs inside</div>
@@ -1742,18 +1582,14 @@ function QuranPage() {
         </div>
       )}
 
-      {/* SAVED TAB */}
       {tab === "saved" && (
         <div>
-          {/* Saved Surahs */}
           {bookmarkedSurahs.length > 0 && (
             <>
               <div style={{ color:GOLD, fontSize:12, fontWeight:700, marginBottom:10 }}>🕌 Saved Surahs ({bookmarkedSurahs.length})</div>
               {bookmarkedSurahs.map(s => <SurahCard key={s.n} s={s} />)}
             </>
           )}
-
-          {/* Saved Ayahs */}
           {ayahBookmarks.length > 0 && (
             <>
               <div style={{ color:GOLD, fontSize:12, fontWeight:700, margin:"16px 0 10px" }}>📌 Saved Ayahs ({ayahBookmarks.length})</div>
@@ -1769,170 +1605,155 @@ function QuranPage() {
               ))}
             </>
           )}
-
-          {bookmarkedSurahs.length === 0 && ayahBookmarks.length === 0 && (
-            <div style={{ textAlign:"center", padding:"40px 20px" }}>
-              <div style={{ fontSize:40, marginBottom:12 }}>🔖</div>
-              <div style={{ color:GOLD, fontWeight:700, fontSize:15, marginBottom:8 }}>No Bookmarks Yet</div>
-              <div style={{ color:"rgba(255,255,255,0.35)", fontSize:12, lineHeight:1.7 }}>
-                Open any Surah → tap 🔖 on the header to save Surah<br/>
-                Or tap 🔖 on any Ayah to save that Ayah!
+          {bookmarkedSurahs.length === 0 && ayahBookmarks.length === 0 && (() => {
+            try {
+              const qSaves = JSON.parse(localStorage.getItem("minbar_quarter_saves") || "[]");
+              if (qSaves.length > 0) return null; // handled below
+            } catch(_) {}
+            return (
+              <div style={{ textAlign:"center", padding:"40px 20px" }}>
+                <div style={{ fontSize:40, marginBottom:12 }}>🔖</div>
+                <div style={{ color:GOLD, fontWeight:700, fontSize:15, marginBottom:8 }}>No Bookmarks Yet</div>
+                <div style={{ color:"rgba(255,255,255,0.35)", fontSize:12, lineHeight:1.7 }}>
+                  Open any Surah → tap 🔖 on the header to save Surah<br/>
+                  Or tap 🔖 on any Ayah to save that Ayah!
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
+          {(() => {
+            try {
+              const qSaves = JSON.parse(localStorage.getItem("minbar_quarter_saves") || "[]");
+              if (qSaves.length === 0) return null;
+              return (
+                <>
+                  <div style={{ color:GOLD, fontSize:12, fontWeight:700, margin:"16px 0 10px" }}>📐 Saved Quarter Positions ({qSaves.length})</div>
+                  {qSaves.map((s, i) => (
+                    <div key={i} onClick={() => { const sr = SURAHS.find(x => x.n === s.surahN); if(sr) setSelectedSurah(sr); }} style={{ background:"rgba(201,168,76,0.08)", border:"1px solid rgba(201,168,76,0.25)", borderRadius:12, padding:"12px 14px", marginBottom:8, cursor:"pointer", display:"flex", alignItems:"center", gap:10 }}>
+                      <span style={{ fontSize:22 }}>{s.fraction === "¼" ? "🔷" : s.fraction === "½" ? "🔶" : "🟡"}</span>
+                      <div style={{ flex:1 }}>
+                        <div style={{ color:OFF_WHITE, fontWeight:700, fontSize:13 }}>{s.surahName} — {s.label} <span style={{ fontFamily:"'Amiri',serif", fontSize:14, color:GOLD }}>{s.arabic}</span></div>
+                        <div style={{ color:"rgba(255,255,255,0.35)", fontSize:11 }}>Ayah {s.ayah} • {s.fraction} mark • Saved {s.time}</div>
+                      </div>
+                      <div style={{ color:GOLD, fontSize:12 }}>→</div>
+                    </div>
+                  ))}
+                </>
+              );
+            } catch(_) { return null; }
+          })()}
         </div>
       )}
     </div>
   );
 }
 
-// ─── DUA PAGE ──────────────────────────────────────────────────────────────────
+// ─── DUA PAGE ─────────────────────────────────────────────────────────────────
 function DuaPage() {
   const [selectedCat, setSelectedCat] = useState(null);
   const [selectedDua, setSelectedDua] = useState(null);
-  const [playingDua, setPlayingDua]   = useState(null);
-  const [audio, setAudio]             = useState(null);
+  const [playingDua,  setPlayingDua]  = useState(null);
 
   const DUAS = {
-    morning: {
-      icon:"🌅", name:"Morning Duas", color:"#1A4D2E",
-      duas: [
-        { id:1, title:"Waking Up", arabic:"الْحَمْدُ لِلَّهِ الَّذِي أَحْيَانَا بَعْدَ مَا أَمَاتَنَا وَإِلَيْهِ النُّشُورُ", translation:"All praise is for Allah who gave us life after having taken it from us and unto Him is the resurrection.", ref:"Bukhari" },
-        { id:2, title:"After Waking Up", arabic:"لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ، وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ", translation:"None has the right to be worshipped except Allah, alone, without partner. To Him belongs all sovereignty and praise, and He is over all things omnipotent.", ref:"Bukhari" },
-        { id:3, title:"Morning Protection", arabic:"اللَّهُمَّ بِكَ أَصْبَحْنَا، وَبِكَ أَمْسَيْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ، وَإِلَيْكَ النُّشُورُ", translation:"O Allah, by You we enter the morning and by You we enter the evening, by You we live and by You we die, and to You is our resurrection.", ref:"Tirmidhi" },
-        { id:4, title:"Morning Dhikr", arabic:"سُبْحَانَ اللَّهِ وَبِحَمْدِهِ", translation:"Glory is to Allah and praise is to Him. (100 times in morning)", ref:"Muslim" },
-        { id:5, title:"Sayyidul Istighfar", arabic:"اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلَّا أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ، وَأَنَا عَلَى عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ", translation:"O Allah, You are my Lord, none has the right to be worshipped except You, You created me and I am Your servant and I abide to Your covenant and promise as best I can.", ref:"Bukhari" },
-        { id:6, title:"Morning Blessing", arabic:"اللَّهُمَّ مَا أَصْبَحَ بِي مِنْ نِعْمَةٍ أَوْ بِأَحَدٍ مِنْ خَلْقِكَ فَمِنْكَ وَحْدَكَ لَا شَرِيكَ لَكَ", translation:"O Allah, what blessing I or any of Your creation have risen upon, is from You alone, without partner.", ref:"Abu Dawud" },
-        { id:7, title:"Protection Morning", arabic:"اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَافِيَةَ فِي الدُّنْيَا وَالْآخِرَةِ", translation:"O Allah, I ask You for well-being in this world and the next.", ref:"Ibn Majah" },
-      ]
-    },
-    evening: {
-      icon:"🌙", name:"Evening Duas", color:"#1A2E4D",
-      duas: [
-        { id:8, title:"Evening Remembrance", arabic:"اللَّهُمَّ بِكَ أَمْسَيْنَا، وَبِكَ أَصْبَحْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ، وَإِلَيْكَ الْمَصِيرُ", translation:"O Allah, by You we enter the evening and by You we enter the morning, by You we live and by You we die, and to You is our return.", ref:"Tirmidhi" },
-        { id:9, title:"Evening Protection", arabic:"أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ", translation:"I seek refuge in the perfect words of Allah from the evil of what He has created.", ref:"Muslim" },
-        { id:10, title:"Evening Dhikr", arabic:"أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ", translation:"We have reached the evening and at this very time unto Allah belongs all sovereignty, and all praise is for Allah.", ref:"Abu Dawud" },
-        { id:11, title:"Ayatul Kursi", arabic:"اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ", translation:"Allah! There is no god but He, the Living, the Self-subsisting, Eternal. No slumber can seize Him nor sleep.", ref:"Quran 2:255" },
-        { id:12, title:"Evening Forgiveness", arabic:"اللَّهُمَّ إِنِّي أَمْسَيْتُ أُشْهِدُكَ وَأُشْهِدُ حَمَلَةَ عَرْشِكَ وَمَلَائِكَتَكَ وَجَمِيعَ خَلْقِكَ", translation:"O Allah, I have entered the evening calling You, the bearers of Your Throne, Your angels, and all of Your creation to witness.", ref:"Abu Dawud" },
-        { id:13, title:"Three Quls Evening", arabic:"قُلْ هُوَ اللَّهُ أَحَدٌ", translation:"Say: He is Allah, the One! (Recite Al-Ikhlas, Al-Falaq, An-Nas 3 times each)", ref:"Abu Dawud" },
-      ]
-    },
-    sleep: {
-      icon:"😴", name:"Before Sleep", color:"#2E1A4D",
-      duas: [
-        { id:14, title:"Before Sleeping", arabic:"بِاسْمِكَ اللَّهُمَّ أَمُوتُ وَأَحْيَا", translation:"In Your name O Allah, I die and I live.", ref:"Bukhari" },
-        { id:15, title:"Sleep Dua", arabic:"اللَّهُمَّ قِنِي عَذَابَكَ يَوْمَ تَبْعَثُ عِبَادَكَ", translation:"O Allah, protect me from Your punishment on the day Your servants are resurrected.", ref:"Abu Dawud" },
-        { id:16, title:"Tasbih Before Sleep", arabic:"سُبْحَانَ اللَّهِ ، الْحَمْدُ لِلَّهِ ، اللَّهُ أَكْبَرُ", translation:"Glory is to Allah (33x), All praise is for Allah (33x), Allah is the greatest (34x)", ref:"Bukhari" },
-        { id:17, title:"Kafirun Before Sleep", arabic:"قُلْ يَا أَيُّهَا الْكَافِرُونَ", translation:"Recite Surah Al-Kafirun before sleeping — it is a disavowal from shirk.", ref:"Abu Dawud" },
-        { id:18, title:"Protection Night", arabic:"اللَّهُمَّ إِنِّي أَسْلَمْتُ نَفْسِي إِلَيْكَ وَفَوَّضْتُ أَمْرِي إِلَيْكَ", translation:"O Allah, I submit myself to You, entrust my affairs to You.", ref:"Bukhari" },
-        { id:19, title:"Waking at Night", arabic:"لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ", translation:"None has the right to be worshipped except Allah alone, without partner.", ref:"Bukhari" },
-      ]
-    },
-    food: {
-      icon:"🍽️", name:"Food & Eating", color:"#2E4D1A",
-      duas: [
-        { id:20, title:"Before Eating", arabic:"بِسْمِ اللَّهِ", translation:"In the name of Allah. (Say at the beginning of eating)", ref:"Abu Dawud" },
-        { id:21, title:"Forgot Bismillah", arabic:"بِسْمِ اللَّهِ أَوَّلَهُ وَآخِرَهُ", translation:"In the name of Allah at its beginning and end. (If you forget to say Bismillah at start)", ref:"Abu Dawud" },
-        { id:22, title:"After Eating", arabic:"الْحَمْدُ لِلَّهِ الَّذِي أَطْعَمَنِي هَذَا وَرَزَقَنِيهِ مِنْ غَيْرِ حَوْلٍ مِنِّي وَلَا قُوَّةٍ", translation:"All praise is for Allah who fed me this and provided it for me without any might nor power from myself.", ref:"Tirmidhi" },
-        { id:23, title:"After Drinking Milk", arabic:"اللَّهُمَّ بَارِكْ لَنَا فِيهِ وَزِدْنَا مِنْهُ", translation:"O Allah, bless it for us and give us more of it.", ref:"Tirmidhi" },
-        { id:24, title:"When Fasting & Invited", arabic:"إِنِّي صَائِمٌ", translation:"I am fasting. (Say when invited to food while fasting)", ref:"Muslim" },
-        { id:25, title:"Breaking Fast", arabic:"اللَّهُمَّ لَكَ صُمْتُ وَعَلَى رِزْقِكَ أَفْطَرْتُ", translation:"O Allah, for You I have fasted and upon Your provision I have broken my fast.", ref:"Abu Dawud" },
-      ]
-    },
-    travel: {
-      icon:"✈️", name:"Travel Duas", color:"#4D2E1A",
-      duas: [
-        { id:26, title:"Leaving Home", arabic:"بِسْمِ اللَّهِ، تَوَكَّلْتُ عَلَى اللَّهِ، وَلَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ", translation:"In the name of Allah, I place my trust in Allah, and there is no might nor power except with Allah.", ref:"Abu Dawud" },
-        { id:27, title:"Entering Home", arabic:"اللَّهُمَّ إِنِّي أَسْأَلُكَ خَيْرَ الْمَوْلَجِ وَخَيْرَ الْمَخْرَجِ", translation:"O Allah, I ask You for the good of entering and the good of leaving.", ref:"Abu Dawud" },
-        { id:28, title:"Riding Vehicle", arabic:"سُبْحَانَ الَّذِي سَخَّرَ لَنَا هَٰذَا وَمَا كُنَّا لَهُ مُقْرِنِينَ وَإِنَّا إِلَىٰ رَبِّنَا لَمُنقَلِبُونَ", translation:"How perfect He is, the One Who has placed this (transport) at our service, for we ourselves would not have been capable of that.", ref:"Quran 43:13-14" },
-        { id:29, title:"During Journey", arabic:"اللَّهُمَّ هَوِّنْ عَلَيْنَا سَفَرَنَا هَذَا وَاطْوِ عَنَّا بُعْدَهُ", translation:"O Allah, lighten this journey for us and make its distance easy for us.", ref:"Muslim" },
-        { id:30, title:"Entering City", arabic:"اللَّهُمَّ رَبَّ السَّمَاوَاتِ السَّبْعِ وَمَا أَظْلَلْنَ، وَرَبَّ الْأَرَضِينَ وَمَا أَقْلَلْنَ", translation:"O Allah, Lord of the seven heavens and all they overshadow, and Lord of the seven earths and all they carry.", ref:"Ibn Sunni" },
-        { id:31, title:"Returning Home", arabic:"آيِبُونَ تَائِبُونَ عَابِدُونَ لِرَبِّنَا حَامِدُونَ", translation:"We return, repent, worship and praise our Lord.", ref:"Muslim" },
-      ]
-    },
-    forgiveness: {
-      icon:"🤲", name:"Forgiveness", color:"#1A4D4D",
-      duas: [
-        { id:32, title:"Seeking Forgiveness", arabic:"رَبِّ اغْفِرْ لِي وَتُبْ عَلَيَّ، إِنَّكَ أَنْتَ التَّوَّابُ الرَّحِيمُ", translation:"My Lord, forgive me and accept my repentance. Verily you are the Ever-Returning, the Most Merciful.", ref:"Ahmad" },
-        { id:33, title:"Complete Forgiveness", arabic:"اللَّهُمَّ اغْفِرْ لِي ذَنْبِي كُلَّهُ، دِقَّهُ وَجِلَّهُ، وَأَوَّلَهُ وَآخِرَهُ، وَعَلَانِيَتَهُ وَسِرَّهُ", translation:"O Allah, forgive me all my sins, great and small, the first and the last, those that are apparent and those that are hidden.", ref:"Muslim" },
-        { id:34, title:"Dua of Yunus", arabic:"لَّا إِلَٰهَ إِلَّا أَنتَ سُبْحَانَكَ إِنِّي كُنتُ مِنَ الظَّالِمِينَ", translation:"There is no deity except You; exalted are You. Indeed, I have been of the wrongdoers.", ref:"Quran 21:87" },
-        { id:35, title:"Best Forgiveness Dua", arabic:"أَسْتَغْفِرُ اللَّهَ الْعَظِيمَ الَّذِي لَا إِلَهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ وَأَتُوبُ إِلَيْهِ", translation:"I seek forgiveness from Allah the Magnificent, whom there is none worthy of worship except Him, the Ever-Living, the Sustainer, and I repent to Him.", ref:"Tirmidhi" },
-        { id:36, title:"Mercy Dua", arabic:"رَبَّنَا ظَلَمْنَا أَنفُسَنَا وَإِن لَّمْ تَغْفِرْ لَنَا وَتَرْحَمْنَا لَنَكُونَنَّ مِنَ الْخَاسِرِينَ", translation:"Our Lord, we have wronged ourselves, and if You do not forgive us and have mercy upon us, we will surely be among the losers.", ref:"Quran 7:23" },
-      ]
-    },
-    masjid: {
-      icon:"🕌", name:"Masjid Duas", color:"#4D3D1A",
-      duas: [
-        { id:37, title:"Entering Masjid", arabic:"اللَّهُمَّ افْتَحْ لِي أَبْوَابَ رَحْمَتِكَ", translation:"O Allah, open the gates of Your mercy for me.", ref:"Muslim" },
-        { id:38, title:"Leaving Masjid", arabic:"اللَّهُمَّ إِنِّي أَسْأَلُكَ مِنْ فَضْلِكَ", translation:"O Allah, I ask You from Your favour.", ref:"Muslim" },
-        { id:39, title:"After Adhan", arabic:"اللَّهُمَّ رَبَّ هَذِهِ الدَّعْوَةِ التَّامَّةِ وَالصَّلَاةِ الْقَائِمَةِ آتِ مُحَمَّدًا الْوَسِيلَةَ وَالْفَضِيلَةَ", translation:"O Allah, Lord of this perfect call and established prayer, grant Muhammad the intercession and favour.", ref:"Bukhari" },
-        { id:40, title:"Before Prayer", arabic:"اللَّهُمَّ بَاعِدْ بَيْنِي وَبَيْنَ خَطَايَايَ كَمَا بَاعَدْتَ بَيْنَ الْمَشْرِقِ وَالْمَغْرِبِ", translation:"O Allah, separate me from my sins as You have separated the East from the West.", ref:"Bukhari" },
-        { id:41, title:"After Prayer", arabic:"اللَّهُمَّ أَعِنِّي عَلَى ذِكْرِكَ وَشُكْرِكَ وَحُسْنِ عِبَادَتِكَ", translation:"O Allah, help me to remember You, to thank You, and to worship You in the best manner.", ref:"Abu Dawud" },
-        { id:42, title:"Friday Dua", arabic:"اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَعَلَى آلِ مُحَمَّدٍ", translation:"O Allah, send blessings upon Muhammad and the family of Muhammad. (Recite frequently on Friday)", ref:"Bukhari" },
-      ]
-    },
-    hardship: {
-      icon:"💪", name:"Times of Hardship", color:"#4D1A2E",
-      duas: [
-        { id:43, title:"Anxiety & Sorrow", arabic:"اللَّهُمَّ إِنِّي عَبْدُكَ، ابْنُ عَبْدِكَ، ابْنُ أَمَتِكَ، نَاصِيَتِي بِيَدِكَ", translation:"O Allah, I am Your servant, son of Your servant, son of Your female servant, my forelock is in Your hand.", ref:"Ahmad" },
-        { id:44, title:"Distress Dua", arabic:"لَا إِلَهَ إِلَّا اللَّهُ الْعَظِيمُ الْحَلِيمُ، لَا إِلَهَ إِلَّا اللَّهُ رَبُّ الْعَرْشِ الْعَظِيمِ", translation:"None has the right to be worshipped except Allah, the Mighty, the Forbearing. None has the right to be worshipped except Allah, Lord of the magnificent Throne.", ref:"Bukhari" },
-        { id:45, title:"When in Debt", arabic:"اللَّهُمَّ اكْفِنِي بِحَلَالِكَ عَنْ حَرَامِكَ، وَأَغْنِنِي بِفَضْلِكَ عَمَّنْ سِوَاكَ", translation:"O Allah, suffice me with what You have allowed instead of what You have forbidden, and make me independent of all others besides You.", ref:"Tirmidhi" },
-        { id:46, title:"For Good in Both Worlds", arabic:"رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ", translation:"Our Lord, give us good in this world and good in the Hereafter, and protect us from the punishment of the Fire.", ref:"Quran 2:201" },
-        { id:47, title:"Tawakkul Dua", arabic:"حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ", translation:"Allah is sufficient for us and He is the best disposer of affairs.", ref:"Quran 3:173" },
-        { id:48, title:"Patience Dua", arabic:"رَبَّنَا أَفْرِغْ عَلَيْنَا صَبْرًا وَثَبِّتْ أَقْدَامَنَا وَانصُرْنَا عَلَى الْقَوْمِ الْكَافِرِينَ", translation:"Our Lord, pour upon us patience and plant firmly our feet and give us victory over the disbelieving people.", ref:"Quran 2:250" },
-      ]
-    },
+    morning: { icon:"🌅", name:"Morning Duas", color:"#1A4D2E", duas: [
+      { id:1,  title:"Waking Up",         arabic:"الْحَمْدُ لِلَّهِ الَّذِي أَحْيَانَا بَعْدَ مَا أَمَاتَنَا وَإِلَيْهِ النُّشُورُ",                                                                           translation:"All praise is for Allah who gave us life after having taken it from us and unto Him is the resurrection.",                                                                            ref:"Bukhari" },
+      { id:2,  title:"After Waking Up",   arabic:"لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ، وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ",                                translation:"None has the right to be worshipped except Allah, alone, without partner. To Him belongs all sovereignty and praise, and He is over all things omnipotent.",                          ref:"Bukhari" },
+      { id:3,  title:"Morning Protection",arabic:"اللَّهُمَّ بِكَ أَصْبَحْنَا، وَبِكَ أَمْسَيْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ، وَإِلَيْكَ النُّشُورُ",                                                     translation:"O Allah, by You we enter the morning and by You we enter the evening, by You we live and by You we die, and to You is our resurrection.",                                              ref:"Tirmidhi" },
+      { id:4,  title:"Morning Dhikr",     arabic:"سُبْحَانَ اللَّهِ وَبِحَمْدِهِ",                                                                                                                               translation:"Glory is to Allah and praise is to Him. (100 times in morning)",                                                                                                                    ref:"Muslim" },
+      { id:5,  title:"Sayyidul Istighfar",arabic:"اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلَّا أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ، وَأَنَا عَلَى عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ",                    translation:"O Allah, You are my Lord, none has the right to be worshipped except You, You created me and I am Your servant and I abide to Your covenant and promise as best I can.",               ref:"Bukhari" },
+      { id:6,  title:"Morning Blessing",  arabic:"اللَّهُمَّ مَا أَصْبَحَ بِي مِنْ نِعْمَةٍ أَوْ بِأَحَدٍ مِنْ خَلْقِكَ فَمِنْكَ وَحْدَكَ لَا شَرِيكَ لَكَ",                                                 translation:"O Allah, what blessing I or any of Your creation have risen upon, is from You alone, without partner.",                                                                                ref:"Abu Dawud" },
+      { id:7,  title:"Protection Morning",arabic:"اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَافِيَةَ فِي الدُّنْيَا وَالْآخِرَةِ",                                                                                       translation:"O Allah, I ask You for well-being in this world and the next.",                                                                                                                     ref:"Ibn Majah" },
+    ]},
+    evening: { icon:"🌙", name:"Evening Duas", color:"#1A2E4D", duas: [
+      { id:8,  title:"Evening Remembrance",arabic:"اللَّهُمَّ بِكَ أَمْسَيْنَا، وَبِكَ أَصْبَحْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ، وَإِلَيْكَ الْمَصِيرُ",                                                    translation:"O Allah, by You we enter the evening and by You we enter the morning, by You we live and by You we die, and to You is our return.",                                                   ref:"Tirmidhi" },
+      { id:9,  title:"Evening Protection", arabic:"أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ",                                                                                              translation:"I seek refuge in the perfect words of Allah from the evil of what He has created.",                                                                                                  ref:"Muslim" },
+      { id:10, title:"Evening Dhikr",      arabic:"أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ",                                                                                                translation:"We have reached the evening and at this very time unto Allah belongs all sovereignty, and all praise is for Allah.",                                                                  ref:"Abu Dawud" },
+      { id:11, title:"Ayatul Kursi",       arabic:"اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ",                                                                  translation:"Allah! There is no god but He, the Living, the Self-subsisting, Eternal. No slumber can seize Him nor sleep.",                                                                         ref:"Quran 2:255" },
+      { id:12, title:"Evening Forgiveness",arabic:"اللَّهُمَّ إِنِّي أَمْسَيْتُ أُشْهِدُكَ وَأُشْهِدُ حَمَلَةَ عَرْشِكَ وَمَلَائِكَتَكَ وَجَمِيعَ خَلْقِكَ",                                                    translation:"O Allah, I have entered the evening calling You, the bearers of Your Throne, Your angels, and all of Your creation to witness.",                                                       ref:"Abu Dawud" },
+      { id:13, title:"Three Quls Evening", arabic:"قُلْ هُوَ اللَّهُ أَحَدٌ",                                                                                                                                     translation:"Say: He is Allah, the One! (Recite Al-Ikhlas, Al-Falaq, An-Nas 3 times each)",                                                                                                     ref:"Abu Dawud" },
+    ]},
+    sleep: { icon:"😴", name:"Before Sleep", color:"#2E1A4D", duas: [
+      { id:14, title:"Before Sleeping",   arabic:"بِاسْمِكَ اللَّهُمَّ أَمُوتُ وَأَحْيَا",                                                                                                                        translation:"In Your name O Allah, I die and I live.",                                                                                                                                          ref:"Bukhari" },
+      { id:15, title:"Sleep Dua",         arabic:"اللَّهُمَّ قِنِي عَذَابَكَ يَوْمَ تَبْعَثُ عِبَادَكَ",                                                                                                           translation:"O Allah, protect me from Your punishment on the day Your servants are resurrected.",                                                                                                  ref:"Abu Dawud" },
+      { id:16, title:"Tasbih Before Sleep",arabic:"سُبْحَانَ اللَّهِ ، الْحَمْدُ لِلَّهِ ، اللَّهُ أَكْبَرُ",                                                                                                     translation:"Glory is to Allah (33x), All praise is for Allah (33x), Allah is the greatest (34x)",                                                                                                ref:"Bukhari" },
+      { id:17, title:"Kafirun Before Sleep",arabic:"قُلْ يَا أَيُّهَا الْكَافِرُونَ",                                                                                                                              translation:"Recite Surah Al-Kafirun before sleeping — it is a disavowal from shirk.",                                                                                                             ref:"Abu Dawud" },
+      { id:18, title:"Protection Night",  arabic:"اللَّهُمَّ إِنِّي أَسْلَمْتُ نَفْسِي إِلَيْكَ وَفَوَّضْتُ أَمْرِي إِلَيْكَ",                                                                                  translation:"O Allah, I submit myself to You, entrust my affairs to You.",                                                                                                                         ref:"Bukhari" },
+      { id:19, title:"Waking at Night",   arabic:"لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ",                                                                                                           translation:"None has the right to be worshipped except Allah alone, without partner.",                                                                                                            ref:"Bukhari" },
+    ]},
+    food: { icon:"🍽️", name:"Food & Eating", color:"#2E4D1A", duas: [
+      { id:20, title:"Before Eating",     arabic:"بِسْمِ اللَّهِ",                                                                                                                                                 translation:"In the name of Allah. (Say at the beginning of eating)",                                                                                                                           ref:"Abu Dawud" },
+      { id:21, title:"Forgot Bismillah",  arabic:"بِسْمِ اللَّهِ أَوَّلَهُ وَآخِرَهُ",                                                                                                                            translation:"In the name of Allah at its beginning and end. (If you forget to say Bismillah at start)",                                                                                           ref:"Abu Dawud" },
+      { id:22, title:"After Eating",      arabic:"الْحَمْدُ لِلَّهِ الَّذِي أَطْعَمَنِي هَذَا وَرَزَقَنِيهِ مِنْ غَيْرِ حَوْلٍ مِنِّي وَلَا قُوَّةٍ",                                                          translation:"All praise is for Allah who fed me this and provided it for me without any might nor power from myself.",                                                                              ref:"Tirmidhi" },
+      { id:23, title:"After Drinking Milk",arabic:"اللَّهُمَّ بَارِكْ لَنَا فِيهِ وَزِدْنَا مِنْهُ",                                                                                                              translation:"O Allah, bless it for us and give us more of it.",                                                                                                                                  ref:"Tirmidhi" },
+      { id:24, title:"Breaking Fast",     arabic:"اللَّهُمَّ لَكَ صُمْتُ وَعَلَى رِزْقِكَ أَفْطَرْتُ",                                                                                                            translation:"O Allah, for You I have fasted and upon Your provision I have broken my fast.",                                                                                                       ref:"Abu Dawud" },
+    ]},
+    travel: { icon:"✈️", name:"Travel Duas", color:"#4D2E1A", duas: [
+      { id:25, title:"Leaving Home",      arabic:"بِسْمِ اللَّهِ، تَوَكَّلْتُ عَلَى اللَّهِ، وَلَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ",                                                                       translation:"In the name of Allah, I place my trust in Allah, and there is no might nor power except with Allah.",                                                                                 ref:"Abu Dawud" },
+      { id:26, title:"Entering Home",     arabic:"اللَّهُمَّ إِنِّي أَسْأَلُكَ خَيْرَ الْمَوْلَجِ وَخَيْرَ الْمَخْرَجِ",                                                                                         translation:"O Allah, I ask You for the good of entering and the good of leaving.",                                                                                                                ref:"Abu Dawud" },
+      { id:27, title:"Riding Vehicle",    arabic:"سُبْحَانَ الَّذِي سَخَّرَ لَنَا هَٰذَا وَمَا كُنَّا لَهُ مُقْرِنِينَ وَإِنَّا إِلَىٰ رَبِّنَا لَمُنقَلِبُونَ",                                                translation:"How perfect He is, the One Who has placed this (transport) at our service, for we ourselves would not have been capable of that.",                                                      ref:"Quran 43:13-14" },
+      { id:28, title:"During Journey",    arabic:"اللَّهُمَّ هَوِّنْ عَلَيْنَا سَفَرَنَا هَذَا وَاطْوِ عَنَّا بُعْدَهُ",                                                                                          translation:"O Allah, lighten this journey for us and make its distance easy for us.",                                                                                                              ref:"Muslim" },
+      { id:29, title:"Returning Home",    arabic:"آيِبُونَ تَائِبُونَ عَابِدُونَ لِرَبِّنَا حَامِدُونَ",                                                                                                           translation:"We return, repent, worship and praise our Lord.",                                                                                                                                    ref:"Muslim" },
+    ]},
+    forgiveness: { icon:"🤲", name:"Forgiveness", color:"#1A4D4D", duas: [
+      { id:30, title:"Seeking Forgiveness",arabic:"رَبِّ اغْفِرْ لِي وَتُبْ عَلَيَّ، إِنَّكَ أَنْتَ التَّوَّابُ الرَّحِيمُ",                                                                                     translation:"My Lord, forgive me and accept my repentance. Verily you are the Ever-Returning, the Most Merciful.",                                                                                ref:"Ahmad" },
+      { id:31, title:"Complete Forgiveness",arabic:"اللَّهُمَّ اغْفِرْ لِي ذَنْبِي كُلَّهُ، دِقَّهُ وَجِلَّهُ، وَأَوَّلَهُ وَآخِرَهُ، وَعَلَانِيَتَهُ وَسِرَّهُ",                                               translation:"O Allah, forgive me all my sins, great and small, the first and the last, those that are apparent and those that are hidden.",                                                         ref:"Muslim" },
+      { id:32, title:"Dua of Yunus",      arabic:"لَّا إِلَٰهَ إِلَّا أَنتَ سُبْحَانَكَ إِنِّي كُنتُ مِنَ الظَّالِمِينَ",                                                                                        translation:"There is no deity except You; exalted are You. Indeed, I have been of the wrongdoers.",                                                                                               ref:"Quran 21:87" },
+      { id:33, title:"Best Forgiveness",  arabic:"أَسْتَغْفِرُ اللَّهَ الْعَظِيمَ الَّذِي لَا إِلَهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ وَأَتُوبُ إِلَيْهِ",                                                       translation:"I seek forgiveness from Allah the Magnificent, whom there is none worthy of worship except Him, the Ever-Living, the Sustainer, and I repent to Him.",                                 ref:"Tirmidhi" },
+      { id:34, title:"Mercy Dua",         arabic:"رَبَّنَا ظَلَمْنَا أَنفُسَنَا وَإِن لَّمْ تَغْفِرْ لَنَا وَتَرْحَمْنَا لَنَكُونَنَّ مِنَ الْخَاسِرِينَ",                                                       translation:"Our Lord, we have wronged ourselves, and if You do not forgive us and have mercy upon us, we will surely be among the losers.",                                                        ref:"Quran 7:23" },
+    ]},
+    masjid: { icon:"🕌", name:"Masjid Duas", color:"#4D3D1A", duas: [
+      { id:35, title:"Entering Masjid",   arabic:"اللَّهُمَّ افْتَحْ لِي أَبْوَابَ رَحْمَتِكَ",                                                                                                                    translation:"O Allah, open the gates of Your mercy for me.",                                                                                                                                     ref:"Muslim" },
+      { id:36, title:"Leaving Masjid",    arabic:"اللَّهُمَّ إِنِّي أَسْأَلُكَ مِنْ فَضْلِكَ",                                                                                                                    translation:"O Allah, I ask You from Your favour.",                                                                                                                                              ref:"Muslim" },
+      { id:37, title:"After Adhan",       arabic:"اللَّهُمَّ رَبَّ هَذِهِ الدَّعْوَةِ التَّامَّةِ وَالصَّلَاةِ الْقَائِمَةِ آتِ مُحَمَّدًا الْوَسِيلَةَ وَالْفَضِيلَةَ",                                         translation:"O Allah, Lord of this perfect call and established prayer, grant Muhammad the intercession and favour.",                                                                               ref:"Bukhari" },
+      { id:38, title:"Before Prayer",     arabic:"اللَّهُمَّ بَاعِدْ بَيْنِي وَبَيْنَ خَطَايَايَ كَمَا بَاعَدْتَ بَيْنَ الْمَشْرِقِ وَالْمَغْرِبِ",                                                              translation:"O Allah, separate me from my sins as You have separated the East from the West.",                                                                                                     ref:"Bukhari" },
+      { id:39, title:"After Prayer",      arabic:"اللَّهُمَّ أَعِنِّي عَلَى ذِكْرِكَ وَشُكْرِكَ وَحُسْنِ عِبَادَتِكَ",                                                                                            translation:"O Allah, help me to remember You, to thank You, and to worship You in the best manner.",                                                                                              ref:"Abu Dawud" },
+      { id:40, title:"Friday Dua",        arabic:"اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَعَلَى آلِ مُحَمَّدٍ",                                                                                                        translation:"O Allah, send blessings upon Muhammad and the family of Muhammad. (Recite frequently on Friday)",                                                                                     ref:"Bukhari" },
+    ]},
+    hardship: { icon:"💪", name:"Times of Hardship", color:"#4D1A2E", duas: [
+      { id:41, title:"Anxiety & Sorrow",  arabic:"اللَّهُمَّ إِنِّي عَبْدُكَ، ابْنُ عَبْدِكَ، ابْنُ أَمَتِكَ، نَاصِيَتِي بِيَدِكَ",                                                                               translation:"O Allah, I am Your servant, son of Your servant, son of Your female servant, my forelock is in Your hand.",                                                                           ref:"Ahmad" },
+      { id:42, title:"Distress Dua",      arabic:"لَا إِلَهَ إِلَّا اللَّهُ الْعَظِيمُ الْحَلِيمُ، لَا إِلَهَ إِلَّا اللَّهُ رَبُّ الْعَرْشِ الْعَظِيمِ",                                                        translation:"None has the right to be worshipped except Allah, the Mighty, the Forbearing. None has the right to be worshipped except Allah, Lord of the magnificent Throne.",                    ref:"Bukhari" },
+      { id:43, title:"When in Debt",      arabic:"اللَّهُمَّ اكْفِنِي بِحَلَالِكَ عَنْ حَرَامِكَ، وَأَغْنِنِي بِفَضْلِكَ عَمَّنْ سِوَاكَ",                                                                       translation:"O Allah, suffice me with what You have allowed instead of what You have forbidden, and make me independent of all others besides You.",                                                 ref:"Tirmidhi" },
+      { id:44, title:"Good in Both Worlds",arabic:"رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ",                                                                    translation:"Our Lord, give us good in this world and good in the Hereafter, and protect us from the punishment of the Fire.",                                                                     ref:"Quran 2:201" },
+      { id:45, title:"Tawakkul Dua",      arabic:"حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ",                                                                                                                          translation:"Allah is sufficient for us and He is the best disposer of affairs.",                                                                                                                  ref:"Quran 3:173" },
+      { id:46, title:"Patience Dua",      arabic:"رَبَّنَا أَفْرِغْ عَلَيْنَا صَبْرًا وَثَبِّتْ أَقْدَامَنَا وَانصُرْنَا عَلَى الْقَوْمِ الْكَافِرِينَ",                                                         translation:"Our Lord, pour upon us patience and plant firmly our feet and give us victory over the disbelieving people.",                                                                          ref:"Quran 2:250" },
+    ]},
   };
 
   const playDuaAudio = (dua) => {
-    if (audio) { audio.pause(); audio.src = ""; setAudio(null); }
-    if (playingDua === dua.id) { setPlayingDua(null); return; }
-    // Use text-to-speech for Arabic dua recitation
-    try {
-      if ("speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(dua.arabic);
-        utterance.lang = "ar-SA";
-        utterance.rate = 0.75;
-        utterance.pitch = 1.0;
-        utterance.volume = 1.0;
-        // Try to find Arabic voice
-        const voices = window.speechSynthesis.getVoices();
-        const arabicVoice = voices.find(v => v.lang.startsWith("ar"));
-        if (arabicVoice) utterance.voice = arabicVoice;
-        utterance.onend = () => setPlayingDua(null);
-        utterance.onerror = () => setPlayingDua(null);
-        window.speechSynthesis.speak(utterance);
-        setPlayingDua(dua.id);
-      } else {
-        // Fallback: play a gentle tone
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator(), gain = ctx.createGain();
-        osc.connect(gain); gain.connect(ctx.destination);
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(396, ctx.currentTime);
-        gain.gain.setValueAtTime(0.2, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.5);
-        osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 1.5);
-        setTimeout(() => setPlayingDua(null), 1500);
-        setPlayingDua(dua.id);
-      }
-    } catch(_) { setPlayingDua(null); }
+    if (playingDua === dua.id) {
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+      setPlayingDua(null); return;
+    }
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(dua.arabic);
+      utterance.lang = "ar-SA";
+      utterance.rate = 0.75;
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+      const voices = window.speechSynthesis.getVoices();
+      const arabicVoice = voices.find(v => v.lang.startsWith("ar"));
+      if (arabicVoice) utterance.voice = arabicVoice;
+      utterance.onend = () => setPlayingDua(null);
+      utterance.onerror = () => setPlayingDua(null);
+      window.speechSynthesis.speak(utterance);
+      setPlayingDua(dua.id);
+    } else {
+      setPlayingDua(null);
+    }
   };
 
   const stopDuaAudio = () => {
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
-    if (audio) { audio.pause(); audio.src = ""; setAudio(null); }
     setPlayingDua(null);
   };
 
-  // Dua detail view
   if (selectedDua) {
     const cat = DUAS[selectedCat];
     return (
       <div style={{ display:"flex", flexDirection:"column", position:"fixed", inset:0, zIndex:500, background:DARK_GREEN }}>
         <div style={{ background:`linear-gradient(135deg,${DARK_GREEN},${cat.color})`, padding:"12px 16px", display:"flex", alignItems:"center", gap:10, flexShrink:0 }}>
-          <button onClick={() => setSelectedDua(null)} style={{ background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:10, padding:"7px 12px", color:GOLD, fontSize:12, fontWeight:700, cursor:"pointer" }}>← Back</button>
+          <button onClick={() => { stopDuaAudio(); setSelectedDua(null); }} style={{ background:"rgba(201,168,76,0.15)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:10, padding:"7px 12px", color:GOLD, fontSize:12, fontWeight:700, cursor:"pointer" }}>← Back</button>
           <div style={{ flex:1, color:LIGHT_GOLD, fontWeight:700, fontSize:14 }}>{selectedDua.title}</div>
         </div>
         <div style={{ flex:1, overflowY:"auto", padding:20 }}>
@@ -1948,7 +1769,7 @@ function DuaPage() {
             <span style={{ color:GOLD, fontSize:12 }}>📚</span>
             <span style={{ color:"rgba(255,255,255,0.4)", fontSize:12 }}>Reference: <span style={{ color:GOLD }}>{selectedDua.ref}</span></span>
           </div>
-          <div onClick={() => playingDua === selectedDua.id ? stopDuaAudio() : playDuaAudio(selectedDua)} style={{ background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, color:DARK_GREEN, borderRadius:20, padding:"14px", fontSize:15, fontWeight:700, cursor:"pointer", textAlign:"center" }}>
+          <div onClick={() => playDuaAudio(selectedDua)} style={{ background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, color:DARK_GREEN, borderRadius:20, padding:"14px", fontSize:15, fontWeight:700, cursor:"pointer", textAlign:"center" }}>
             {playingDua === selectedDua.id ? "⏸ Stop" : "🔊 Listen Arabic"}
           </div>
         </div>
@@ -1956,7 +1777,6 @@ function DuaPage() {
     );
   }
 
-  // Category detail view
   if (selectedCat) {
     const cat = DUAS[selectedCat];
     return (
@@ -1970,7 +1790,7 @@ function DuaPage() {
         </div>
         <div style={{ flex:1, overflowY:"auto", padding:"16px 16px 80px" }}>
           {cat.duas.map(dua => (
-            <div key={dua.id} onClick={() => { setSelectedDua(dua); }} style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(201,168,76,0.12)", borderRadius:14, padding:"16px", marginBottom:10, cursor:"pointer" }}>
+            <div key={dua.id} onClick={() => setSelectedDua(dua)} style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(201,168,76,0.12)", borderRadius:14, padding:"16px", marginBottom:10, cursor:"pointer" }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
                 <div style={{ color:GOLD, fontWeight:700, fontSize:13 }}>{dua.title}</div>
                 <div style={{ color:"rgba(255,255,255,0.25)", fontSize:10 }}>{dua.ref}</div>
@@ -1988,20 +1808,15 @@ function DuaPage() {
     );
   }
 
-  // Main categories view
   return (
     <div style={{ padding:"20px 20px 80px" }}>
       <SectionTitle>🤲 Dua Collection</SectionTitle>
-      <div style={{ color:"rgba(255,255,255,0.45)", fontSize:13, marginBottom:16 }}>40+ Authentic Duas from Quran & Sunnah</div>
-
-      {/* Dua of the Day */}
+      <div style={{ color:"rgba(255,255,255,0.45)", fontSize:13, marginBottom:16 }}>46 Authentic Duas from Quran & Sunnah</div>
       <div style={{ background:`linear-gradient(135deg,${MID_GREEN},#1A2E4A)`, border:"1px solid rgba(201,168,76,0.3)", borderRadius:18, padding:"18px", marginBottom:20, textAlign:"center" }}>
         <div style={{ color:GOLD, fontSize:10, letterSpacing:2, marginBottom:8 }}>✨ DUA OF THE DAY</div>
         <div style={{ color:LIGHT_GOLD, fontSize:19, lineHeight:1.8, fontFamily:"'Amiri', serif", marginBottom:10, direction:"rtl" }}>رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً</div>
         <div style={{ color:"rgba(255,255,255,0.5)", fontSize:11, fontStyle:"italic" }}>"Our Lord, give us good in this world and good in the Hereafter..."</div>
       </div>
-
-      {/* Categories */}
       <div style={{ color:OFF_WHITE, fontSize:14, fontWeight:700, marginBottom:12 }}>📂 Categories</div>
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
         {Object.entries(DUAS).map(([key, cat]) => (
@@ -2016,11 +1831,11 @@ function DuaPage() {
   );
 }
 
-// ─── TASBEEH PAGE ──────────────────────────────────────────────────────────────
+// ─── TASBEEH PAGE ─────────────────────────────────────────────────────────────
 function TasbeehPage() {
   const [counts, setCounts] = useState({ sub:0, alh:0, all:0 });
   const [active, setActive] = useState("sub");
-  const keys  = { sub:"SubhanAllah", alh:"Alhamdulillah", all:"Allahu Akbar" };
+  const keys = { sub:"SubhanAllah", alh:"Alhamdulillah", all:"Allahu Akbar" };
   const total = counts.sub + counts.alh + counts.all;
   return (
     <div style={{ padding:"20px 20px 80px", display:"flex", flexDirection:"column", alignItems:"center" }}>
@@ -2048,16 +1863,15 @@ function TasbeehPage() {
   );
 }
 
-
 // ─── QIBLA PAGE ───────────────────────────────────────────────────────────────
 function QiblaPage() {
-  const [qibla, setQibla]         = useState(null);
-  const [compass, setCompass]     = useState(0);
-  const [error, setError]         = useState(null);
-  const [loading, setLoading]     = useState(false);
-  const [permAsked, setPermAsked] = useState(false);
-  const [location, setLocation]   = useState(null);
-  const [aligned, setAligned]     = useState(false);
+  const [qibla,    setQibla]    = useState(null);
+  const [compass,  setCompass]  = useState(0);
+  const [error,    setError]    = useState(null);
+  const [loading,  setLoading]  = useState(false);
+  const [permAsked,setPermAsked]= useState(false);
+  const [location, setLocation] = useState(null);
+  const [aligned,  setAligned]  = useState(false);
   const compassRef = useRef(0);
 
   useEffect(() => {
@@ -2065,17 +1879,13 @@ function QiblaPage() {
     if (!navigator.geolocation) { setError("Geolocation not supported."); setLoading(false); return; }
     navigator.geolocation.getCurrentPosition(
       pos => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
+        const lat = pos.coords.latitude, lng = pos.coords.longitude;
         setLocation({ lat, lng });
-        const makkahLat = 21.4225 * Math.PI / 180;
-        const makkahLng = 39.8262 * Math.PI / 180;
-        const userLat   = lat * Math.PI / 180;
-        const dLng      = makkahLng - (lng * Math.PI / 180);
-        const y = Math.sin(dLng) * Math.cos(makkahLat);
-        const x = Math.cos(userLat) * Math.sin(makkahLat) - Math.sin(userLat) * Math.cos(makkahLat) * Math.cos(dLng);
-        const bearing = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
-        setQibla(Math.round(bearing));
+        const mLat = 21.4225 * Math.PI / 180, mLng = 39.8262 * Math.PI / 180;
+        const uLat = lat * Math.PI / 180, dLng = mLng - (lng * Math.PI / 180);
+        const y = Math.sin(dLng) * Math.cos(mLat);
+        const x = Math.cos(uLat) * Math.sin(mLat) - Math.sin(uLat) * Math.cos(mLat) * Math.cos(dLng);
+        setQibla(Math.round((Math.atan2(y, x) * 180 / Math.PI + 360) % 360));
         setLoading(false);
       },
       () => { setError("📍 Please allow location access to find Qibla direction."); setLoading(false); },
@@ -2086,11 +1896,8 @@ function QiblaPage() {
   const startCompass = () => {
     const handler = e => {
       let heading = 0;
-      if (e.webkitCompassHeading !== undefined && e.webkitCompassHeading !== null) {
-        heading = e.webkitCompassHeading;
-      } else if (e.alpha !== null) {
-        heading = 360 - e.alpha;
-      }
+      if (e.webkitCompassHeading !== undefined && e.webkitCompassHeading !== null) { heading = e.webkitCompassHeading; }
+      else if (e.alpha !== null) { heading = 360 - e.alpha; }
       compassRef.current = heading;
       setCompass(Math.round(heading));
     };
@@ -2114,16 +1921,9 @@ function QiblaPage() {
   };
 
   const needle = qibla !== null ? (qibla - compass + 360) % 360 : 0;
+  useEffect(() => { const d = Math.abs(needle % 360); setAligned(d < 5 || d > 355); }, [needle]);
 
-  useEffect(() => {
-    const diff = Math.abs(needle % 360);
-    setAligned(diff < 5 || diff > 355);
-  }, [needle]);
-
-  const getDirection = (deg) => {
-    const dirs = ["N","NE","E","SE","S","SW","W","NW","N"];
-    return dirs[Math.round(deg / 45)];
-  };
+  const getDirection = (deg) => ["N","NE","E","SE","S","SW","W","NW","N"][Math.round(deg / 45)];
 
   return (
     <div style={{ padding:"20px 20px 80px", display:"flex", flexDirection:"column", alignItems:"center" }}>
@@ -2139,17 +1939,12 @@ function QiblaPage() {
       {loading && <div style={{ color:GOLD, fontSize:14, marginBottom:20 }}>📍 Getting your location...</div>}
       {error && <div style={{ background:"rgba(255,68,68,0.1)", border:"1px solid rgba(255,68,68,0.3)", borderRadius:14, padding:"14px 18px", marginBottom:20, color:"#FF9999", fontSize:13, textAlign:"center", lineHeight:1.7, width:"100%" }}>{error}</div>}
 
-      {/* Compass Rose */}
       <div style={{ position:"relative", width:280, height:280, marginBottom:24 }}>
         <div style={{ position:"absolute", inset:-4, borderRadius:"50%", background: aligned ? "rgba(0,255,100,0.1)" : "rgba(201,168,76,0.05)", border: aligned ? "2px solid rgba(0,255,100,0.5)" : "2px solid rgba(201,168,76,0.2)", transition:"all 0.5s ease" }} />
         <div style={{ position:"absolute", inset:0, borderRadius:"50%", background:"radial-gradient(circle at 35% 35%, #1E5535, #0A2010)", border:`3px solid ${aligned ? "#00FF64" : GOLD}`, boxShadow:`0 0 ${aligned ? "60px rgba(0,255,100,0.4)" : "40px rgba(201,168,76,0.25)"}`, transition:"all 0.5s ease" }}>
           {Array.from({length:72}).map((_,i) => {
-            const angle = i * 5;
-            const isMajor = angle % 45 === 0;
-            const r1 = isMajor ? 115 : 120;
-            return (
-              <div key={i} style={{ position:"absolute", top:"50%", left:"50%", width: isMajor ? 2 : 1, height: isMajor ? 14 : 7, background: isMajor ? GOLD : "rgba(201,168,76,0.3)", transform:`translate(-50%,-50%) rotate(${angle}deg) translateY(-${r1}px)`, transformOrigin:"50% 50%" }} />
-            );
+            const angle = i * 5, isMajor = angle % 45 === 0, r1 = isMajor ? 115 : 120;
+            return <div key={i} style={{ position:"absolute", top:"50%", left:"50%", width: isMajor ? 2 : 1, height: isMajor ? 14 : 7, background: isMajor ? GOLD : "rgba(201,168,76,0.3)", transform:`translate(-50%,-50%) rotate(${angle}deg) translateY(-${r1}px)`, transformOrigin:"50% 50%" }} />;
           })}
           {[{l:"N",d:0,c:"#FF5555"},{l:"NE",d:45,c:GOLD},{l:"E",d:90,c:GOLD},{l:"SE",d:135,c:GOLD},{l:"S",d:180,c:GOLD},{l:"SW",d:225,c:GOLD},{l:"W",d:270,c:GOLD},{l:"NW",d:315,c:GOLD}].map(({l,d,c}) => {
             const r = l.length === 1 ? 98 : 95;
@@ -2212,32 +2007,34 @@ function QiblaPage() {
   );
 }
 
-// ─── CHAT PAGE ─────────────────────────────────────────────────────────────────
+// ─── CHAT PAGE ────────────────────────────────────────────────────────────────
 const SCHOLARS = [
-  { id:1, name:"Mufti Altaf Qasmi", role:"Islamic Scholar", speciality:"Research Scholar from Darul-Uloom Deoband", avatar:"👳", phone:"916359384140" },
+  { id:1, name:"Mufti Altaf Qasmi",        role:"Islamic Scholar",                  speciality:"Research Scholar from Darul-Uloom Deoband",        avatar:"👳", phone:"916359384140" },
+  { id:2, name:"Mufti Abdulla Khan",        role:"Mufti from Matliwala, Bharuch",    speciality:"Islamic Jurisprudence & Fiqh — Matliwala",         avatar:"👳", phone:"919687758200" },
+  { id:3, name:"Qari Abdulrehman Shaikh",   role:"Qari — Imam of Jumma Masjid Valsad", speciality:"Quran Recitation, Tajweed & Local Imam",         avatar:"🕌", phone:"919484557861" },
 ];
 
 const FAQ = [
-  { keys:["5 pillars","five pillars","pillars of islam"], q:"What are the 5 pillars of Islam?", a:"The 5 pillars: 1) Shahada — Declaration of faith 2) Salah — 5 daily prayers 3) Zakat — 2.5% charity 4) Sawm — Fasting in Ramadan 5) Hajj — Pilgrimage to Makkah once in lifetime." },
-  { keys:["how many times","pray daily","5 times","salah"], q:"How many times should I pray daily?", a:"Muslims pray 5 times daily: 🌙 Fajr (before sunrise), ☀️ Dhuhr (midday), 🌤 Asr (afternoon), 🌅 Maghrib (after sunset), ⭐ Isha (night). Obligatory for every adult Muslim." },
-  { keys:["fast","roza","ramadan","iftar","sehri"], q:"What breaks the fast in Ramadan?", a:"Fast runs from Sehri (before Fajr) to Iftar (Maghrib). Things that break fast: eating, drinking, smoking intentionally. Sunnah is to break fast with dates and water. Unintentional eating does NOT break fast." },
-  { keys:["music","song","nasheed","instrument"], q:"Is music halal or haram?", a:"Most classical scholars consider musical instruments haram. Vocal nasheeds without instruments are generally permissible. Avoid music that distracts from Allah and consult a scholar for detailed guidance." },
-  { keys:["zakat","zakah","charity","nisab","2.5"], q:"What is Zakat?", a:"Zakat is 2.5% of total savings held for one lunar year above Nisab (87.48g gold value). Obligatory on every adult Muslim above Nisab. It purifies wealth and helps the poor." },
-  { keys:["wudu","ablution","wudhu","wash","purity"], q:"How to perform Wudu?", a:"Wudu steps: 1) Niyyah 2) Bismillah 3) Wash hands 3x 4) Rinse mouth 3x 5) Clean nose 3x 6) Wash face 3x 7) Wash arms to elbows 3x (right first) 8) Wipe head 9) Clean ears 10) Wash feet 3x (right first)." },
-  { keys:["missed prayer","qada","qaza","make up"], q:"What is the ruling on missed prayers?", a:"Missed prayers (Qada) must be made up as soon as possible in order. There is no expiry — repent sincerely and make them up. Deliberately missing prayers is a major sin." },
-  { keys:["women pray","menstruation","haid","period"], q:"Can women pray during menstruation?", a:"Women are EXEMPT from Salah, fasting, and Tawaf during menstruation. Missed Salah do NOT need to be made up. Missed Ramadan fasts MUST be made up after period ends." },
-  { keys:["friday","jumuah","jummah","jumma","khutbah"], q:"What is the Sunnah of Friday?", a:"Sunnah of Friday: 1) Ghusl 2) Clean clothes 3) Apply itr (perfume) 4) Go early to Masjid 5) Recite Surah Al-Kahf 6) Send Durood on Prophet ﷺ 7) Make Dua between Asr and Maghrib." },
-  { keys:["dua","supplication","how to ask allah"], q:"How to make Dua?", a:"How to make Dua: 1) Face Qibla 2) Wudu 3) Raise hands 4) Start with Alhamdulillah & Durood 5) Ask with full trust in Allah 6) End with Ameen. Best times: last 1/3 of night, between Adhan & Iqamah, Friday afternoon." },
-  { keys:["halal food","haram food","meat","slaughter","zabiha"], q:"What is Halal food?", a:"Halal: meat slaughtered in Allah's name, fish, vegetables, fruits. Haram: pork, alcohol, blood, carrion, animals not properly slaughtered or dedicated to other than Allah." },
-  { keys:["hajj","pilgrimage","makkah","kaaba","umrah"], q:"What is Hajj?", a:"Hajj is the 5th pillar — pilgrimage to Makkah. Obligatory ONCE in lifetime for those physically and financially able. Takes place in Dhul Hijjah. Wipes all past sins for sincere performers." },
-  { keys:["marriage","nikah","age of marriage","shaadi","wedding"], q:"What is the Islamic ruling on marriage?", a:"Nikah is highly recommended — the Prophet ﷺ said it is his Sunnah. Key conditions: consent of both parties, Mahr (gift to bride), witnesses, and Wali (guardian for bride). Most modern scholars require legal age (18)." },
-  { keys:["interest","riba","bank","loan","mortgage","sood"], q:"What is Riba (interest)?", a:"Riba (interest) is strictly HARAM. Allah says in Quran 2:275 that trade is permitted and Riba is forbidden. Includes bank interest, credit card interest, and all usury. Seek Islamic finance alternatives." },
-  { keys:["hijab","purdah","covering","veil","niqab","scarf"], q:"What is the ruling on Hijab?", a:"Hijab is obligatory for adult Muslim women per Quran 24:31 and 33:59. Covers all except face and hands according to majority scholars. Some require full covering (Niqab)." },
-  { keys:["ghusl","bath","janabah","major impurity"], q:"How to perform Ghusl?", a:"Ghusl required after: marital relations, wet dream, end of menstruation. Steps: 1) Niyyah 2) Wash hands & private parts 3) Full Wudu 4) Pour water over right shoulder 3x, left 3x 5) Wet entire body including all hair." },
-  { keys:["repent","tawbah","forgiveness","sins","forgive"], q:"How to repent from sins?", a:"Tawbah conditions: 1) Stop the sin immediately 2) Feel genuine regret 3) Firmly resolve never to return. Quran 39:53: Do not despair of Allah's mercy — Allah forgives all sins. Sincere Tawbah wipes the slate clean." },
-  { keys:["tahajjud","night prayer","qiyam","witr"], q:"What is Tahajjud prayer?", a:"Tahajjud is voluntary night prayer — highly recommended Sunnah. Prayed after Isha before Fajr (last 1/3 of night is best). Prayed in 2 rakah sets. End with Witr. Means of closeness to Allah and acceptance of Dua." },
-  { keys:["quran","recite","memorize","hifz","tilawat"], q:"Importance of reciting Quran?", a:"The Prophet ﷺ said: The best of you learns and teaches the Quran. Each letter brings 10 rewards. Reciting daily, understanding meaning, and implementing in life is obligatory. Quran will intercede for its reciter on Judgement Day." },
-  { keys:["sadaqah","donation","giving","khairat"], q:"What is Sadaqah?", a:"Sadaqah is voluntary charity for Allah's sake. No minimum amount. Even a smile is Sadaqah. Sadaqah Jariyah (ongoing charity like building a well or masjid) continues giving rewards after death." },
+  { q:"What are the 5 pillars of Islam?",             a:"The 5 pillars: 1) Shahada — Declaration of faith 2) Salah — 5 daily prayers 3) Zakat — 2.5% charity 4) Sawm — Fasting in Ramadan 5) Hajj — Pilgrimage to Makkah once in lifetime.", keys:["5 pillars","five pillars","pillars of islam"] },
+  { q:"How many times should I pray daily?",           a:"Muslims pray 5 times daily: 🌙 Fajr (before sunrise), ☀️ Dhuhr (midday), 🌤 Asr (afternoon), 🌅 Maghrib (after sunset), ⭐ Isha (night). Obligatory for every adult Muslim.", keys:["pray daily","5 times","salah"] },
+  { q:"What breaks the fast in Ramadan?",              a:"Fast runs from Sehri (before Fajr) to Iftar (Maghrib). Things that break fast: eating, drinking, smoking intentionally. Sunnah is to break fast with dates and water. Unintentional eating does NOT break fast.", keys:["fast","roza","ramadan","iftar","sehri"] },
+  { q:"Is music halal or haram?",                      a:"Most classical scholars consider musical instruments haram. Vocal nasheeds without instruments are generally permissible. Avoid music that distracts from Allah and consult a scholar for detailed guidance.", keys:["music","song","nasheed","instrument"] },
+  { q:"What is Zakat?",                                a:"Zakat is 2.5% of total savings held for one lunar year above Nisab (87.48g gold value). Obligatory on every adult Muslim above Nisab. It purifies wealth and helps the poor.", keys:["zakat","zakah","charity","nisab","2.5"] },
+  { q:"How to perform Wudu?",                          a:"Wudu steps: 1) Niyyah 2) Bismillah 3) Wash hands 3x 4) Rinse mouth 3x 5) Clean nose 3x 6) Wash face 3x 7) Wash arms to elbows 3x (right first) 8) Wipe head 9) Clean ears 10) Wash feet 3x (right first).", keys:["wudu","ablution","wudhu","wash","purity"] },
+  { q:"What is the ruling on missed prayers?",         a:"Missed prayers (Qada) must be made up as soon as possible in order. There is no expiry — repent sincerely and make them up. Deliberately missing prayers is a major sin.", keys:["missed prayer","qada","qaza","make up"] },
+  { q:"Can women pray during menstruation?",           a:"Women are EXEMPT from Salah, fasting, and Tawaf during menstruation. Missed Salah do NOT need to be made up. Missed Ramadan fasts MUST be made up after period ends.", keys:["women pray","menstruation","haid","period"] },
+  { q:"What is the Sunnah of Friday?",                 a:"Sunnah of Friday: 1) Ghusl 2) Clean clothes 3) Apply itr (perfume) 4) Go early to Masjid 5) Recite Surah Al-Kahf 6) Send Durood on Prophet ﷺ 7) Make Dua between Asr and Maghrib.", keys:["friday","jumuah","jummah","jumma","khutbah"] },
+  { q:"How to make Dua?",                              a:"How to make Dua: 1) Face Qibla 2) Wudu 3) Raise hands 4) Start with Alhamdulillah & Durood 5) Ask with full trust in Allah 6) End with Ameen. Best times: last 1/3 of night, between Adhan & Iqamah, Friday afternoon.", keys:["dua","supplication","how to ask allah"] },
+  { q:"What is Halal food?",                           a:"Halal: meat slaughtered in Allah's name, fish, vegetables, fruits. Haram: pork, alcohol, blood, carrion, animals not properly slaughtered or dedicated to other than Allah.", keys:["halal food","haram food","meat","slaughter","zabiha"] },
+  { q:"What is Hajj?",                                 a:"Hajj is the 5th pillar — pilgrimage to Makkah. Obligatory ONCE in lifetime for those physically and financially able. Takes place in Dhul Hijjah. Wipes all past sins for sincere performers.", keys:["hajj","pilgrimage","makkah","kaaba","umrah"] },
+  { q:"What is the Islamic ruling on marriage?",       a:"Nikah is highly recommended — the Prophet ﷺ said it is his Sunnah. Key conditions: consent of both parties, Mahr (gift to bride), witnesses, and Wali (guardian for bride). Most modern scholars require legal age (18).", keys:["marriage","nikah","shaadi","wedding"] },
+  { q:"What is Riba (interest)?",                      a:"Riba (interest) is strictly HARAM. Allah says in Quran 2:275 that trade is permitted and Riba is forbidden. Includes bank interest, credit card interest, and all usury. Seek Islamic finance alternatives.", keys:["interest","riba","bank","loan","mortgage","sood"] },
+  { q:"What is the ruling on Hijab?",                  a:"Hijab is obligatory for adult Muslim women per Quran 24:31 and 33:59. Covers all except face and hands according to majority scholars. Some require full covering (Niqab).", keys:["hijab","purdah","covering","veil","niqab","scarf"] },
+  { q:"How to perform Ghusl?",                         a:"Ghusl required after: marital relations, wet dream, end of menstruation. Steps: 1) Niyyah 2) Wash hands & private parts 3) Full Wudu 4) Pour water over right shoulder 3x, left 3x 5) Wet entire body including all hair.", keys:["ghusl","bath","janabah","major impurity"] },
+  { q:"How to repent from sins?",                      a:"Tawbah conditions: 1) Stop the sin immediately 2) Feel genuine regret 3) Firmly resolve never to return. Quran 39:53: Do not despair of Allah's mercy — Allah forgives all sins. Sincere Tawbah wipes the slate clean.", keys:["repent","tawbah","forgiveness","sins","forgive"] },
+  { q:"What is Tahajjud prayer?",                      a:"Tahajjud is voluntary night prayer — highly recommended Sunnah. Prayed after Isha before Fajr (last 1/3 of night is best). Prayed in 2 rakah sets. End with Witr. Means of closeness to Allah and acceptance of Dua.", keys:["tahajjud","night prayer","qiyam","witr"] },
+  { q:"Importance of reciting Quran?",                 a:"The Prophet ﷺ said: The best of you learns and teaches the Quran. Each letter brings 10 rewards. Reciting daily, understanding meaning, and implementing in life is obligatory. Quran will intercede for its reciter on Judgement Day.", keys:["quran","recite","memorize","hifz","tilawat"] },
+  { q:"What is Sadaqah?",                              a:"Sadaqah is voluntary charity for Allah's sake. No minimum amount. Even a smile is Sadaqah. Sadaqah Jariyah (ongoing charity like building a well or masjid) continues giving rewards after death.", keys:["sadaqah","donation","giving","khairat"] },
 ];
 
 function ChatPage() {
@@ -2256,26 +2053,24 @@ function ChatPage() {
     setInput("");
     setMessages(prev => [...prev, { from:"user", text:q }]);
     setTimeout(() => {
-      const match = FAQ.find(f => f.q.toLowerCase().includes(q.toLowerCase()) || q.toLowerCase().includes(f.q.toLowerCase().split(" ").slice(0,3).join(" ")));
-      const answer = match
-        ? match.a
-        : "JazakAllah Khair for your question! I don't have a specific answer for that. Would you like to contact one of our scholars for a detailed answer?";
-      setMessages(prev => [...prev, { from:"bot", text:answer, showContact:!match }]);
+      const qLower = q.toLowerCase();
+      const match = FAQ.find(f =>
+        f.keys.some(k => qLower.includes(k)) ||
+        qLower.includes(f.q.toLowerCase().split(" ").slice(0,3).join(" "))
+      );
+      setMessages(prev => [...prev, {
+        from:"bot",
+        text: match ? match.a : "JazakAllah Khair for your question! I don't have a specific answer for that. Would you like to contact one of our scholars for a detailed answer?",
+        showContact: !match,
+      }]);
     }, 600);
   };
 
   const openWhatsApp = (scholar) => {
-    const msg = encodeURIComponent(`Assalamu Alaikum ${scholar.name},
-
-I have a question about: *${contactTopic || "Islamic Guidance"}*
-
-${contactMsg}
-
-JazakAllah Khair`);
+    const msg = encodeURIComponent(`Assalamu Alaikum ${scholar.name},\n\nI have a question about: *${contactTopic || "Islamic Guidance"}*\n\n${contactMsg}\n\nJazakAllah Khair`);
     window.open(`https://wa.me/${scholar.phone}?text=${msg}`, "_blank");
     setShowScholars(false);
-    setContactMsg("");
-    setContactTopic("");
+    setContactMsg(""); setContactTopic("");
     setMessages(prev => [...prev, { from:"bot", text:`Your message has been sent to ${scholar.name}! They will reply within 24 hours Insha'Allah. 🤲` }]);
   };
 
@@ -2312,13 +2107,10 @@ JazakAllah Khair`);
 
   return (
     <div style={{ display:"flex", flexDirection:"column", height:"calc(100vh - 60px)", padding:"0" }}>
-      {/* Header */}
       <div style={{ background:`linear-gradient(135deg,${DARK_GREEN},${MID_GREEN})`, padding:"16px 20px 12px", flexShrink:0 }}>
         <SectionTitle>💬 Islamic Assistant</SectionTitle>
         <div style={{ color:"rgba(255,255,255,0.35)", fontSize:12 }}>Ask any Islamic question</div>
       </div>
-
-      {/* Messages */}
       <div style={{ flex:1, overflowY:"auto", padding:"14px 16px", display:"flex", flexDirection:"column", gap:10 }}>
         {messages.map((m, i) => (
           <div key={i} style={{ display:"flex", flexDirection:"column", alignItems:m.from==="user"?"flex-end":"flex-start" }}>
@@ -2335,8 +2127,6 @@ JazakAllah Khair`);
         ))}
         <div ref={msgEndRef} />
       </div>
-
-      {/* FAQ Quick Questions */}
       <div style={{ padding:"8px 12px", flexShrink:0, borderTop:"1px solid rgba(201,168,76,0.1)" }}>
         <div style={{ display:"flex", gap:8, overflowX:"auto", paddingBottom:6, scrollbarWidth:"none" }}>
           {FAQ.slice(0,6).map((f,i) => (
@@ -2346,8 +2136,6 @@ JazakAllah Khair`);
           ))}
         </div>
       </div>
-
-      {/* Input */}
       <div style={{ padding:"10px 12px 16px", display:"flex", gap:8, flexShrink:0, background:DARK_GREEN }}>
         <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendMessage()} placeholder="Ask an Islamic question..." style={{ flex:1, background:"rgba(255,255,255,0.07)", border:"1px solid rgba(201,168,76,0.3)", borderRadius:24, padding:"11px 16px", color:"#fff", fontSize:13, outline:"none" }}/>
         <div onClick={() => sendMessage()} style={{ width:44, height:44, borderRadius:"50%", background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer", fontSize:18, flexShrink:0 }}>➤</div>
@@ -2356,11 +2144,12 @@ JazakAllah Khair`);
   );
 }
 
-// ─── ROOT APP ──────────────────────────────────────────────────────────────────
+// ─── ROOT APP ─────────────────────────────────────────────────────────────────
 export default function MinbarLiveApp() {
   const [onboarding, setOnboarding] = useState(() => !localStorage.getItem("minbar_onboarding_done"));
-  const [splash, setSplash]             = useState(true);
-  const [page, setPage]               = useState("home");
+  const [splash,     setSplash]     = useState(true);
+  const [page,       setPage]       = useState("home");
+
   const [masjids, setMasjids] = useState(() => {
     try {
       const saved = localStorage.getItem("minbar_masjids");
@@ -2372,17 +2161,19 @@ export default function MinbarLiveApp() {
       });
     } catch { return MASJIDS_DEFAULT; }
   });
-  const [adminTarget, setAdminTarget] = useState(null);
-  const [loggedInAdmin, setLoggedInAdmin] = useState(null);
-  const [showLogin, setShowLogin]     = useState(false);
-  const [showAdminPanel, setShowAdminPanel] = useState(false);
+
+  const [adminTarget,     setAdminTarget]     = useState(null);
+  const [loggedInAdminId, setLoggedInAdminId] = useState(null);
+  const [showLogin,       setShowLogin]       = useState(false);
+  const [showAdminPanel,  setShowAdminPanel]  = useState(false);
+  const [showMasjidSelect,setShowMasjidSelect]= useState(false);
 
   // ── Notifications ──
   const [notifEnabled, setNotifEnabled] = useState(() => {
     const saved = localStorage.getItem("minbar_notif");
     return saved === null ? true : saved === "true";
   });
-  const [notifPerm, setNotifPerm]       = useState(typeof Notification !== "undefined" ? Notification.permission : "default");
+  const [notifPerm, setNotifPerm] = useState(typeof Notification !== "undefined" ? Notification.permission : "default");
   const [currentNotif, setCurrentNotif] = useState(null);
 
   const handleInAppNotif = useCallback((n) => setCurrentNotif(n), []);
@@ -2397,7 +2188,9 @@ export default function MinbarLiveApp() {
       setNotifEnabled(false);
     }
   };
-  const { prompt, install } = useInstallPrompt();
+
+  const { prompt, install, dismiss } = useInstallPrompt();
+  const clock = useClock();
 
   const navItems = [
     { id:"home",    icon:"🏠", label:"Home"    },
@@ -2410,10 +2203,7 @@ export default function MinbarLiveApp() {
   const pages = { home:HomePage, live:LivePage, library:LibraryPage, quran:QuranPage, dua:DuaPage, tasbeeh:TasbeehPage, qibla:QiblaPage, chat:ChatPage };
   const CurrentPage = pages[page] || HomePage;
 
-  // Admin button clicked — show masjid selector
-  const [showMasjidSelect, setShowMasjidSelect] = useState(false);
-  const [showAddMasjid, setShowAddMasjid]       = useState(false); // eslint-disable-line no-unused-vars
-
+  // ── Admin helpers ──
   const handleAdminSelect = (masjid) => {
     setAdminTarget(masjid);
     setShowMasjidSelect(false);
@@ -2422,13 +2212,13 @@ export default function MinbarLiveApp() {
 
   const handleLoginSuccess = () => {
     setShowLogin(false);
-    setLoggedInAdmin(adminTarget);
+    setLoggedInAdminId(adminTarget.id);
     setShowAdminPanel(true);
   };
 
   const handleAdminClose = () => {
     setShowAdminPanel(false);
-    setLoggedInAdmin(null);
+    setLoggedInAdminId(null);
     setAdminTarget(null);
   };
 
@@ -2439,24 +2229,9 @@ export default function MinbarLiveApp() {
       return updated;
     });
   };
-  // eslint-disable-next-line no-unused-vars
-  const handleAddMasjid = (newMasjid) => {
-    setMasjids(prev => {
-      const updated = [...prev, newMasjid];
-      localStorage.setItem("minbar_masjids", JSON.stringify(updated));
-      return updated;
-    });
-  };
-  // eslint-disable-next-line no-unused-vars
-  const handleDeleteMasjid = (id) => {
-    if (window.confirm("Delete this masjid?")) {
-      setMasjids(prev => {
-        const updated = prev.filter(m => m.id !== id);
-        localStorage.setItem("minbar_masjids", JSON.stringify(updated));
-        return updated;
-      });
-    }
-  };
+
+  // Always show fresh masjid data inside AdminPanel
+  const loggedInMasjid = masjids.find(m => m.id === loggedInAdminId) || null;
 
   // Auto request notification permission on first load
   useEffect(() => {
@@ -2465,7 +2240,6 @@ export default function MinbarLiveApp() {
     }
   }, []);
 
-  // Save notif preference
   useEffect(() => {
     localStorage.setItem("minbar_notif", String(notifEnabled));
   }, [notifEnabled]);
@@ -2474,45 +2248,36 @@ export default function MinbarLiveApp() {
     <div style={{ maxWidth:390, margin:"0 auto", minHeight:"100vh", background:`linear-gradient(180deg,${DARK_GREEN} 0%,#050F08 100%)`, backgroundImage:arabicPattern, fontFamily:"'Lato',sans-serif", position:"relative" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Cinzel:wght@400;600&family=Lato:wght@300;400;600;700&family=Amiri:ital,wght@0,400;0,700;1,400&display=swap');
-        @keyframes pulse  { 0%,100%{transform:scale(1)} 50%{transform:scale(1.3)} }
-        @keyframes ripple { 0%{transform:scale(1);opacity:0.4} 100%{transform:scale(2.5);opacity:0} }
-        @keyframes spin   { from{transform:translate(-50%,-50%) rotate(0deg)} to{transform:translate(-50%,-50%) rotate(360deg)} }
-        @keyframes splashIn   { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes pulse    { 0%,100%{transform:scale(1)} 50%{transform:scale(1.3)} }
+        @keyframes ripple   { 0%{transform:scale(1);opacity:0.4} 100%{transform:scale(2.5);opacity:0} }
+        @keyframes spin     { from{transform:translate(-50%,-50%) rotate(0deg)} to{transform:translate(-50%,-50%) rotate(360deg)} }
+        @keyframes splashIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
         @keyframes splashFade { from{opacity:1} to{opacity:0;pointer-events:none} }
-        @keyframes wave   { from{transform:scaleY(0.5)} to{transform:scaleY(1.2)} }
-        @keyframes slideDown { from{transform:translateX(-50%) translateY(-20px);opacity:0} to{transform:translateX(-50%) translateY(0);opacity:1} }
+        @keyframes slideDown  { from{transform:translateX(-50%) translateY(-20px);opacity:0} to{transform:translateX(-50%) translateY(0);opacity:1} }
         * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
         ::-webkit-scrollbar { display:none; }
-        input,button { font-family:'Lato',sans-serif; }
-        input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.5; }
+        input,button,textarea { font-family:'Lato',sans-serif; }
+        input[type="time"]::-webkit-calendar-picker-indicator { filter:invert(1); opacity:0.5; }
       `}</style>
 
-      {/* Onboarding — first time only */}
       {onboarding && <OnboardingScreen onDone={() => { localStorage.setItem("minbar_onboarding_done","1"); setOnboarding(false); }} />}
-
-      {/* Splash Screen */}
       {!onboarding && splash && <SplashScreen onDone={() => setSplash(false)} />}
-
-      {/* In-app notification banner */}
       {currentNotif && <NotifBanner notif={currentNotif} onDismiss={() => setCurrentNotif(null)} />}
 
       {/* Status bar */}
       <div style={{ background:DARK_GREEN, padding:"10px 20px 8px", display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-        <span style={{ color:"rgba(255,255,255,0.35)", fontSize:12 }}>9:41</span>
+        <span style={{ color:"rgba(255,255,255,0.35)", fontSize:12 }}>{clock}</span>
 
-        {/* NOTIFICATION BELL */}
         <button onClick={toggleNotifications} style={{
           background: notifEnabled ? "linear-gradient(135deg,#1A4D2E,#2E6B3A)" : "rgba(255,255,255,0.05)",
           border: `1px solid ${notifEnabled ? "rgba(201,168,76,0.4)" : "rgba(255,255,255,0.1)"}`,
           borderRadius:20, padding:"5px 12px", cursor:"pointer",
           display:"flex", alignItems:"center", gap:5,
           color: notifEnabled ? "#F0D080" : "rgba(255,255,255,0.35)", fontSize:11, fontWeight:700,
-          title: notifPerm === "denied" ? "Notifications blocked in browser settings" : "",
         }}>
           {notifEnabled ? "🔔" : "🔕"} {notifEnabled ? "ON" : notifPerm === "denied" ? "BLOCKED" : "OFF"}
         </button>
 
-        {/* ADMIN BUTTON */}
         <button onClick={() => setShowMasjidSelect(true)} style={{
           background:"linear-gradient(135deg,#6B0000,#CC1111)",
           border:"1px solid rgba(255,100,100,0.35)", borderRadius:20, padding:"5px 14px",
@@ -2545,7 +2310,7 @@ export default function MinbarLiveApp() {
         ))}
       </div>
 
-      {/* ── MASJID SELECTOR SHEET ── */}
+      {/* Masjid Selector Sheet */}
       {showMasjidSelect && (
         <div style={{ position:"fixed", inset:0, zIndex:200, background:"rgba(0,0,0,0.88)", display:"flex", alignItems:"flex-end", justifyContent:"center" }}>
           <div style={{ background:`linear-gradient(180deg,#0E2418,${DARK_GREEN})`, border:"1px solid rgba(201,168,76,0.3)", borderRadius:"24px 24px 0 0", width:"100%", maxWidth:390, padding:"24px 20px 44px" }}>
@@ -2558,24 +2323,17 @@ export default function MinbarLiveApp() {
               Each masjid has its own admin password. Only the masjid admin can access their panel.
             </div>
             {masjids.map(m => (
-              <div key={m.id} style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
-                <div onClick={() => handleAdminSelect(m)} style={{
-                  background:`linear-gradient(135deg,${m.color},rgba(10,46,26,0.9))`,
-                  border:"1px solid rgba(201,168,76,0.2)", borderRadius:14, padding:"14px 16px",
-                  display:"flex", alignItems:"center", gap:14, cursor:"pointer", flex:1,
-                }}>
-                  <span style={{ fontSize:28 }}>{m.icon}</span>
-                  <div style={{ flex:1 }}>
-                    <div style={{ color:OFF_WHITE, fontWeight:700, fontSize:15 }}>{m.name}</div>
-                    <div style={{ color:"rgba(255,255,255,0.35)", fontSize:11, marginTop:2 }}>Tap to login as admin</div>
-                  </div>
-                  <div style={{ color:GOLD, fontSize:18 }}>🔒</div>
+              <div key={m.id} onClick={() => handleAdminSelect(m)} style={{ background:`linear-gradient(135deg,${m.color},rgba(10,46,26,0.9))`, border:"1px solid rgba(201,168,76,0.2)", borderRadius:14, padding:"14px 16px", display:"flex", alignItems:"center", gap:14, cursor:"pointer", marginBottom:10 }}>
+                <span style={{ fontSize:28 }}>{m.icon}</span>
+                <div style={{ flex:1 }}>
+                  <div style={{ color:OFF_WHITE, fontWeight:700, fontSize:15 }}>{m.name}</div>
+                  <div style={{ color:"rgba(255,255,255,0.35)", fontSize:11, marginTop:2 }}>Tap to login as admin</div>
                 </div>
-
+                <div style={{ color:GOLD, fontSize:18 }}>🔒</div>
               </div>
             ))}
             <div style={{ background:"rgba(201,168,76,0.06)", border:"1px solid rgba(201,168,76,0.2)", borderRadius:14, padding:"14px 16px", marginTop:8 }}>
-              <div style={{ color:"rgba(255,255,255,0.45)", fontSize:11, textAlign:"center", marginBottom:10 }}>Want to add or remove a Masjid?</div>
+              <div style={{ color:"rgba(255,255,255,0.45)", fontSize:11, textAlign:"center", marginBottom:10 }}>Need to add or remove a Masjid?</div>
               <div style={{ display:"flex", gap:8 }}>
                 <div onClick={() => window.open("https://wa.me/919157467486?text=Assalamu%20Alaikum%20Ibrahim%2C%20I%20want%20to%20add%2Fremove%20a%20Masjid%20on%20Minbar%20Live%20app.", "_blank")} style={{ flex:1, background:"linear-gradient(135deg,#25D366,#128C7E)", borderRadius:12, padding:"11px", textAlign:"center", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}>
                   <span style={{ fontSize:16 }}>💬</span>
@@ -2595,25 +2353,17 @@ export default function MinbarLiveApp() {
       {/* PWA Install Banner */}
       {prompt && (
         <div style={{ position:"fixed", bottom:70, left:"50%", transform:"translateX(-50%)", width:"calc(100% - 32px)", maxWidth:358, background:`linear-gradient(135deg,${MID_GREEN},#1A3D2A)`, border:"1px solid rgba(201,168,76,0.4)", borderRadius:16, padding:"14px 16px", zIndex:400, display:"flex", alignItems:"center", gap:12, boxShadow:"0 8px 32px rgba(0,0,0,0.5)" }}>
-          <img src="/islamiclogo.png" alt="logo" style={{ width:40, height:40, borderRadius:10 }} />
+          <div style={{ width:40, height:40, borderRadius:10, background:`linear-gradient(135deg,${MID_GREEN},${DARK_GREEN})`, border:"1px solid rgba(201,168,76,0.4)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22 }}>🕌</div>
           <div style={{ flex:1 }}>
             <div style={{ color:LIGHT_GOLD, fontWeight:700, fontSize:13 }}>Install Minbar Live</div>
             <div style={{ color:"rgba(255,255,255,0.45)", fontSize:11 }}>Add to home screen for easy access</div>
           </div>
           <button onClick={install} style={{ background:`linear-gradient(135deg,${GOLD},${LIGHT_GOLD})`, color:DARK_GREEN, border:"none", borderRadius:10, padding:"8px 14px", fontSize:12, fontWeight:700, cursor:"pointer" }}>Install</button>
-          <button onClick={() => {}} style={{ background:"none", border:"none", color:"rgba(255,255,255,0.3)", fontSize:18, cursor:"pointer", padding:0 }}>✕</button>
+          <button onClick={dismiss} style={{ background:"none", border:"none", color:"rgba(255,255,255,0.3)", fontSize:18, cursor:"pointer", padding:0 }}>✕</button>
         </div>
       )}
 
-      {/* ── ADD MASJID MODAL ── */}
-      {showAddMasjid && (
-        <AddMasjidModal
-          onAdd={handleAddMasjid}
-          onClose={() => setShowAddMasjid(false)}
-        />
-      )}
-
-      {/* ── PASSWORD LOGIN ── */}
+      {/* Password Login */}
       {showLogin && adminTarget && (
         <PasswordLogin
           masjid={adminTarget}
@@ -2622,10 +2372,10 @@ export default function MinbarLiveApp() {
         />
       )}
 
-      {/* ── ADMIN PANEL ── */}
-      {showAdminPanel && loggedInAdmin && (
+      {/* Admin Panel — always gets fresh masjid data */}
+      {showAdminPanel && loggedInMasjid && (
         <AdminPanel
-          masjid={loggedInAdmin}
+          masjid={loggedInMasjid}
           onClose={handleAdminClose}
           onUpdateMasjid={handleUpdateMasjid}
         />

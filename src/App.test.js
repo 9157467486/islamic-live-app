@@ -1,8 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
-test('renders learn react link', () => {
+test('renders Minbar Live app', () => {
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+  // The splash screen renders with MINBAR LIVE text
+  const heading = screen.getByText(/MINBAR LIVE/i);
+  expect(heading).toBeInTheDocument();
 });
