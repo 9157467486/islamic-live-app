@@ -271,7 +271,7 @@ function NotifBanner({ notif, onDismiss }) {
   useEffect(() => { const t = setTimeout(onDismiss, 8000); return () => clearTimeout(t); }, [onDismiss]);
   if (!notif) return null;
   const isAdhan   = notif.type === "adhan";
-  const isIqamah  = notif.type === "iqamah";
+
   const isSunrise = notif.type === "sunrise";
 
   const bg     = isSunrise ? "linear-gradient(135deg,#2E1A00,#4A2E00)"
@@ -1274,7 +1274,7 @@ function QuranReader({ surah, onBack }) {
   };
 
   // Lang display label
-  const langLabel = langChoice === "hi" ? "हिंदी" : langChoice === "en" ? "English" : "🌍";
+
 
   return (
     <div style={{ display:"flex", flexDirection:"column", position:"fixed", inset:0, zIndex:500, background:DARK_GREEN }}>
