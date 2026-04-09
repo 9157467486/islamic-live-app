@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.ibrahimailabs.minbarlive",
+    "sha256_cert_fingerprints": [
+      "44:C3:B2:3D:F5:DF:AF:C9:34:E3:79:99:E6:EF:54:8C:D5:09:2D:2E:E5:A2:BC:53:CC:D4:6E:67:49:C2:CE:42"
+    ]
+  }
+}]
