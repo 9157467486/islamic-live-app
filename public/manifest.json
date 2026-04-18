@@ -25,15 +25,15 @@
   "screenshots": [
     {
       "src": "/screenshots/IMG_0952.PNG",
-      "sizes": "728x1592",
+      "sizes": "1320x2868",
       "type": "image/png",
       "form_factor": "narrow"
     },
     {
       "src": "/screenshots/IMG_0954.PNG",
-      "sizes": "728x1592",
+      "sizes": "1320x2868",
       "type": "image/png",
-      "form_factor": "wide"
+      "form_factor": "narrow"
     }
   ],
   "categories": ["entertainment", "lifestyle"]
