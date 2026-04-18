@@ -3,6 +3,7 @@
   "short_name": "Minbar Live",
   "description": "Live Islamic streaming from your local masjid",
   "start_url": "/",
+  "id": "/",
   "display": "standalone",
   "background_color": "#0A2E1A",
   "theme_color": "#0A2E1A",
@@ -20,5 +21,20 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/screen1.png",
+      "sizes": "640x1136",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshots/screen2.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "categories": ["entertainment", "lifestyle"]
 }
